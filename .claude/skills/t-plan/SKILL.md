@@ -19,10 +19,12 @@ optional, and `/t-work` will refuse without it.
    its tracking issue if any.
 2. Inspect the repository enough to plan honestly — relevant files, existing structure.
    Do not load everything by default.
-3. Produce the plan and **append it to the issue body** (`tracker:edit-body <id>`,
-   preserving the existing body). Appending only this section is the one edit to an
-   issue body that is expected after its PR opens — `/t-status` exempts it; anything
-   else changed at the same time is the intent drift that warning exists to catch.
+3. Produce the plan and **write it to the issue body** (`tracker:edit-body <id>`),
+   preserving everything else there. On a first plan that means appending the section;
+   on a re-plan it means replacing it, per the rule below. Either way, changing only
+   this section is the one edit to an issue body that is expected after its PR opens —
+   `/t-status` exempts it; anything else changed at the same time is the intent drift
+   that warning exists to catch.
 
    **When the issue already has a `## Plan` section, replace it — wholesale.** This
    happens on a re-plan: `/t-work` Phase 3 and `/t-ship` precondition 1 both send a task
@@ -31,10 +33,13 @@ optional, and `/t-work` will refuse without it.
    the old one. **An issue carries exactly one `## Plan` section, always**, so the three
    skills that read it never need a rule for which of two binds.
 
-   Nothing is lost by replacing. Why the scope changed is history, and history belongs in
-   the task record's Deviations — the issue states what is true now. Say in your report
-   what the previous plan allowed and what the new one allows, so the implementer can
-   carry that into the record.
+   Nothing is lost by replacing, but only because the record catches it. Why the scope
+   changed is history, and history belongs in the task record's Deviations — the issue
+   states what is true now. **Quote the previous Allowed paths verbatim in your report**,
+   alongside the new ones and the reason they changed; `/t-work` step 6 requires exactly
+   that text in the record before work resumes. Without it the old scope survives only in
+   the tracker's edit history, which `CONSTITUTION.md` §1.3 says is not where anything
+   binding may live.
 
    The section:
 
@@ -78,6 +83,7 @@ optional, and `/t-work` will refuse without it.
 - If the issue is incomplete, fix the issue or stop with a clear question. Never hide a
   gap inside the plan.
 - A re-plan replaces the `## Plan` section and touches nothing else in the body. Editing
-  Goal, Done when, Scope or Non-goals here is intent drift — that belongs in the record
-  once work has started (`AGENTS.md` §Conventions), and this section is its one exception.
+  Goal, Done when, Scope or Non-goals here is intent drift — once work has started, task
+  intent changes in the record rather than the issue body (`docs/tasks/README.md`,
+  `/t-open` §Rules), and this section is that rule's one exception.
 - Do not implement, and do not create branches or PRs here.

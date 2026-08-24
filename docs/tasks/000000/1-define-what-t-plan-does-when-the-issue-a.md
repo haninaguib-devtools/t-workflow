@@ -38,10 +38,29 @@ already there, so the pipeline's own remediation path could produce an issue wit
 
   What replace appears to lose — why the scope changed — is not lost: the task record is
   the durable account (this file), and its Deviations section is where a re-plan's reason
-  belongs. The issue states intent; the record states history. That split already exists
-  in `AGENTS.md` ("after work starts, intent changes in the record, never in the issue
-  body"), and this rule is the one exception to it, so `/t-plan` now says so out loud.
+  belongs. The issue states intent; the record states history. That split already exists —
+  `docs/tasks/README.md` says task intent changes in the record, never in the issue body,
+  and `/t-open` §Rules says the same — and this rule is the one exception to it, so
+  `/t-plan` now says so out loud.
 
 ## Deviations / notes
 
-- none
+- **Cold review (PR #2) found the `AGENTS.md` attribution above was false** (medium).
+  Both this record and `/t-plan` cited `AGENTS.md` §Conventions for the intent-in-the-
+  record rule; `AGENTS.md` does not state it. Corrected in both places to the actual
+  homes, `docs/tasks/README.md` and `/t-open` §Rules. Worth noting the consistency script
+  could not catch this: check 2b verifies a named section *exists*, not that it says what
+  a citation claims.
+- **The "nothing is lost by replacing" argument was not closed** (medium, same review).
+  `/t-plan` reported the old Allowed paths but nothing required them to reach the record,
+  so across sessions the previous scope could vanish — the tracker's edit history being
+  ruled out by `CONSTITUTION.md` §1.3. Closed from both ends: `/t-plan` must now quote the
+  previous Allowed paths verbatim, and `/t-work` step 6 must write them into Deviations
+  before resuming work. `/t-work` is inside this task's Allowed paths, so this is not
+  scope drift.
+- **`/t-plan` step 3 still opened with "append"** (low, same review), which read as the
+  general rule against "delete the old one" three lines below. Reworded to "write", with
+  append and replace named as the two cases.
+- Two findings from that review were **not** fixed here and are opened as their own
+  issues: the plan template has no place for the mandatory task record inside Allowed
+  paths, and this task's own plan therefore excludes a file every task must write.

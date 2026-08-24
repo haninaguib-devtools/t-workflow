@@ -87,6 +87,14 @@ implementation before editing files.
    filling Asked / Done when / Explicitly not from the issue. Resumed or fix work reads
    the existing record instead. The record is part of the diff and merges with the work.
 
+   **Resuming after a re-plan, write the scope change into Deviations before touching a
+   file:** what the previous plan allowed, what the new one allows, and why it changed —
+   the text `/t-plan` quoted in its report. A re-plan replaces the `## Plan` section, so
+   the issue no longer holds the old bounds, and `CONSTITUTION.md` §1.3 rules out the
+   tracker's edit history as a home for anything binding. Skip this and the reason the
+   task grew is gone from `main` for good. If `/t-plan`'s report is not in this session,
+   say so and ask rather than reconstructing it from memory.
+
 ## Phase 2 — the work
 
 - The Allowed paths (or the issue's Scope line, without a plan) are **binding**. An issue
