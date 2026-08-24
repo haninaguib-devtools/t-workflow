@@ -89,7 +89,11 @@ implementation before editing files.
 
 ## Phase 2 — the work
 
-- The Allowed paths (or the issue's Scope line, without a plan) are **binding**.
+- The Allowed paths (or the issue's Scope line, without a plan) are **binding**. An issue
+  carries exactly one `## Plan` section, and it governs: `/t-plan` replaces the section on
+  a re-plan rather than appending a second, so the one you read is current by
+  construction. Two sections on an issue is a defect — stop and report it rather than
+  choosing between them.
   Out-of-scope defects become new issues (`Part of:` the same tracking issue where apt),
   never drive-by fixes. Exception (ADR-001 ride-along): a pure typo or formatting fix in
   a file already inside this task's scope may be made here and listed in the record.

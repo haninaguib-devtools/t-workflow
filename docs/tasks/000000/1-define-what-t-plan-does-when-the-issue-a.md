@@ -1,0 +1,47 @@
+# 1 — Define what /t-plan does when the issue already has a plan
+Issue: #1
+
+## Asked
+
+`/t-plan` appends a `## Plan` section to the issue body, and is also the skill `/t-work`
+and `/t-ship` send a task back to when the work grows onto a protected surface after
+planning was already done. Nothing said what a second invocation does to the plan that is
+already there, so the pipeline's own remediation path could produce an issue with two
+`## Plan` sections and no rule for which one binds.
+
+## Done when
+
+- `/t-plan` states what a re-plan does to an existing `## Plan` section, unambiguously.
+- `/t-work` and `/t-review` each say which section governs when they read one.
+- `/t-status`'s edited-issue exemption covers a re-plan, not only a first plan.
+- `./scripts/consistency-check.sh` exits 0.
+- Human check: the chosen rule reads as the obviously right one across all four skills.
+
+## Explicitly not
+
+- Changing *when* a re-plan is triggered — `/t-work` Phase 3 and `/t-ship` precondition 1
+  already decide that.
+- Mechanizing a "exactly one `## Plan` section" check. Stated as a boundary in the issue:
+  the rule has to exist before anything can check it.
+
+## Decisions made along the way
+
+- **The rule is: a re-plan replaces the existing `## Plan` section wholesale** (Claude,
+  2026-08-24, for the human to accept or reject at the merge gate). Three options were
+  live — replace, amend, append.
+
+  *Append* was rejected because it is the defect: two sections, no rule for which binds.
+  *Amend* was rejected because it makes the section's history and its current content the
+  same text, so a reader cannot tell which paths are binding now — the plan's whole job
+  is to state current bounds. *Replace* leaves exactly one section, which is always the
+  current one, and needs no precedence rule in the three skills that read it.
+
+  What replace appears to lose — why the scope changed — is not lost: the task record is
+  the durable account (this file), and its Deviations section is where a re-plan's reason
+  belongs. The issue states intent; the record states history. That split already exists
+  in `AGENTS.md` ("after work starts, intent changes in the record, never in the issue
+  body"), and this rule is the one exception to it, so `/t-plan` now says so out loud.
+
+## Deviations / notes
+
+- none

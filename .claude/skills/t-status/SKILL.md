@@ -63,8 +63,11 @@ timestamps); they are worth it, and they are the only ones that are. Resolve eve
 - An issue whose body was edited after its PR opened (intent belongs in the record once
   work starts). **One exemption, or this warning fires on the pipeline's own prescribed
   path:** when work grows onto a protected surface, `/t-work` and `/t-ship` send the task
-  to `/t-plan`, which appends a `## Plan` section to the issue body by design. An edit
-  that only added that section is expected — say so rather than flagging it.
+  to `/t-plan`, which writes a `## Plan` section to the issue body by design — adding one
+  the first time, and *replacing* it on any re-plan. An edit that only added or only
+  replaced that section is expected — say so rather than flagging it. An edit that changed
+  Goal, Done when, Scope or Non-goals is not exempt, whatever else it touched: that is
+  the intent drift this warning exists to catch.
 - A task branch with no open PR and no merged commit — work that stalled after the branch
   was cut.
 

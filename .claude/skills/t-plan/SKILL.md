@@ -23,6 +23,19 @@ optional, and `/t-work` will refuse without it.
    preserving the existing body). Appending only this section is the one edit to an
    issue body that is expected after its PR opens — `/t-status` exempts it; anything
    else changed at the same time is the intent drift that warning exists to catch.
+
+   **When the issue already has a `## Plan` section, replace it — wholesale.** This
+   happens on a re-plan: `/t-work` Phase 3 and `/t-ship` precondition 1 both send a task
+   back here when its diff grew onto a protected surface the old Allowed paths never
+   covered. Write the new section from scratch against what the task is now, and delete
+   the old one. **An issue carries exactly one `## Plan` section, always**, so the three
+   skills that read it never need a rule for which of two binds.
+
+   Nothing is lost by replacing. Why the scope changed is history, and history belongs in
+   the task record's Deviations — the issue states what is true now. Say in your report
+   what the previous plan allowed and what the new one allows, so the implementer can
+   carry that into the record.
+
    The section:
 
    ```markdown
@@ -64,4 +77,7 @@ optional, and `/t-work` will refuse without it.
   behavior, it must not be the stage that first discovers it.
 - If the issue is incomplete, fix the issue or stop with a clear question. Never hide a
   gap inside the plan.
+- A re-plan replaces the `## Plan` section and touches nothing else in the body. Editing
+  Goal, Done when, Scope or Non-goals here is intent drift — that belongs in the record
+  once work has started (`AGENTS.md` §Conventions), and this section is its one exception.
 - Do not implement, and do not create branches or PRs here.

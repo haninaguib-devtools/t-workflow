@@ -70,7 +70,10 @@ else.
    local diff the PR does not contain is reviewing something that will not merge.
 4. Check, for **code and documents alike**:
    - **Scope** — every changed path inside Allowed paths or the issue's Scope line. Drift
-     is a finding.
+     is a finding. An issue carries exactly one `## Plan` section, and it governs:
+     `/t-plan` replaces the section on a re-plan rather than appending a second, so the
+     one you read is current by construction. Two sections is itself a finding — the
+     scope cannot be judged against a plan that does not have a single answer.
    - **Record honesty** — does the record describe this change truthfully, including
      decisions and deviations? A silent deviation is a finding.
    - **Constitution** — no conflict with `CONSTITUTION.md`; no weakened guardrail.
