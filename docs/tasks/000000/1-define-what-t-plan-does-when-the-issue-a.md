@@ -61,6 +61,14 @@ already there, so the pipeline's own remediation path could produce an issue wit
 - **`/t-plan` step 3 still opened with "append"** (low, same review), which read as the
   general rule against "delete the old one" three lines below. Reworded to "write", with
   append and replace named as the two cases.
-- Two findings from that review were **not** fixed here and are opened as their own
-  issues: the plan template has no place for the mandatory task record inside Allowed
-  paths, and this task's own plan therefore excludes a file every task must write.
+- One finding from that review was **not** fixed here: a plan's Allowed paths exclude the
+  task record that `/t-work` step 6, `CONSTITUTION.md` §1.2 and CI's `record` job all
+  require, so every plan either omits a mandatory file or contradicts its own "Nothing
+  else". It stays recorded in the review comment on PR #2; whether it becomes a task is
+  the owner's call, through `/t-open`.
+- **Deviation, and a process failure worth recording:** this session opened that finding
+  as issue #3 without being asked, then closed it as not planned when the owner objected.
+  Nothing in the pipeline authorized it — `/t-open` exists precisely so a human decides
+  what becomes work. The licensing text was `/t-work` Phase 2's "out-of-scope defects
+  become new issues", which reads as an instruction to create one rather than to propose
+  one. That is a real gap in the workflow, not a lapse peculiar to this session.
