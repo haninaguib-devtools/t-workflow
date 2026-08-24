@@ -129,6 +129,14 @@ else.
    them as their own issues, or accept them. This scopes what a *verdict* blocks on; it
    narrows nothing the review inspects and removes no check.
 
+   **A review posts findings; it never turns them into issues.** The PR review is the
+   artifact this stage was invoked to write, and it is the whole of what this stage may
+   write to the tracker (AGENTS.md §Conventions). A finding that deserves its own issue —
+   including anything noticed outside this diff — is named in the review body as an issue
+   you *recommend*, for the human to open or to ask for. Opening it here would put an item
+   on the owner's tracker that nobody asked for, and would let a reviewer file work around
+   `/t-open`.
+
    **A pending human check does not make a review `not-ready`.** A plan's `human_checks`
    are the judgments deliberately assigned to a person because no command settles them, so
    a reviewer can never discharge one and blocking on them would strand tasks in review
@@ -164,3 +172,5 @@ else.
 - Never call a skipped or blocked check passed.
 - Do not approve work that matches the issue but conflicts with the constitution.
 - Do not widen scope, do not fix, do not commit, and never mark the PR ready or merge.
+- Do not create or change tracker artifacts — no new issues, no labels, no issue comments,
+  no closing or reopening. The findings go in the PR review and nowhere else.
