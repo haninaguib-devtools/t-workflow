@@ -65,13 +65,15 @@ cp -R "$src" "$target" || die "could not copy the template into '$target'."
 #   .git       — this is a new project, not a fork of the template's history
 #   LICENSE    — the template's MIT file names the template's copyright holder; putting
 #                that on someone else's project would be wrong. They choose their own.
-#   installer/ — a project does not ship the thing that made it, and
+#   installer/ — a project does not ship the thing that made it
 #   .github/workflows/installer.yml — nor the workflow that tests it. Left behind, that
-#              workflow would reference ./installer/test.sh, which was just deleted, and
-#              go red on the new project's first pull request for a reason its owner did
-#              not cause and could not fix.
-rm -rf "$target/.git" "$target/LICENSE" "$target/installer" \
-       "$target/.github/workflows/installer.yml"
+#              workflow would reference ./installer/test.sh, which was just deleted.
+#   site/      — the public website describes this delivery-system template, not the
+#                project being generated
+#   .github/workflows/pages.yml — deploys that website and would fail without site/.
+rm -rf "$target/.git" "$target/LICENSE" "$target/installer" "$target/site" \
+       "$target/.github/workflows/installer.yml" \
+       "$target/.github/workflows/pages.yml"
 
 # Task records describe the template's own history. The shape of a record stays
 # (TEMPLATE.md, README.md); the records themselves go.

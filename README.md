@@ -39,8 +39,9 @@ only the pipeline that moves any change from idea to `main`:
 - `installer/` — the one-command bootstrap that turns this template into a new project.
   `install.sh` is the URL people fetch; `bootstrap.sh` does the work after the clone.
   Deleted from every project it generates, along with `LICENSE`, this repo's git history,
-  and `.github/workflows/installer.yml` — the workflow that tests it, which lives in its
-  own file precisely so that removing it is a deletion rather than an edit.
+  the template website in `site/`, and the website and installer workflows under
+  `.github/workflows/`. Those workflows live in their own files precisely so removing
+  them is a deletion rather than an edit.
 
 ## Bootstrapping a new project
 
@@ -99,8 +100,9 @@ The installer only automates the steps below; nothing depends on having used it.
 1. Copy this repo (or use it as a GitHub template) and `git init`.
 2. Replace `README.md` with one describing your project. `installer/templates/README.md`
    is the version the installer writes — copy it **before** step 3 deletes it.
-3. Delete `LICENSE`, `installer/`, and `.github/workflows/installer.yml`, and empty
-   `docs/tasks/` of everything except `TEMPLATE.md` and `README.md`.
+3. Delete `LICENSE`, `installer/`, `site/`, `.github/workflows/installer.yml`, and
+   `.github/workflows/pages.yml`; then empty `docs/tasks/` of everything except
+   `TEMPLATE.md` and `README.md`.
 4. Make the two fills above, plus `CONSTITUTION.md` §3 if you already know your
    application surfaces. Doing them here is the cheap moment — the exception is open.
 5. Create the repository on your forge and point the checkout at it, then commit and
