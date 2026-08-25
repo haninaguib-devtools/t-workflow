@@ -57,11 +57,15 @@ routed around the pipeline's entrance while appearing to follow it.
   labelling, changing issue state — not just issue creation (Claude, 2026-08-24). Issue #3
   was an issue-creation failure, but a rule naming only that invites the same
   routing-around in another shape.
-- Exceptions are expressed as "the skill invoked for that act, on the artifact it was
-  invoked for" rather than a bare list of skill names (Claude, 2026-08-24). A bare list
-  would license `/t-cancel` to comment on any issue it liked; the binding form is that
-  the human's invocation of the stage *is* the ask, and it reaches only that stage's own
-  artifact.
+- Exceptions are expressed as "the stage the human invoked, doing what that invocation
+  asked for" rather than a bare list of skill names (Claude, 2026-08-24). A bare list
+  would license `/t-cancel` to comment on any issue it liked. Two things make a tracker
+  write asked-for: the human's invocation of the stage, for that stage's own work; or the
+  human's agreement at that stage's confirmation gate, where the write reaches past the
+  task's own issue — `/t-cancel` recording each neighbour's disposition, `/t-ship` ticking
+  or closing a tracking issue. The gate is what carries the ask across that boundary. An
+  earlier draft of this bullet bounded the exception to "that stage's own artifact and no
+  other"; that draft was abandoned before commit and is recorded under Deviations.
 - The existing out-of-scope-work rule in `AGENTS.md` §Conventions was rewritten in place
   rather than deleted (Claude, 2026-08-24). It still has to say that out-of-scope work is
   not a drive-by change; only its disposal instruction ("becomes a new issue") changed to
@@ -78,3 +82,9 @@ routed around the pipeline's entrance while appearing to follow it.
   asked for, and that a write reaching past the task's own issue is asked-for because the
   human agreed to it at that stage's confirmation gate. This is the "must not disable the
   pipeline it governs" risk the plan named, arriving exactly where the plan expected it.
+- **The abandoned draft survived in this record after the fix, and the review caught it**
+  (finding M1 on PR #5, addressed 2026-08-24 at the owner's request). The "Decisions made
+  along the way" bullet on the exception wording still stated the discarded formulation as
+  though it were the decision, so this record described a rule that `AGENTS.md` does not
+  contain. Rewritten to state the shipped formulation; the discarded draft stays here,
+  where a superseded wording belongs, and nowhere else.
