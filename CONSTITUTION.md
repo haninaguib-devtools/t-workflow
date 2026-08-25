@@ -88,9 +88,9 @@ commit are made directly, in that order, before any tracker, PR, or branch prote
 exists to route them through. Either route performs genesis — `installer/` doing it in one
 command, or a person doing it by hand — and the exception is identical in both: it covers
 exactly those placeholder fills and that first commit, and nothing else. **The exception
-ends when that first commit is pushed** — one end-point,
-stated the same way in `README.md` §Bootstrapping. Every *edit to the tree* after that
-push goes through the pipeline, including further edits to those same files. Running
+ends when that first commit is pushed** — one end-point, stated the same way in
+`README.md` §Bootstrapping. Every *edit to the tree* after that push goes through the
+pipeline, including further edits to those same files. Running
 `scripts/github-bootstrap.sh` is not such an edit — it changes settings on the forge and
 produces no diff — so it needs no task, before or after the push. The exception never
 covers a second round of "just this once".
