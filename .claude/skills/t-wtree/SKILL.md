@@ -42,7 +42,7 @@ creates no record, edits no task file, and opens nothing on the tracker or the f
 
    ```bash
    # no branch exists anywhere
-   git worktree add -b wip/<id>-<slug> ../<repo-name>-<id> main
+   git worktree add -b wip/<id>-<slug> ../<repo-name>-<id> origin/main
 
    # a local branch exists with no worktree
    git worktree add ../<repo-name>-<id> wip/<id>-<slug>
@@ -51,9 +51,8 @@ creates no record, edits no task file, and opens nothing on the tracker or the f
    git worktree add -b wip/<id>-<slug> ../<repo-name>-<id> origin/wip/<id>-<slug>
    ```
 
-   Creating from `main` needs the primary checkout's `main` to be current: after the
-   fetch, fast-forward a behind-only `main` with `git merge --ff-only origin/main`, and
-   stop and report if it is ahead or diverged.
+   `origin/main` is already current as of the step-2 fetch, so basing the new branch on
+   it needs no separate freshness check against the primary checkout's local `main`.
 
 5. **Verify and report.** `git worktree list --porcelain` must map that branch to exactly
    one path. Report the absolute path and the branch, and say what to do next: open a
