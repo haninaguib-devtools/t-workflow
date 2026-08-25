@@ -129,5 +129,25 @@ jobs:
             exit 1
           fi
 
-  # Add the project's build/test command here as a third job once the stack exists —
+  # The installer generates every new project from this template, so a defect here is
+  # inherited by repositories nobody in this one will review. The test runs it for real
+  # and asserts the project it produces.
+  #
+  # ADVISORY, not required: `scripts/github-bootstrap.sh` is the only place that names
+  # required status checks, and it names `consistency` and `record`. This job goes red on
+  # failure but branch protection will not block a merge on it until that script lists it
+  # too. Deliberate — see task #6.
+  installer:
+    name: installer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # The test pushes HEAD into a throwaway repository and installs from that, so
+          # it needs real history, not the default depth-1 checkout.
+          fetch-depth: 0
+      - name: The installer produces a correct project
+        run: ./installer/test.sh
+
+  # Add the project's build/test command here as a further job once the stack exists —
   # AGENTS.md §Checks item 1 is the single place that names it.

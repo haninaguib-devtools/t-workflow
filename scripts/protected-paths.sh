@@ -51,6 +51,9 @@ patterns=(
   '.cursor/*'
   '.github/*'
   'scripts/*'
+  # The installer stamps out every new repository from this template: a defect here is
+  # inherited by every project it generates, and none of them are reviewed by anyone here.
+  'installer/*'
   'docs/tasks/TEMPLATE.md'
   'docs/tasks/README.md'
   '.gitignore'
