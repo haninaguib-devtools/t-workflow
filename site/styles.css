@@ -9,6 +9,9 @@
   --primary-dark: #4652c2;
   --primary-soft: #eef0ff;
   --success: #1f765a;
+  --warn-bg: #fff4df;
+  --warn-border: #f0c869;
+  --warn-text: #6b4b06;
   --code: #151821;
   --radius: 14px;
   --shadow: 0 16px 40px rgba(31, 38, 71, 0.08);
@@ -65,6 +68,22 @@ input {
 
 .skip-link:focus {
   transform: translateY(0);
+}
+
+.wip-banner {
+  background: var(--warn-bg);
+  border-bottom: 1px solid var(--warn-border);
+  color: var(--warn-text);
+  text-align: center;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.wip-banner p {
+  width: var(--page);
+  margin: 0 auto;
 }
 
 .site-header {
