@@ -37,9 +37,10 @@ only the pipeline that moves any change from idea to `main`:
   the skills use for every issue/PR operation. Swap Jira or GitLab in by editing these
   two files only.
 - `installer/` — the one-command bootstrap that turns this template into a new project.
-  `install.sh` is the URL people fetch; `bootstrap.sh` does the work after the clone. It
-  is deleted from every project it generates, along with `LICENSE` and this repo's git
-  history.
+  `install.sh` is the URL people fetch; `bootstrap.sh` does the work after the clone.
+  Deleted from every project it generates, along with `LICENSE`, this repo's git history,
+  and `.github/workflows/installer.yml` — the workflow that tests it, which lives in its
+  own file precisely so that removing it is a deletion rather than an edit.
 
 ## Bootstrapping a new project
 
@@ -48,45 +49,61 @@ curl -fsSL https://raw.githubusercontent.com/haninaguib-devtools/t-workflow/main
 ```
 
 It asks for a project name, creates a directory with that name, puts the workflow in it,
-makes the first commit, and offers to create the GitHub repository and apply the
-repository settings. Pass `--name <name>` and `--remote` or `--no-remote` to run it
-without questions; `--help` lists every option.
+and makes the first commit. If you let it, it then creates the GitHub repository, pushes
+`main`, and applies the repository settings.
 
-What it deliberately does not do: choose a licence for you (the generated project has no
-`LICENSE` — see §License below), or invent your stack. It prints the two placeholders it
-cannot know, which are steps 2 and 3 below.
+To run it without questions, the flags have to reach the script rather than `bash`, which
+means `-s --`:
 
-The installer performs the **genesis exception** (`CONSTITUTION.md` §3) on your behalf:
-the placeholder fills and the first commit are made outside the pipeline, because there
-is no tracker and no `main` to open a PR against yet. **The exception ends when that
-first commit is pushed** — the same end-point whichever route you take. Every edit to the
-tree after that push goes through the pipeline. Running `scripts/github-bootstrap.sh` is
-not such an edit: it changes settings on the forge and produces no diff, so it needs no
-task, before or after the push.
+```bash
+curl -fsSL https://raw.githubusercontent.com/haninaguib-devtools/t-workflow/main/installer/install.sh \
+  | bash -s -- --name my-project --no-remote
+```
 
-Then, in the new project:
+`--help` lists every option. What it deliberately does not do: choose a licence for you
+(the generated project has no `LICENSE` — see §License below), or invent your stack.
 
-1. `CONSTITUTION.md` §3 — add your protected application surfaces as they appear, and
-   the matching patterns in `scripts/protected-paths.sh`; the two change together.
-2. `CONSTITUTION.md` §4 — your stack constraints, each ratified by an ADR.
-3. `AGENTS.md` §Checks — your build/test commands. This is the only place the skills
-   get them from.
-4. Re-run `scripts/github-bootstrap.sh` after CI's first run on `main`, to make the
-   status checks required.
-5. From then on every change goes through the pipeline, starting with `/t-open`. That
-   includes adding your build/test command to `.github/workflows/ci.yml` as a third job
-   once the stack exists.
+### The two fills, and when they stop being free
+
+The installer cannot know two things, and leaves them exactly as they ship:
+
+- `CONSTITUTION.md` §4 — your stack constraints, each ratified by an ADR.
+- `AGENTS.md` §Checks — your build/test command. This is the only place the skills get
+  it from; the same command also goes into `.github/workflows/ci.yml` as a third job.
+
+**When you may fill them in by hand depends on one thing: whether the first commit has
+been pushed.** That is the genesis exception (`CONSTITUTION.md` §3), and **the exception
+ends when that first commit is pushed** — the same end-point whichever route you took to
+get there.
+
+- **Not pushed yet** (you answered no to the remote, or passed `--no-remote`) — the
+  exception is still open. Edit both files by hand and fold them into the first commit,
+  then create the repository and push.
+- **Already pushed** (the default path: the installer created the repository and pushed
+  `main`) — the exception has closed. Both files are protected surfaces, so each fill is
+  ordinary work: `/t-open`, then a plan, then a review. Branch protection will refuse a
+  direct push to `main` in any case.
+
+`CONSTITUTION.md` §3 is a third file worth editing early — add your protected application
+surfaces as they appear, along with the matching patterns in `scripts/protected-paths.sh`.
+The two change together, and the same rule about the push applies.
+
+Running `scripts/github-bootstrap.sh` is never a tree edit — it changes settings on the
+forge and produces no diff — so it needs no task, before or after the push. Re-run it
+once CI has run on `main`, which is when the status checks can be marked required.
 
 ### By hand, without the installer
 
 The installer only automates the steps below; nothing depends on having used it.
 
 1. Copy this repo (or use it as a GitHub template) and `git init`.
-2. Delete `LICENSE` and `installer/`, and empty `docs/tasks/` of everything except
-   `TEMPLATE.md` and `README.md`. Replace `README.md` with one describing your project —
-   `installer/templates/README.md` is the version the installer writes.
-3. Fill in the three placeholders listed above.
-4. Create the repository on your forge and point the checkout at it, then commit and
+2. Replace `README.md` with one describing your project. `installer/templates/README.md`
+   is the version the installer writes — copy it **before** step 3 deletes it.
+3. Delete `LICENSE`, `installer/`, and `.github/workflows/installer.yml`, and empty
+   `docs/tasks/` of everything except `TEMPLATE.md` and `README.md`.
+4. Make the two fills above, plus `CONSTITUTION.md` §3 if you already know your
+   application surfaces. Doing them here is the cheap moment — the exception is open.
+5. Create the repository on your forge and point the checkout at it, then commit and
    push. **The genesis exception ends here.**
 
    ```bash
@@ -94,8 +111,9 @@ The installer only automates the steps below; nothing depends on having used it.
    git add -A && git commit -m "Bootstrap the delivery system"
    git push -u origin main
    ```
-5. Run `scripts/github-bootstrap.sh` to set up labels, merge mechanics, and branch
-   protection, then continue from step 4 above.
+6. Run `scripts/github-bootstrap.sh` to set up labels, merge mechanics, and branch
+   protection, and re-run it after CI's first run on `main`.
+7. From then on every change goes through the pipeline, starting with `/t-open`.
 
 ## License
 

@@ -128,6 +128,52 @@ else
 fi
 check "installer/ is protected in the generated project" \
   bash "$demo/scripts/protected-paths.sh" installer/anything.sh
+
+# The generated project inherits every workflow file in this repository. A workflow that
+# calls a script the strip list just deleted goes red on the new owner's first pull
+# request, for a reason they did not cause. Rather than naming the known offender, this
+# asserts the general rule: every script a generated workflow runs must exist.
+missing=""
+for wf in "$demo"/.github/workflows/*.yml; do
+  [ -f "$wf" ] || continue
+  while IFS= read -r script; do
+    [ -e "$demo/$script" ] || missing="$missing $(basename "$wf"):$script"
+  # Both spellings a workflow may use: `run:` as a key under a named step, and the
+  # inline `- run:` list item. Matching only the first would leave the guard passing on
+  # exactly the bug it exists to catch, written the other way.
+  done < <(sed -n -E 's#^[[:space:]]*(-[[:space:]]+)?run:[[:space:]]*\./([^[:space:]]*).*#\2#p' "$wf")
+done
+if [ -z "$missing" ]; then
+  ok "generated workflows call no missing script"
+else
+  bad "generated workflows call no missing script (missing:$missing)"
+fi
+check "the installer's own workflow is not inherited" \
+  test ! -e "$demo/.github/workflows/installer.yml"
+check "the generated project keeps ci.yml"     test -f "$demo/.github/workflows/ci.yml"
+echo
+
+# --- 7b. the provenance branch every real user takes -------------------------
+# install.sh was given a local --source above, so bootstrap.sh only ever took the
+# "no origin URL" path. The branch that substitutes a real URL is the one that runs for
+# anyone installing from the public one-liner, and nothing was exercising it. Driving
+# bootstrap.sh directly is what lets it be tested without reaching the network.
+echo "provenance from a URL source"
+git clone --quiet --depth 1 "file://$srcrepo" "$work/clone" 2>/dev/null
+if TWORKFLOW_SRC="$work/clone" \
+   TWORKFLOW_NAME=urltest \
+   TWORKFLOW_TARGET="$work/urltest" \
+   TWORKFLOW_REMOTE=no \
+   TWORKFLOW_VISIBILITY=private \
+   TWORKFLOW_SOURCE_URL="https://github.com/example/t-workflow.git" \
+   bash "$root/installer/bootstrap.sh" >/dev/null 2>&1; then
+  ok "installs from a URL source"
+  check "provenance names the URL, with .git trimmed" \
+    grep -qE '^Generated from t-workflow @ [0-9a-f]{7,} — https://github\.com/example/t-workflow$' \
+    "$work/urltest/README.md"
+else
+  bad "installs from a URL source"
+fi
 echo
 
 # --- 8. the closing message says the two things it must ----------------------

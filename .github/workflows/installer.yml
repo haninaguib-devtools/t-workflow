@@ -1,0 +1,37 @@
+# The installer's own test, deliberately in a file of its own rather than a job in
+# ci.yml.
+#
+# Every file in this repository is copied into the projects the installer generates, and
+# those projects have no `installer/` directory — the installer deletes it. A job living
+# in ci.yml would therefore be inherited by every generated project as a check pointing
+# at a script that is not there: red on its first pull request, for a reason its owner
+# could not diagnose. Keeping it in its own file makes removing it one deletion
+# (`installer/bootstrap.sh`, the strip list) instead of text surgery on a protected file,
+# where a partial edit would leave a broken workflow in someone else's repository.
+#
+# ADVISORY, not required: `scripts/github-bootstrap.sh` is the only place that names
+# required status checks, and it names `consistency` and `record`. This job goes red on
+# failure but branch protection will not block a merge on it until that script lists it
+# too. Deliberate — see task #6.
+name: installer
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  installer:
+    name: installer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # The test pushes HEAD into a throwaway repository and installs from that, so
+          # it needs real history, not the default depth-1 checkout.
+          fetch-depth: 0
+      - name: The installer produces a correct project
+        run: ./installer/test.sh

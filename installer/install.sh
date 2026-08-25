@@ -41,12 +41,19 @@ Options:
   --public               Create the remote repository public.
   --source <url|path>    Where to clone the template from.
                          Default: the public t-workflow repository.
-  --ref <ref>            Branch, tag, or commit to clone. Default: main.
+  --ref <ref>            Branch or tag to clone. Default: main. Not a raw commit id:
+                         git clone cannot fetch one, and the installer refuses rather
+                         than quietly installing something else.
   -h, --help             Print this and exit.
 
 With --name and either --remote or --no-remote, the installer asks nothing and is safe
 to run unattended. Without a terminal (no /dev/tty) those flags are required, because
 there is nowhere to ask.
+
+Passing flags through a pipe needs `bash -s --`, because otherwise bash reads them as
+its own options and refuses:
+
+  curl -fsSL <url> | bash -s -- --name my-project --no-remote
 
 The generated project ships with NO LICENSE file: it is not this template's place to
 choose one for you. Two things the installer cannot know are left for you to fill in —
@@ -183,9 +190,19 @@ if [ -d "$source_repo" ]; then
 fi
 
 note "Fetching the template ($ref)..."
-git clone --quiet --depth 1 --branch "$ref" "$clone_from" "$tmp/src" 2>/dev/null \
-  || git clone --quiet --depth 1 "$clone_from" "$tmp/src" \
-  || die "could not clone $source_repo at $ref"
+# No fallback to the default branch on failure. Provenance is the whole reason the
+# generated README records a commit, and silently installing main after being asked for
+# something else records a version nobody asked for — worse than refusing, because it
+# looks like it worked.
+clone_err=$(mktemp "${TMPDIR:-/tmp}/t-workflow-clone.XXXXXX")
+if ! git clone --quiet --depth 1 --branch "$ref" "$clone_from" "$tmp/src" 2>"$clone_err"; then
+  msg=$(sed 's/^/    /' "$clone_err")
+  rm -f "$clone_err"
+  die "could not clone $source_repo at '$ref'. git said:
+$msg
+  --ref takes a branch or a tag. A raw commit id will not work here."
+fi
+rm -f "$clone_err"
 
 [ -f "$tmp/src/installer/bootstrap.sh" ] \
   || die "the clone has no installer/bootstrap.sh — is $source_repo a t-workflow template?"

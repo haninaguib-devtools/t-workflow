@@ -45,14 +45,33 @@ esac
 # symlink on both GNU and BSD, which is the whole point: CLAUDE.md, GEMINI.md,
 # .agents/skills and .github/copilot-instructions.md are symlinks to the real files, and
 # a copy that followed them would produce look-alike duplicates that then drift apart.
+# From here on the target exists, so a failure must not leave a half-built tree behind:
+# it would be a project with no commit and no explanation, and the next run would refuse
+# because the directory already exists. One case opts out deliberately — see the git
+# identity check below, which leaves the tree and tells the person how to finish it.
+clean_target_on_failure=yes
+cleanup_target() {
+  status=$?
+  if [ "$status" -ne 0 ] && [ "$clean_target_on_failure" = "yes" ]; then
+    rm -rf "$target"
+    printf 'installer: removed the partly built '\''%s'\'' — nothing was left half-done.\n' "$target" >&2
+  fi
+}
+trap cleanup_target EXIT
+
 cp -R "$src" "$target" || die "could not copy the template into '$target'."
 
 # Everything the new project must not inherit.
 #   .git       — this is a new project, not a fork of the template's history
 #   LICENSE    — the template's MIT file names the template's copyright holder; putting
 #                that on someone else's project would be wrong. They choose their own.
-#   installer/ — a project does not ship the thing that made it
-rm -rf "$target/.git" "$target/LICENSE" "$target/installer"
+#   installer/ — a project does not ship the thing that made it, and
+#   .github/workflows/installer.yml — nor the workflow that tests it. Left behind, that
+#              workflow would reference ./installer/test.sh, which was just deleted, and
+#              go red on the new project's first pull request for a reason its owner did
+#              not cause and could not fix.
+rm -rf "$target/.git" "$target/LICENSE" "$target/installer" \
+       "$target/.github/workflows/installer.yml"
 
 # Task records describe the template's own history. The shape of a record stays
 # (TEMPLATE.md, README.md); the records themselves go.
@@ -83,6 +102,9 @@ git -C "$target" symbolic-ref HEAD refs/heads/main
 # `git var` respects GIT_AUTHOR_* / GIT_COMMITTER_* as well as config, which `git config
 # user.email` does not. Checking the wrong one would refuse a perfectly valid CI run.
 if ! git -C "$target" var GIT_COMMITTER_IDENT >/dev/null 2>&1; then
+  # The one failure worth keeping the tree for: everything is built and only the commit
+  # is missing, so deleting it would throw away work the person can finish in one command.
+  clean_target_on_failure=no
   die "git has no author identity, so the first commit cannot be made.
   The project tree is at '$target' — set an identity and commit it:
     git config --global user.name  \"Your Name\"
@@ -127,7 +149,7 @@ cat >&2 <<EOF
 Created '$name' at $target
 Generated from t-workflow @ $ref
 
-Two things this installer cannot know. Fill them in before you open any work:
+Two things this installer cannot know, left for you to fill in:
 
   1. CONSTITUTION.md   section 4 — your stack and architecture constraints,
                        each one ratified by an ADR in docs/adr/.
@@ -139,27 +161,39 @@ No LICENSE file was created. A project with no licence is "all rights reserved" 
 default, which is the safe place to start — add the one you want before publishing.
 EOF
 
+# Which of these is true decides how those two fills may be made, so it is stated
+# rather than left for the person to work out. CONSTITUTION.md section 3: the genesis
+# exception ends when the first commit is pushed.
 if [ "$remote_done" = "yes" ]; then
   cat >&2 <<EOF
 
-The remote repository exists and main has been pushed.
-EOF
-else
-  cat >&2 <<EOF
-
-No remote repository was created. To add one later:
-
-    cd $target
-    gh repo create $name --$visibility --source . --remote origin --push
-    ./scripts/github-bootstrap.sh
-EOF
-fi
-
-cat >&2 <<EOF
-
-Then start work the way everything starts here:
+The remote repository exists and main has been pushed, so the genesis exception has
+closed. Both fills above are now ordinary work: open each one with /t-open and let it
+go through the pipeline like any other change. CONSTITUTION.md and AGENTS.md are
+protected surfaces, so each needs a plan and a review — and branch protection will
+refuse a direct push to main anyway.
 
     cd $target
     /t-open
 
 EOF
+else
+  cat >&2 <<EOF
+
+Nothing has been pushed yet, so the genesis exception is still open: you may make both
+fills above by hand and fold them into the first commit.
+
+    cd $target
+    \$EDITOR CONSTITUTION.md AGENTS.md
+    git add -A && git commit --amend --no-edit
+
+Then create the repository and apply its settings:
+
+    gh repo create $name --$visibility --source . --remote origin --push
+    ./scripts/github-bootstrap.sh
+
+That push closes the genesis exception. Every edit to the tree after it goes through
+the pipeline, starting with /t-open.
+
+EOF
+fi

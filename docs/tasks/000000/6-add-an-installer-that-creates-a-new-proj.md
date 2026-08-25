@@ -91,9 +91,11 @@ the project later decides it wants it.
   self-contained file, but the installer clones the whole repository anyway, so every
   supporting file is available after the clone. Keeping the entry point tiny also keeps
   its public URL stable.
-- (agent, 2026-08-24) The generated tree is produced by moving the clone's working tree
-  and deleting `.git`, rather than by copying file by file. This preserves the four
-  symlinks exactly, which a copy that follows symlinks would silently destroy.
+- (agent, 2026-08-24) The generated tree is produced by copying the clone's working tree
+  wholesale (`cp -R`) and deleting `.git`, rather than by reconstructing it file by file.
+  `cp -R` copies a symlink as a symlink on both GNU and BSD, which is what preserves the
+  four symlinks; a copy that followed them would silently produce duplicates that then
+  drift apart.
 
 ## Deviations / notes
 
@@ -104,3 +106,68 @@ the project later decides it wants it.
   project that later grows an installer of its own is protected by default. Having the
   installer mechanically edit two protected files to strip the rule would be fragile and a
   partial edit would break check 9 for the new project's owner.
+
+### Fix pass, 2026-08-25 — the cold review's findings (PR #7)
+
+The review returned `readiness: not-ready` on two high findings. The human asked for both
+of those plus five of the smaller ones in one pass; findings 7, 8 and 9 were left, and are
+named at the end.
+
+- **High 1 — every generated project shipped a permanently failing CI check.** The
+  `installer` job ran `./installer/test.sh`, and the installer deletes `installer/` from
+  the project it generates without removing the job. A new owner's first pull request went
+  red for a reason they did not cause. Fixed by moving the job out of
+  `.github/workflows/ci.yml` into its own file, `.github/workflows/installer.yml`, and
+  adding that file to the strip list. Its own file, not an edit to `ci.yml`, for the same
+  reason the `installer/*` protection rule is left in place below: mechanically rewriting
+  a protected file is fragile, and a partial edit would leave a broken workflow in someone
+  else's repository. Deleting a whole file cannot half-happen.
+
+  `installer/test.sh` now asserts the general rule rather than the known offender: every
+  script a generated workflow runs must exist. The first version of that assertion matched
+  only `run:` under a named step and not the inline `- run:` list item, so it would have
+  passed on the same bug written the other way; caught by testing the guard against both
+  spellings before trusting it.
+
+- **High 2 — `README.md` §Bootstrapping contradicted the `CONSTITUTION.md` §3 it amends.**
+  It claimed the installer performs the placeholder fills (it does not, by design), and
+  listed those fills — two of them on protected files — as post-install steps, implying
+  they sit outside the pipeline. On the default path the installer has already pushed
+  `main` and applied branch protection by then, so §3 requires those edits to go through
+  the pipeline and a direct push is refused outright. The section is rewritten around the
+  one thing that decides it: whether the first commit has been pushed. `installer/`'s
+  closing message drifted the same way ("Fill them in before you open any work") and now
+  states the pushed and not-pushed cases separately.
+
+- **Medium 3** — the published one-liner and the flags beside it did not compose:
+  `curl … | bash --name x` is a bash usage error. The working `bash -s -- …` form is now
+  in both `README.md` and `--help`.
+- **Medium 4** — `--ref <commit>` silently installed `main`, because `git clone --branch`
+  rejects a raw commit id and the failure was swallowed by `2>/dev/null`. The provenance
+  line then recorded a version nobody asked for, which is worse than failing. The fallback
+  is gone: the clone failure is reported with git's own message, and `--help` no longer
+  claims a commit id works.
+- **Medium 5** — the provenance branch that substitutes a real URL never ran in CI,
+  because the test always passes a local `--source`. `installer/test.sh` now drives
+  `bootstrap.sh` directly with a URL in `TWORKFLOW_SOURCE_URL`, which exercises it without
+  reaching the network.
+- **Low 6** — the record said the tree is "moved"; the code copies it. Corrected above.
+- **Low 10** — a failure part-way through left a half-built directory that the next run
+  then refused as "already exists". `bootstrap.sh` now removes it on a failed exit. The
+  missing-git-identity case opts out deliberately: everything is built and only the commit
+  is missing, so the tree is kept and the person is told the one command that finishes it.
+
+**Left for the human to decide (reported, not fixed):**
+
+- **Low 7** — §3's new closing paragraph ("changing `installer/` *here* is ordinary
+  protected work") is inherited verbatim by generated projects, where there is no
+  `installer/` and "here" points at the wrong repository. Same class as the residue noted
+  above, but this one is a sentence that reads as false rather than a rule that is merely
+  unused.
+- **Low 8** — `AGENTS.md` §Checks does not know the installer test exists, so a future task
+  changing `installer/` is never told to run it. `AGENTS.md` is outside this task's Allowed
+  paths, so it cannot be fixed here; it is recommended as its own issue.
+- **Low 9** — small ordering snags in `README.md` §Bootstrapping. Fixed incidentally: the
+  by-hand route was rewritten wholesale for High 2, and leaving a known ordering error in
+  text being rewritten anyway was not defensible.
+
