@@ -18,7 +18,10 @@ No application backend, accounts, analytics, content-management system, custom d
 ## Decisions made along the way
 - Codex, 2026-08-24 — use dependency-free HTML, CSS, and progressive-enhancement JavaScript so the site adds no stack decision to this stack-neutral template.
 - Human, 2026-08-24 — use a practical, white, developer-focused landing page: explain the project directly, make the installer command prominent and copyable, show the core workflow, and describe every skill. Use nginxproxymanager.com only as a tone and layout reference.
+- Human, 2026-08-24 — keep the template website out of generated projects by stripping both `site/` and its `.github/workflows/pages.yml` deployment workflow during installation.
 - Codex, 2026-08-24 — publish the contents of `site/` as the Pages artifact with official GitHub actions pinned to the current immutable SHAs behind their major-version tags.
 
 ## Deviations / notes
 - The initial editorial “control room” concept was rejected by the human as too theatrical for a developer tool and was completely replaced before the draft PR. The issue scope and allowed paths did not change.
+- Human-approved re-plan, 2026-08-24 — the previous Allowed paths were `site/**`, `.github/workflows/pages.yml`, and `docs/tasks/000000/8-create-project-website.md`. The new Allowed paths are `site/**`, `.github/workflows/pages.yml`, `installer/bootstrap.sh`, `installer/test.sh`, `README.md`, and `docs/tasks/000000/8-create-project-website.md`. Scope expanded after the draft PR because the wholesale installer copy would otherwise put the template’s website into every generated project; removing only `site/` would also leave a broken Pages workflow behind.
+- The first pre-commit `./installer/test.sh` run reported 44 passes and 2 failures for the new website-removal assertions because the test deliberately constructs its source repository from committed `HEAD`, not the working tree. The implementation must therefore be committed before this end-to-end check can exercise it; the same test is rerun against that commit before push.

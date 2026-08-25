@@ -84,6 +84,8 @@ echo
 echo "stripped"
 check "no installer/ directory"                test ! -e "$demo/installer"
 check "no LICENSE"                             test ! -e "$demo/LICENSE"
+check "no template website"                    test ! -e "$demo/site"
+check "no Pages workflow"                      test ! -e "$demo/.github/workflows/pages.yml"
 check "no leftover task records"               test -z "$(find "$demo/docs/tasks" -mindepth 1 -maxdepth 1 -type d)"
 check "docs/tasks keeps TEMPLATE.md"           test -f "$demo/docs/tasks/TEMPLATE.md"
 check "docs/tasks keeps README.md"             test -f "$demo/docs/tasks/README.md"
