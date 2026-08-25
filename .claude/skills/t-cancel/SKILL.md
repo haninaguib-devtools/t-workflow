@@ -116,8 +116,12 @@ question mechanism), last thing in the message —
    **Refuse to remove a worktree with uncommitted changes** (never `--force`): report what
    is uncommitted, stop the teardown there, and let the human decide.
 3. **Close any PR — never repurpose it.** That diff *is* the discarded work, and closing
-   it records the abandonment honestly:
-   `forge:pr-close <pr>` with a comment saying why, in prose.
+   it records the abandonment honestly: `forge:pr-close <pr>` with a comment saying why,
+   in prose. **Before running the command, re-read `docs/adapters/FORGE.md`'s
+   `forge:pr-close` row and check the command string you are about to run against it** —
+   a command reconstructed from memory at this point is exactly how a branch survives a
+   close unnoticed (issue #13): verify it includes the active backend's branch-deletion
+   flag (`--delete-branch` on GitHub) before running it.
 4. **Delete the branch, if anything is left to delete.** Step 3's `forge:pr-close`
    already removed the branch — local *and* remote — whenever a PR existed, so this step
    is normally a no-op after a PR, and does the whole job when there was never one.
