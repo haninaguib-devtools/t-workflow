@@ -1,5 +1,9 @@
 # t-workflow
 
+> **⚠️ Work in progress.** t-workflow is under active internal use and expected to churn
+> significantly before it stabilizes. Please wait for a released version before adopting
+> it in your own projects.
+
 A template repo for an agent-driven delivery workflow. It contains no application code —
 only the pipeline that moves any change from idea to `main`:
 
