@@ -41,4 +41,21 @@ reconstructed from memory.
   missing script, which covers the new workflow for free.
 
 ## Deviations / notes
-- none
+- Fixed after the cold review (hani, 2026-08-25): `scripts/stale-branches-check.sh`'s
+  per-branch existence check (`if gh api "repos/$repo/branches/$branch" ...; then`)
+  treated *any* non-zero exit from `gh api` — a confirmed 404 (branch gone) but also a
+  bad/expired token, rate limit, or network failure — as "not stale", so a check that
+  exists specifically to catch silent failures could itself fail silently and still
+  print "no stale branches found" with exit 0. Reproduced directly (a request with a bad
+  token returns `HTTP 401`, indistinguishable by exit code alone from the `HTTP 404` a
+  genuinely-deleted branch returns). Fixed by capturing `gh api`'s stderr and only
+  treating a message containing `HTTP 404` as "confirmed deleted"; every other failure
+  now reports `UNKNOWN` and makes the whole script exit 1 rather than reporting a clean
+  pass. Same fix for the page-limit case: hitting the `--limit` used to print a warning
+  but still let the script report "no stale branches found"; it now exits 1 immediately,
+  since ADR-001 §D6 treats a scan sitting at its page limit as incomplete, never as a
+  clean total. Verified: reproduced both failure modes directly (a bad `GH_TOKEN` against
+  a real branch, and `limit=1` against this repo's real PR history) and confirmed each
+  now exits 1 with the right message; re-ran the normal case and the zero-grace-period
+  case against this repo's real history, both still exit 0 with "no stale branches
+  found".
