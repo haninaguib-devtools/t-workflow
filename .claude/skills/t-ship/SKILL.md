@@ -145,8 +145,13 @@ already left the pipeline; say which and stop.
    exit. What this gate guarantees is visibility at the decision moment. A human who
    wants a check settled first answers `abort`.
 3. On confirmation, squash-merge with a **self-contained commit** written from the
-   record, via `forge:pr-merge <pr>`. The subject overrides the forge's default entirely,
-   so append the PR reference explicitly — it is not added for you:
+   record, via `forge:pr-merge <pr>`. **Before running the command, re-read
+   `docs/adapters/FORGE.md`'s `forge:pr-merge` row and check the command string you are
+   about to run against it** — the row is the one source of truth, and a command
+   reconstructed from memory at this point is exactly how a branch survives a merge
+   unnoticed (issue #13): verify it includes the active backend's branch-deletion flag
+   (`--delete-branch` on GitHub) before running it. The subject overrides the forge's
+   default entirely, so append the PR reference explicitly — it is not added for you:
 
    ```
    subject: <issue title> (#<pr>)
