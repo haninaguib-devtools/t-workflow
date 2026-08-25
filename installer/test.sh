@@ -41,6 +41,11 @@ echo
 # gives the installer a real branch to fetch whatever state the caller is testing.
 srcrepo="$work/source.git"
 git init --quiet --bare "$srcrepo" || exit 2
+# `git init --bare` points HEAD at init.defaultBranch, which is still `master` on an
+# older git — including the Linux CI runner's. A clone that does not name a branch then
+# tries to check out a ref that does not exist and silently produces an empty working
+# tree. Naming the branch here makes the test source identical everywhere.
+git -C "$srcrepo" symbolic-ref HEAD refs/heads/main || exit 2
 git -C "$root" push --quiet "$srcrepo" "HEAD:refs/heads/main" || {
   echo "could not stage the test source from $root — is HEAD committed?" >&2
   exit 2
@@ -159,7 +164,10 @@ echo
 # anyone installing from the public one-liner, and nothing was exercising it. Driving
 # bootstrap.sh directly is what lets it be tested without reaching the network.
 echo "provenance from a URL source"
-git clone --quiet --depth 1 "file://$srcrepo" "$work/clone" 2>/dev/null
+if ! clone_err=$(git clone --quiet --depth 1 --branch main "file://$srcrepo" "$work/clone" 2>&1); then
+  bad "clones the test source over file://"
+  printf '%s\n' "$clone_err" | sed 's/^/    /'
+fi
 if TWORKFLOW_SRC="$work/clone" \
    TWORKFLOW_NAME=urltest \
    TWORKFLOW_TARGET="$work/urltest" \
@@ -173,6 +181,10 @@ if TWORKFLOW_SRC="$work/clone" \
     "$work/urltest/README.md"
 else
   bad "installs from a URL source"
+  TWORKFLOW_SRC="$work/clone" TWORKFLOW_NAME=urltest2 TWORKFLOW_TARGET="$work/urltest2" \
+  TWORKFLOW_REMOTE=no TWORKFLOW_VISIBILITY=private \
+  TWORKFLOW_SOURCE_URL="https://github.com/example/t-workflow.git" \
+  bash "$root/installer/bootstrap.sh" 2>&1 | sed 's/^/    /' | tail -5
 fi
 echo
 
