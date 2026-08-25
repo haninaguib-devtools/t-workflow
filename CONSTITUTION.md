@@ -70,6 +70,8 @@ where they disagree, that is a defect to fix, not a judgment call to make.
 - `.github/` (CI, CODEOWNERS, rulesets — or the active forge's equivalent config paths,
   `.gitlab-ci.yml` and `.gitlab/`)
 - `scripts/` (the mechanical checks and settings-as-code)
+- `installer/` (the one-command bootstrap that generates every new project from this
+  template — a defect here is inherited by repositories nobody in this one will review)
 - `docs/tasks/TEMPLATE.md` and `docs/tasks/README.md` (the shape of every future record —
   the individual records under `docs/tasks/<bucket>/` are not protected)
 - `.gitignore` (what it hides never reaches review)
@@ -80,15 +82,23 @@ where they disagree, that is a defect to fix, not a judgment call to make.
 *(reserved: application surfaces — data-privacy paths, contracts, migrations, grants,
 audit — to be added when the application exists.)*
 
-**Genesis exception.** A repository started from this template is bootstrapped by hand:
-the placeholder fills named in `README.md` §Bootstrapping and the first commit are made
-directly, in that order, before any tracker, PR, or branch protection exists to route
-them through. **The exception ends when that first commit is pushed** — one end-point,
-stated the same way in `README.md` §Bootstrapping. Every *edit to the tree* after that
-push goes through the pipeline, including further edits to those same files. Running
+**Genesis exception.** A repository started from this template is bootstrapped outside
+the pipeline: the placeholder fills named in `README.md` §Bootstrapping and the first
+commit are made directly, in that order, before any tracker, PR, or branch protection
+exists to route them through. Either route performs genesis — `installer/` doing it in one
+command, or a person doing it by hand — and the exception is identical in both: it covers
+exactly those placeholder fills and that first commit, and nothing else. **The exception
+ends when that first commit is pushed** — one end-point, stated the same way in
+`README.md` §Bootstrapping. Every *edit to the tree* after that push goes through the
+pipeline, including further edits to those same files. Running
 `scripts/github-bootstrap.sh` is not such an edit — it changes settings on the forge and
 produces no diff — so it needs no task, before or after the push. The exception never
 covers a second round of "just this once".
+
+The exception belongs to the repository being *created*, and covers only its own genesis.
+It never covers work on the tooling that creates one: in a repository that ships an
+installer, changing that installer is ordinary protected work, planned and reviewed like
+any other change to this list.
 
 ## 4. Stack & architecture
 
