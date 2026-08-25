@@ -146,6 +146,9 @@ fi
 valid_name "$name" || die "not a usable project name: '$name'"
 
 [ -d "$parent" ] || die "parent directory does not exist: $parent"
+# Normalize before building the target: the installer prints this path back to the
+# person as a `cd` command, and "/tmp//name" or "./name" reads as a bug in the tool.
+parent=$(cd "$parent" && pwd) || die "cannot read parent directory: $parent"
 target="$parent/$name"
 [ -e "$target" ] && die "'$target' already exists. Choose another name, or another --dir."
 

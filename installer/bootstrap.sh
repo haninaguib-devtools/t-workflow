@@ -32,7 +32,13 @@ source_url="${TWORKFLOW_SOURCE_URL:-}"
 # Read the provenance before the copy: .git is about to be deleted, and after that there
 # is no way to say which version of the template this project came from.
 ref=$(git -C "$src" rev-parse --short HEAD) || die "could not read the template's commit."
-browse_url="${source_url%.git}"
+# The provenance line names a URL only when the template actually came from one. A
+# --source pointing at a local path (how the test and local development run it) would
+# otherwise stamp a temporary directory into the project's README as its origin.
+case "$source_url" in
+  http://*|https://*|git://*|ssh://*|*@*:*) browse_url="${source_url%.git}" ;;
+  *)                                        browse_url="" ;;
+esac
 
 # --- the tree ---------------------------------------------------------------
 # One wholesale copy, not a file-by-file reconstruction. `cp -R` copies a symlink as a
@@ -62,7 +68,11 @@ tpl="$src/installer/templates/README.md"
 readme=$(cat "$tpl")
 readme=${readme//\{\{PROJECT_NAME\}\}/$name}
 readme=${readme//\{\{TWORKFLOW_REF\}\}/$ref}
-readme=${readme//\{\{TWORKFLOW_URL\}\}/$browse_url}
+if [ -n "$browse_url" ]; then
+  readme=${readme//\{\{TWORKFLOW_URL\}\}/$browse_url}
+else
+  readme=${readme//" — {{TWORKFLOW_URL}}"/}
+fi
 printf '%s\n' "$readme" > "$target/README.md"
 
 # --- the first commit -------------------------------------------------------

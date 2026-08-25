@@ -111,6 +111,11 @@ check "provenance line, matched by shape" \
 check "carries the project name"               grep -q '^# demo$' "$demo/README.md"
 check "no unsubstituted placeholders"          bash -c '! grep -q "{{" "$1"' _ "$demo/README.md"
 check "differs from the template's own README" bash -c '! cmp -s "$1" "$2"' _ "$demo/README.md" "$root/README.md"
+# --source pointed at a local directory here, so there is no origin URL to name. The
+# provenance line must degrade to the hash alone rather than stamping a temporary path
+# into the project's README as its origin.
+check "no local source path in the provenance line" \
+  bash -c '! grep -q "Generated from t-workflow @ .* — /" "$1"' _ "$demo/README.md"
 echo
 
 # --- 7. the generated project is internally consistent -----------------------
