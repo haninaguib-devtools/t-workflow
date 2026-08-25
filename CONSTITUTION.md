@@ -95,9 +95,10 @@ pipeline, including further edits to those same files. Running
 produces no diff — so it needs no task, before or after the push. The exception never
 covers a second round of "just this once".
 
-The exception belongs to the repository being *created*, never to the one that ships
-the installer: changing `installer/` here is ordinary protected work, planned and
-reviewed like any other change to this list.
+The exception belongs to the repository being *created*, and covers only its own genesis.
+It never covers work on the tooling that creates one: in a repository that ships an
+installer, changing that installer is ordinary protected work, planned and reviewed like
+any other change to this list.
 
 ## 4. Stack & architecture
 

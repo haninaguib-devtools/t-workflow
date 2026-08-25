@@ -159,15 +159,57 @@ named at the end.
 
 **Left for the human to decide (reported, not fixed):**
 
-- **Low 7** — §3's new closing paragraph ("changing `installer/` *here* is ordinary
-  protected work") is inherited verbatim by generated projects, where there is no
-  `installer/` and "here" points at the wrong repository. Same class as the residue noted
-  above, but this one is a sentence that reads as false rather than a rule that is merely
-  unused.
+- **Low 7 — fixed in the re-plan pass, at the human's request.** §3's closing paragraph
+  said "changing `installer/` *here* is ordinary protected work". That sentence is
+  inherited verbatim by every generated project, where there is no `installer/` and "here"
+  points at the wrong repository — a sentence that reads as false, not merely a rule that
+  goes unused. Rewritten so it is true in both: the exception belongs to the repository
+  being created and covers only its own genesis; a repository that *ships* an installer
+  treats changing it as ordinary protected work. No path named, so nothing to mis-read.
 - **Low 8** — `AGENTS.md` §Checks does not know the installer test exists, so a future task
   changing `installer/` is never told to run it. `AGENTS.md` is outside this task's Allowed
   paths, so it cannot be fixed here; it is recommended as its own issue.
 - **Low 9** — small ordering snags in `README.md` §Bootstrapping. Fixed incidentally: the
   by-hand route was rewritten wholesale for High 2, and leaving a known ordering error in
   text being rewritten anyway was not defensible.
+
+### Re-plan, 2026-08-25 — the Allowed paths were widened by one entry
+
+Fixing the review's high finding 1 moved the installer's CI job out of
+`.github/workflows/ci.yml` and into a workflow file of its own. The first plan named only
+`ci.yml`, so the diff had grown onto a protected path that plan never covered. `/t-plan`
+was re-run and its `## Plan` section replaced; the issue now holds only the new bounds, so
+the old ones are recorded here.
+
+**What the previous plan allowed, verbatim:**
+
+```
+- `installer/**` — new directory: `install.sh`, `bootstrap.sh`, `templates/README.md`, `test.sh`
+- `README.md`
+- `CONSTITUTION.md`
+- `scripts/protected-paths.sh`
+- `.github/workflows/ci.yml`
+- `docs/tasks/000000/6-*.md` — this task's record
+
+Explicitly **not** in scope: `scripts/github-bootstrap.sh`. Decided at plan time — see
+"the installer CI job is advisory" under Risks.
+```
+
+**What the new plan allows:** the same list with `.github/workflows/ci.yml` widened to
+`.github/workflows/**`. `scripts/github-bootstrap.sh` stays out, unchanged; `AGENTS.md` is
+now named as out of scope too, so review finding 8 stays a recommendation rather than
+drifting in.
+
+**Why it changed:** the installer deletes `installer/` from every project it generates, so
+a job in `ci.yml` calling `./installer/test.sh` is inherited as a check pointing at a
+script that is not there. The fix is to strip the workflow along with the directory, and
+stripping a whole file is a deletion the installer can perform safely — editing YAML
+inside a protected file is not, because a partial edit would leave a broken workflow in
+someone else's repository. That reasoning is the same one used above for leaving the
+`installer/*` protection rule in place, applied to a file that can simply be removed.
+
+The re-plan also wrote three new risks into the issue, each learned from a defect on the
+first pass: every file under `.github/workflows/` is inherited by generated projects; an
+assertion must be proven non-vacuous before it is trusted; and errors must never be
+swallowed with `2>/dev/null`.
 
