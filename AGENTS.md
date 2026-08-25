@@ -46,6 +46,25 @@ abstracted.
   (`CONSTITUTION.md` §3): the template's placeholder fills and the first commit happen by
   hand, because there is no tracker and no `main` to open a PR against yet. It expires
   once that commit is pushed.
+- **Writing to the tracker needs the human's ask.** Creating or changing anything on the
+  tracker — opening an issue, commenting, adding or removing a label, closing or
+  reopening one — puts an item on the owner's tracker under the owner's name, so an agent
+  does it only when the human asked for that specific thing. Noticing that an issue
+  *should* exist is not being asked to create it: say what you found, propose the issue in
+  the report, and wait. An agent that opens one unprompted has routed around `/t-open`,
+  the pipeline's entrance, while appearing to follow it.
+
+  The exception is **the stage the human invoked, doing what that invocation asked for**:
+  `/t-open` creating the issues it was called to create and the labels they need,
+  `/t-plan` writing the `## Plan` section onto the issue in its argument, `/t-work` and
+  `/t-review` posting on their own task's PR, `/t-cancel` labelling and closing the
+  cancelled issue, `/t-ship` closing the shipped issue after the merge gate. Where a stage
+  reaches past its own task's issue — `/t-cancel` writing each neighbour's disposition,
+  `/t-ship` ticking or closing a tracking issue — the human agreed to that specific write
+  at that stage's gate, and the gate is what makes it asked-for.
+
+  Everything outside that is a proposal, never an act: an issue nobody named, a label on
+  an issue you merely noticed, a comment on a task that is not yours.
 - **Nothing chains automatically.** Each stage ends by naming the next command and
   stopping (ADR-001). Review does not follow implementation on its own, and findings do
   not trigger their own fix pass.
@@ -75,9 +94,11 @@ abstracted.
 - Decisions live in `docs/adr/` (one file per decision, via PR). Anything durable settled
   in a PR thread is promoted into the record, an ADR, or `docs/architecture/` before
   merge.
-- Out-of-scope work discovered mid-task becomes a new issue, never a drive-by change.
-  Exception (ADR-001): a pure typo or formatting fix in a file already inside the task's
-  scope may ride along, listed in the record. Standalone meaning-free fixes use `/t-fix`.
+- Out-of-scope work discovered mid-task is never a drive-by change: report it and
+  propose an issue, which the human opens or asks you to open (see the tracker rule
+  above). Exception (ADR-001): a pure typo or formatting fix in a file already inside the
+  task's scope may ride along, listed in the record. Standalone meaning-free fixes use
+  `/t-fix`.
 
 ## Communication
 

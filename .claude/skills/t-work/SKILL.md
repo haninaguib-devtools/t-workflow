@@ -102,9 +102,13 @@ implementation before editing files.
   a re-plan rather than appending a second, so the one you read is current by
   construction. Two sections on an issue is a defect — stop and report it rather than
   choosing between them.
-  Out-of-scope defects become new issues (`Part of:` the same tracking issue where apt),
-  never drive-by fixes. Exception (ADR-001 ride-along): a pure typo or formatting fix in
-  a file already inside this task's scope may be made here and listed in the record.
+  Out-of-scope defects are never drive-by fixes — and never issues you open on your own
+  either. **Propose and wait:** note the defect, and in the closing report describe the
+  issue it deserves (title, what is wrong, `Part of:` the same tracking issue where apt)
+  as a recommendation for the human, who opens it or asks you to. Creating it here is a
+  tracker write nobody asked for (AGENTS.md §Conventions). Exception (ADR-001
+  ride-along): a pure typo or formatting fix in a file already inside this task's scope
+  may be made here and listed in the record.
 - Existing behavior in the touched area is protected: preserve it unless the issue
   changes it explicitly, and investigate anything that disappears unexplained.
 - Never weaken a check, test, or guardrail to make work pass.
@@ -153,9 +157,10 @@ Do not mark the PR ready and do not merge — `/t-ship` owns that.
 
 ## Fix mode
 
-- Address **only** the named blocker and high findings. Anything else found becomes a new
-  finding or a new issue. Medium and low findings are fixed only when the human asks
-  by number.
+- Address **only** the named blocker and high findings. Anything else found is reported,
+  not acted on: describe it in the closing report as a further finding, or as an issue you
+  recommend the human open — never open one yourself (AGENTS.md §Conventions). Medium and
+  low findings are fixed only when the human asks by number.
 - Append what each change answers to the record's Deviations / notes.
 - Re-run the checks the findings falsify. Push to the same branch and PR.
 - Stop and report, naming `/t-review <id>` for a scoped re-review. If the same findings
