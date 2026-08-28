@@ -51,3 +51,12 @@ mechanical-enforcement list to match.
   (kept this task's `forge:pr-merge`/`forge:pr-list` changes, adopted #26's GitLab-row
   removal); `scripts/stale-branches-check.sh`'s modify/delete conflict resolved by
   keeping this task's deletion.
+- After the scoped re-review (fresh subagent, 2026-08-28) returned `readiness: ready`,
+  a third sibling, #27 (remove `/t-wtree`), merged to `main` and put the PR back into
+  conflict — again on `AGENTS.md`, this time the "task worktree is optional" bullet:
+  #27's edit (worktree creation no longer names `/t-wtree`) and this task's own earlier
+  fix to that same bullet (correcting the stale "`/t-ship`/`/t-cancel` never run from
+  inside a worktree" claim) both landed on it independently. Merged `origin/main` again
+  and combined both edits by hand — #27's "no skill for it, use `git worktree add`"
+  wording plus this task's ADR-002 description of what `/t-ship`/`/t-cancel`/`/t-clean`
+  actually do with a worktree now (hani, 2026-08-28).
