@@ -91,3 +91,14 @@ is deleted from every skill.
   cancelled blocker from a completed one) was not addressed in this pass — not asked
   for by number, per this skill's fix-mode rule. Left for the human to decide: fix now,
   defer, or accept.
+- **Merge conflict against `main`, resolved (`cd6c4f4`).** #25 (Remove /t-fix), #27
+  (Remove /t-wtree), and #28 (Ship from anywhere) — the concurrent-work overlap named in
+  this task's posted `## Plan` — all landed on `main` while this task was in review.
+  `t-cancel/SKILL.md` and `t-ship/SKILL.md` had real content conflicts (Phase 4's
+  disposition step in t-cancel; the fast-forward/branch-teardown step in t-ship);
+  `t-status/SKILL.md`, `t-work/SKILL.md`, and `docs/workflow.md` auto-merged cleanly.
+  Resolved by keeping #28's newer behavior (no branch switching, no local-branch
+  deletion in `/t-ship`; renumbered Phase 4 in `/t-cancel`) together with this task's
+  native-relation content in the same steps — neither side's changes were dropped.
+  `./scripts/consistency-check.sh`, the done-when greps, and the operation
+  cross-check all re-verified clean after the merge (Hani, 2026-08-28).
