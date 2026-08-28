@@ -69,8 +69,8 @@ neighbour's disposition land on the issue before anything is destroyed (ADR-001 
 
 The unit is the **reviewable merge**; the answer to bigger work is never a bigger PR.
 **6.1** Work spanning several PRs gets a tracking issue holding the intent and its children; it
-has no branch or record of its own, and a child that must wait is opened anyway with
-`Blocked-by: #n`. **6.2 "Releasable":** every merge leaves `main` green and deployable as a
+has no branch or record of its own, and a child that must wait is opened anyway with a
+native blocked-by dependency set on it. **6.2 "Releasable":** every merge leaves `main` green and deployable as a
 set at the next release cut — code unwired, endpoints behind permissions nobody holds, handlers
 before emitters — but need **not** satisfy runtime backwards compatibility, since window deploys
 mean old code never runs against the new schema. **6.3** Migrations are separate PRs from
@@ -114,7 +114,10 @@ repository these need a paid GitHub plan, so until then PR-only `main` runs on c
 Losing GitHub loses verification evidence and conversational texture, **never knowledge**: code,
 constitution, ADRs, architecture docs, and every record live in git. Mitigations, in order: (1)
 self-contained squash commits; (2) settings as code; (3) the promotion rule; (4) a periodic
-export of issues and threads; (5) bumping a new account's issue counter past the old maximum if
+export of issues and threads, including sub-issue and dependency relations — parent/child and
+blocked-by/blocking live only in the tracker's structured fields since ADR-003 moved them out
+of issue bodies, so an export that reads body text alone would silently lose every relation it
+covers; (5) bumping a new account's issue counter past the old maximum if
 numbering ever restarts. One exception to the guarantee: a cancelled task's reason lives only in
 its close comment (ADR-001).
 

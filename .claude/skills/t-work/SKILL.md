@@ -23,17 +23,11 @@ implementation before editing files.
    issue names. Resolve every `tracker:*` / `forge:*` operation named in this skill via
    `docs/adapters/TRACKER.md` and `docs/adapters/FORGE.md` (GitHub by default).
 
-2. **Blockers.** Every `Blocked-by: #n` in the issue body must reference a *closed*
-   issue (`tracker:view <n>`, state). An open blocker stops here. A blocker that
-   was **cancelled** rather than completed was abandoned, not satisfied — stop and say
-   so, even though it is closed.
-
-   Read the marker in **both** shapes: the inline `Blocked-by: #n` that `/t-open` writes,
-   and a bare `#n` sitting under a `### Blocked by` heading, which is how a tracker's
-   issue form renders the same field. A hand-opened issue that says only `#n` under that
-   heading is blocked exactly as if it had said `Blocked-by: #n`; treating it as
-   unblocked is the silent failure this gate exists to prevent. The same applies to
-   `Part of:` under a `### Part of` heading.
+2. **Blockers.** `tracker:list-blockers <id>` must come back either empty or with
+   every entry *closed* — an open blocker stops here. A blocker that was **cancelled**
+   rather than completed was abandoned, not satisfied — stop and say so, even though it
+   is closed (ADR-001 §D3.2, re-expressed over the native `blockedBy` field per
+   ADR-003).
 
 3. **Protected surfaces.** If the work will touch a protected path and the issue has no
    `## Plan` section, stop and recommend `/t-plan <id>`. Decide with
@@ -104,8 +98,9 @@ implementation before editing files.
   choosing between them.
   Out-of-scope defects are never drive-by fixes — and never issues you open on your own
   either. **Propose and wait:** note the defect, and in the closing report describe the
-  issue it deserves (title, what is wrong, `Part of:` the same tracking issue where apt)
-  as a recommendation for the human, who opens it or asks you to. Creating it here is a
+  issue it deserves (title, what is wrong, and — where apt — the tracking issue it
+  belongs under, for `/t-open` to link as its parent) as a recommendation for the
+  human, who opens it or asks you to. Creating it here is a
   tracker write nobody asked for (AGENTS.md §Conventions). Exception (ADR-001
   ride-along): a pure typo or formatting fix in a file already inside this task's scope
   may be made here and listed in the record.

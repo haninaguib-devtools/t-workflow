@@ -165,16 +165,17 @@ already left the pipeline; say which and stop.
    - **On any other branch**, including the task branch: leave the checkout exactly
      where it is. That is not a failure to report; it is the normal outcome now that
      shipping runs from anywhere.
-6. If the task belongs to a tracking issue, tick its checkbox
-   (`tracker:edit-body` on the tracking issue's task list).
+6. If `tracker:view <id>`'s `parent` field names a tracking issue, closing the task
+   above already updated its native `subIssuesSummary` — nothing to write. Read that
+   summary (`tracker:view <parent-id>`) to see whether every child is now closed.
 7. Report the merge commit hash, whether a cold review ran, and whether this checkout's
    `main` was fast-forwarded.
 
-   **If that tick completed the tracking issue's list**, say so and ask whether to close
-   the initiative — it is the human's call, never automatic, because an initiative can
-   outlive its checklist. On a yes, close it as completed (`tracker:close-done`) with a
-   comment naming the child tasks that delivered it; on a no, leave it open and say what
-   it is still waiting for.
+   **If `subIssuesSummary` now shows every child closed**, say so and ask whether to
+   close the initiative — it is the human's call, never automatic, because an initiative
+   can outlive a complete child list. On a yes, close it as completed
+   (`tracker:close-done`) with a comment naming the child tasks that delivered it; on a
+   no, leave it open and say what it is still waiting for.
 
 ## Rules
 
