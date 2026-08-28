@@ -31,7 +31,23 @@ mechanical-enforcement list to match.
 - No auto-cleanup: `/t-clean` acts only on the human's confirmation.
 
 ## Decisions made along the way
-- none
+- Cold review (fresh subagent, 2026-08-28) found two high findings. One (a stale
+  cross-reference in `docs/adapters/FORGE.md`'s `forge:pr-close` row, still pointing at
+  `forge:pr-merge`'s old deletion behavior after this task rewrote it) was fixed
+  directly, in scope. The other — `.claude/skills/t-fix/SKILL.md` describing the old
+  `forge:pr-merge` behavior — was resolved without a code change: while the review was
+  in flight, sibling task #25 merged to `main` and deleted `t-fix/SKILL.md` entirely,
+  which is exactly the resolution the review itself named as an alternative to
+  widening this task's scope (hani, 2026-08-28).
 
 ## Deviations / notes
-- none
+- Sibling tasks #25 (remove `/t-fix`) and #26 (drop Jira/GitLab support) both merged to
+  `main` after this task's branch was cut, each independently editing files this task
+  also touches (`AGENTS.md`, `.claude/skills/t-cancel/SKILL.md`,
+  `docs/adapters/FORGE.md`) — the scope-overlap risk flagged on the issue's Plan.
+  Merged `origin/main` into the task branch and resolved the resulting conflicts in
+  `.claude/skills/t-ship/SKILL.md` (kept this task's rewritten cleanup logic, adopted
+  #26's dropped id-lowercasing clause and GitLab rows) and `docs/adapters/FORGE.md`
+  (kept this task's `forge:pr-merge`/`forge:pr-list` changes, adopted #26's GitLab-row
+  removal); `scripts/stale-branches-check.sh`'s modify/delete conflict resolved by
+  keeping this task's deletion.
