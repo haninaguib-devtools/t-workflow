@@ -168,8 +168,8 @@ already left the pipeline; say which and stop.
    `tracker:close-done` (as completed). Never
    `tracker:close`, which closes as not-planned and would read as an abandoned blocker.
 4. `git fetch --prune` — deleted `wip/` branches otherwise linger as stale
-   `origin/wip/*` tracking refs. Fetch first, then clean up: the same order in
-   `/t-fix` and `/t-cancel`.
+   `origin/wip/*` tracking refs. Fetch first, then clean up: the same order as
+   `/t-cancel`.
 5. **Clean up: two independent actions, both always taken.** Removing the shipped
    task's worktree and putting the invoking checkout right are separate concerns — one
    is about the task's checkout, the other about this session's — and neither replaces

@@ -9,8 +9,8 @@
 #
 # Usage: scripts/stale-branches-check.sh [grace-minutes]
 #   grace-minutes  Skip PRs merged/closed more recently than this (default 30). Gives an
-#                   in-flight /t-ship, /t-fix, or /t-cancel run room to finish its own
-#                   branch deletion before a scheduled run flags it.
+#                   in-flight /t-ship or /t-cancel run room to finish its own branch
+#                   deletion before a scheduled run flags it.
 #
 # Exit 0: scan completed and no stale branches found. Exit 1: a stale branch was found,
 # the scan was cut off by the page limit, or a branch's existence could not be confirmed

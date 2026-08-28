@@ -15,15 +15,13 @@ by ADRs as decisions are ratified.
    tracker issue, carries a record riding in its PR, and reaches `main` only by PR with a
    human confirming the merge. Planning, an isolated worktree, and an independent review
    are chosen per task (ADR-001) — except on a protected surface (§3), where a plan and an
-   independent review are required. Changes with no semantic content use the no-issue
-   path (ADR-001), still merged by PR on a human's confirmation.
+   independent review are required.
 3. Git is the system of record for outcomes; the tracker and the forge are the venue for
    process. Which products fill those roles is a mechanical choice made in
    `docs/adapters/` (GitHub for both by default), not a constitutional one. Nothing
    binding exists only in an issue or PR thread — if it isn't merged, it isn't decided.
 4. Squash commits are self-contained: goal, non-goals, outcome, and a `Task: #<id>` line
-   written from the task record. A no-issue fix (§1.2) has no task or record; its commit
-   instead carries the one-line no-semantic-content eligibility statement.
+   written from the task record.
 5. Guardrails are never weakened to make work pass. A failing check is fixed by fixing
    the work. Loosening any gate is a protected change (workflow §11.3) with an ADR.
 

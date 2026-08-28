@@ -127,10 +127,9 @@ page carries shape only. **11.5** A deviation is approved in the moment and land
 record, and **the same deviation twice is a bug in the process**. **11.6 Batch, don't tweak**,
 except mid-incident: workflow changes accumulate and land together at a periodic
 **retro** — an ordinary task, titled `Workflow retro: <date>`, that reviews friction since
-the last one, samples the `/t-fix` merges `/t-status` counts, and records that count in
-its own task record under `## Decisions made along the way`. That title is the convention
-a cold session searches on to find the previous retro and its count; without it the creep
-signal has no baseline to compare against. **11.7 In-flight tasks** meet new rules at their next gate.
+the last one and records what it decided in its own task record under
+`## Decisions made along the way`. That title is the convention a cold session searches
+on to find the previous retro. **11.7 In-flight tasks** meet new rules at their next gate.
 
 ## 12. The flow in practice
 

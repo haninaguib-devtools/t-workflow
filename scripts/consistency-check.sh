@@ -104,9 +104,10 @@ for d in .claude/skills/*/; do
   grep -qE "^\| \`/$s\`" AGENTS.md || err ".claude/skills/$s exists but AGENTS.md's pipeline table has no /$s row"
 done
 
-# --- 4. Load-bearing phrase present where the no-issue fix path is defined ------
-# The phrase is required only where the path itself is defined (ADR-001 §D2).
-for f in docs/adr/001-phase0-delivery-workflow.md .claude/skills/t-fix/SKILL.md; do
+# --- 4. Load-bearing phrase present where the no-issue fix path was defined -----
+# ADR-001 §D2 is historical (the path it defined is removed, ADR-002); the phrase is
+# still required there so the historical record stays legible on its own terms.
+for f in docs/adr/001-phase0-delivery-workflow.md; do
   [ -f "$f" ] && { grep -q "no semantic content" "$f" || err "$f defines/constrains the no-issue fix path but lacks the load-bearing phrase 'no semantic content'"; }
 done
 
