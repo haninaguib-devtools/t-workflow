@@ -64,11 +64,11 @@ issue-dependency support to `gh issue`. An older gh rejects these flags and JSON
 outright (`Unknown JSON field`) rather than degrading quietly; confirm `gh --version`
 before relying on them (ADR-003).
 
-### `tracker:view <id>` — full issue: number, title, body, state, labels, parent
+### `tracker:view <id>` — full issue: number, title, body, state, labels, parent, subIssuesSummary
 
 | Backend | Command |
 |---|---|
-| GitHub | `gh issue view <id> --json number,title,body,state,labels,parent` |
+| GitHub | `gh issue view <id> --json number,title,body,state,labels,parent,subIssuesSummary` |
 
 ### `tracker:list-open` — ALL open issues with id, title, labels, body, and blockedBy
 

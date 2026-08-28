@@ -78,3 +78,16 @@ is deleted from every skill.
   per-blocker state check, which now goes through `tracker:list-blockers` instead (one
   call returning every blocker's state, rather than one `tracker:view` call per
   blocker). No other call site used it (`git grep` confirmed before removing it).
+- **Fix pass, addressing `/t-review`'s high finding (PR #38, review
+  `PRR_kwDOUC4wm88AAAABLVO_gg`):** `tracker:view`'s `--json` field list omitted
+  `subIssuesSummary`, so `t-ship/SKILL.md` step 6's instruction to read it via
+  `tracker:view <parent-id>` would have returned nothing — `gh --json` returns only
+  the fields named. Added `subIssuesSummary` to `tracker:view`'s contract and command
+  in `docs/adapters/TRACKER.md`, alongside the `parent` field added during the
+  original pass. No skill text needed to change — `t-ship` already named the right
+  operation, only the adapter's field list was short (Hani, 2026-08-28).
+- The review's medium finding (`tracker:list-blockers`/`list-blocking`'s contract
+  should commit to `stateReason`, not just `state`, so the blocker gate can tell a
+  cancelled blocker from a completed one) was not addressed in this pass — not asked
+  for by number, per this skill's fix-mode rule. Left for the human to decide: fix now,
+  defer, or accept.
