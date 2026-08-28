@@ -51,8 +51,9 @@ creates no record, edits no task file, and opens nothing on the tracker or the f
    git worktree add -b wip/<id>-<slug> ../<repo-name>-<id> origin/wip/<id>-<slug>
    ```
 
-   `origin/main` is already current as of the step-2 fetch, so basing the new branch on
-   it needs no separate freshness check against the primary checkout's local `main`.
+   Creating from `origin/main` (already fetched in step 2) needs no state from the
+   primary checkout's local `main` — the new worktree's branch is based on the remote tip
+   directly, so uncommitted work elsewhere in the primary checkout never blocks this step.
 
 5. **Verify and report.** `git worktree list --porcelain` must map that branch to exactly
    one path. Report the absolute path and the branch, and say what to do next: open a
