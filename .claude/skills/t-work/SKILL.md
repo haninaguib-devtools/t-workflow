@@ -46,8 +46,7 @@ implementation before editing files.
    optional (ADR-001): if the human wanted one they ran `/t-wtree <id>` and this
    session is rooted there. Resolve the branch idempotently — `git fetch --prune`, then
    list local and `origin/` refs matching `wip/<id>-*`, normalizing away the `origin/`
-   prefix. `<id>` in a branch name is the tracker id lowercased (`PROJ-142` → `proj-142`),
-   matching the record filename (ADR-001 §D4):
+   prefix (ADR-001 §D4):
 
    - exactly one → reuse it (`git checkout <branch>`, or it is already current);
    - none → derive `wip/<id>-<slug>` from the issue title (lowercase, each run of
@@ -73,8 +72,8 @@ implementation before editing files.
    Never commit on `main`.
 
 5. **Normal or fix mode.** Resolve the task's PR, if it has one, from the branch:
-   `forge:pr-find-by-task <id>`, which matches head `wip/<id>-*` (`<id>` lowercased,
-   `PROJ-142` → `proj-142`, ADR-001 §D4) across all states — none on a fresh task, exactly one
+   `forge:pr-find-by-task <id>`, which matches head `wip/<id>-*` across all
+   states — none on a fresh task, exactly one
    once step 4 of Phase 3 has run, and more than one is a stop-and-report. If that PR
    carries a review (`forge:pr-reviews <pr>`) with unresolved `blocker` or `high` findings
    and the human has asked for them to be addressed, read the existing record and go to

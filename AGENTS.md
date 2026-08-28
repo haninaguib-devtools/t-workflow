@@ -19,10 +19,8 @@ tracker issue, and `main` moves only by a PR a human confirmed.
 **Backends are pluggable.** The skills speak in `tracker:*` (issues, labels) and
 `forge:*` (PRs, CI, merges) operations; `docs/adapters/TRACKER.md` and
 `docs/adapters/FORGE.md` map each operation to concrete commands for the active backend
-(GitHub Issues + GitHub PRs by default; Jira, GitLab, etc. by editing those two files
-only). "Issue" and "PR" throughout are the workflow's words — read them as the active
-backend's equivalents (Jira ticket, GitLab merge request). Plain `git` is never
-abstracted.
+(GitHub Issues + GitHub PRs today; a future backend adopts by editing those two files
+only). Plain `git` is never abstracted.
 
 | Skill | Stage |
 |---|---|
@@ -75,10 +73,9 @@ abstracted.
   cancelled through `/t-cancel`: the reason and every neighbour's disposition land on the
   issue before anything is destroyed, and a cancelled blocker is abandoned, never
   satisfied (ADR-001 D3).
-- Task ID = the tracker's issue identifier (issue number, or e.g. a Jira key). Branch `wip/<id>-<slug>`. Record
+- Task ID = the tracker's issue number. Branch `wip/<id>-<slug>`. Record
   `docs/tasks/<bucket>/<id>-<slug>.md`, where `<bucket>` is the ID rounded down to the
-  nearest 100, zero-padded to 6 digits — e.g. task 142 → `docs/tasks/000100/142-<slug>.md`;
-  a non-numeric key uses its numeric part for the bucket (`PROJ-142` → `000100/proj-142-…`)
+  nearest 100, zero-padded to 6 digits — e.g. task 142 → `docs/tasks/000100/142-<slug>.md`
   (ADR-001 §D4). Meaning-free fixes (ADR-001 §D2) use
   `fix/<slug>` branches — no issue, PR-only.
 - **A task worktree is optional.** `/t-wtree <id>` prepares the sibling

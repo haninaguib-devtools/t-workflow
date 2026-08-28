@@ -38,8 +38,7 @@ re-derives conclusions instead of testing them.
 
 The argument is the task id (`/t-review 154`); the steps below name `<pr>`. **Resolve it
 first** with `forge:pr-find-by-task <id>`, which matches the head branch `wip/<id>-*` —
-the id lowercased, `PROJ-142` → `proj-142` (ADR-001 §D4) — across all
-states, names the PR. Exactly one → that is `<pr>`. None → there is nothing to review;
+across all states — names the PR. Exactly one → that is `<pr>`. None → there is nothing to review;
 say so and name `/t-work <id>`. More than one → stop and report every candidate. This
 matters more here than anywhere else: a cold session starts holding the id and nothing
 else.

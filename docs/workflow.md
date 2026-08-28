@@ -21,14 +21,13 @@ Knowledge lives in the repository, in every clone: `CONSTITUTION.md`, `AGENTS.md
 `docs/architecture/`, `docs/tasks/`, `.claude/skills/`, `.github/`. Process lives in
 the tracker and the forge — issues, PRs, reviews, CI runs — which is reconstructable, not
 load-bearing. The skills reach both only through named operations that
-`docs/adapters/TRACKER.md` and `docs/adapters/FORGE.md` map to the active backends
-(GitHub for both by default; Jira, GitLab, etc. by editing those two files).
+`docs/adapters/TRACKER.md` and `docs/adapters/FORGE.md` map to the active backend
+(GitHub for both today; a future backend adopts by editing those two files).
 
 ## 3. Task identity
 
-A task's ID is its **tracker issue identifier** (on GitHub, the issue number — issues and
-PRs share one atomically minted sequence, so a bare `#142` is never ambiguous; on other
-backends, the native key, e.g. a Jira `PROJ-142`). Everything inherits it: branch `wip/142-<slug>`,
+A task's ID is its **tracker issue number** — issues and PRs share one atomically minted
+sequence, so a bare `#142` is never ambiguous. Everything inherits it: branch `wip/142-<slug>`,
 record `docs/tasks/000100/142-<slug>.md`, squash-commit line `Task: #142`. Records shard into
 **ID buckets of 100** (ADR-001 §D4): the directory is the ID rounded down to the nearest 100,
 zero-padded to 6 digits, so a bucket never exceeds 100 files however fast tasks open, and the

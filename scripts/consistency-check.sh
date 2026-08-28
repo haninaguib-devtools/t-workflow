@@ -153,15 +153,6 @@ for phrase in "truncate the slug to 40 characters" "never choose lexically" "wip
   done
 done
 
-# --- 8b. Any skill using the branch glob also says how a non-numeric id is cased --
-# Record filenames and branch names lowercase a tracker key (ADR-001 §D4). A skill that
-# resolves `wip/<id>-*` without that rule silently fails on a Jira-style PROJ-142.
-for f in .claude/skills/*/SKILL.md; do
-  grep -qF 'wip/<id>-*' "$f" || continue
-  tr '\n' ' ' < "$f" | tr -s ' ' | grep -qiF 'lowercase' \
-    || err "$f: resolves 'wip/<id>-*' but never says the id is lowercased (PROJ-142 -> proj-142)"
-done
-
 # --- 9. The protected-path script and CONSTITUTION §3 name the same surfaces ----
 # They are one rule in two forms (CONSTITUTION.md §3), so this check runs BOTH ways.
 # The reverse direction (9b) is the load-bearing one: deleting patterns from the script

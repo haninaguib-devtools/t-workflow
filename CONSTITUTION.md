@@ -67,8 +67,7 @@ where they disagree, that is a defect to fix, not a judgment call to make.
 - `.mcp.json` and `.cursor/` (the same argument, for other agents' executable config)
 - `docs/adapters/` (the tracker/forge backend maps the skills execute through)
 - `docs/architecture/` (binding conventions the skills execute against)
-- `.github/` (CI, CODEOWNERS, rulesets — or the active forge's equivalent config paths,
-  `.gitlab-ci.yml` and `.gitlab/`)
+- `.github/` (CI, CODEOWNERS, rulesets)
 - `scripts/` (the mechanical checks and settings-as-code)
 - `installer/` (the one-command bootstrap that generates every new project from this
   template — a defect here is inherited by repositories nobody in this one will review)
