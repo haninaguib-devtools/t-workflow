@@ -140,20 +140,6 @@ if [ -d docs/adapters ]; then
   done
 fi
 
-# --- 8. The branch-resolution algorithm stays identical in its two homes ---------
-# /t-work and /t-wtree each carry it (skills are self-contained, ADR-001 §D5), so the
-# load-bearing clauses are asserted in both: silent drift means two sessions resolve the
-# same task to different branches.
-# Markdown wraps these clauses across lines, so compare against a whitespace-normalized
-# copy of each file rather than line by line.
-for phrase in "truncate the slug to 40 characters" "never choose lexically" "wip/<id>-*"; do
-  for f in .claude/skills/t-work/SKILL.md .claude/skills/t-wtree/SKILL.md; do
-    [ -f "$f" ] || continue
-    tr '\n' ' ' < "$f" | tr -s ' ' | grep -qiF "$phrase" \
-      || err "$f: branch resolution is missing the clause '$phrase' that its twin carries"
-  done
-done
-
 # --- 9. The protected-path script and CONSTITUTION §3 name the same surfaces ----
 # They are one rule in two forms (CONSTITUTION.md §3), so this check runs BOTH ways.
 # The reverse direction (9b) is the load-bearing one: deleting patterns from the script

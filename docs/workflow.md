@@ -53,10 +53,12 @@ stages. One stage-level note with no better home: `/t-status` derives everything
 tracker/forge queries and git — status is never a maintained file.
 
 **Never optional:** an issue before the work, a record riding in the PR, a human-confirmed PR
-into `main`. **Chosen per task (ADR-001):** plan, worktree, cold review — except on a protected
-surface (`CONSTITUTION.md` §3), where plan and review are both required, decided from the paths
-the diff touches, not from a label. **Nothing chains:** each stage names the next command and
-stops, and a `not-ready` review blocks shipping either way.
+into `main`. **Chosen per task (ADR-001, trimmed by ADR-002):** plan, cold review — except on a
+protected surface (`CONSTITUTION.md` §3), where plan and review are both required, decided from
+the paths the diff touches, not from a label. A worktree stays available to any task that wants
+one (`git worktree add`, or one a launching engine creates); it is no longer a pipeline stage
+with a skill of its own. **Nothing chains:** each stage names the next command and stops, and a
+`not-ready` review blocks shipping either way.
 
 **Only blocker and high findings hold a review open**; the rest are posted for the human to
 fix, defer, or accept, and judgments no command can settle travel to the merge question, where

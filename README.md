@@ -10,8 +10,8 @@ only the pipeline that moves any change from idea to `main`:
 - `CONSTITUTION.md` — the project's invariants. Binding on every task.
 - `AGENTS.md` — what an agent reads on session start: pipeline, conventions, checks.
 - `docs/workflow.md` — the shape of the pipeline, from idea to merge.
-- `.claude/skills/t-*` — the executable stages: `/t-open`, `/t-plan`, `/t-wtree`,
-  `/t-work`, `/t-review`, `/t-ship`, `/t-cancel`, `/t-status`.
+- `.claude/skills/t-*` — the executable stages: `/t-open`, `/t-plan`, `/t-work`,
+  `/t-review`, `/t-ship`, `/t-cancel`, `/t-status`.
 - `docs/adr/` — the decision log (one file per decision). Ships with ADR-001, the
   baseline decision defining the workflow itself; your project's own decisions start
   at the next number.
