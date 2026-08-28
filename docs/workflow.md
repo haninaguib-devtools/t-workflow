@@ -97,9 +97,11 @@ anything durable settled in a PR thread lands in the record, an ADR, or the docs
 
 In force today, *mechanically*: branch protection on `main` (PRs only, squash merges, no
 force pushes); CI running `scripts/consistency-check.sh` and the record-present guard on
-every PR (`.github/workflows/ci.yml`); an hourly scheduled check
-(`.github/workflows/stale-branch.yml`) reporting any `wip/*`/`fix/*` branch a merge or
-close should have deleted but did not. Held by convention, not by machinery:
+every PR (`.github/workflows/ci.yml`); the repo's `delete_branch_on_merge` setting
+(`scripts/github-bootstrap.sh`) deleting a merged branch's remote copy without any
+skill-side step. A stale local worktree or branch left behind by `/t-ship`/`/t-cancel`
+(ADR-002) is cleaned up lazily, on a human's confirmation, by `/t-clean` — nothing
+scans for one automatically. Held by convention, not by machinery:
 self-contained squash commit bodies written from the record — the forge enforces squash
 *merging*, nothing checks what the message says. Still to come: CODEOWNERS approval on protected paths, with
 `CONSTITUTION.md` and `docs/adr/` at a heightened bar (§13 Q9), and required approvals
