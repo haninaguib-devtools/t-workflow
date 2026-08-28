@@ -59,9 +59,6 @@ patterns=(
   '.gitignore'
   'README.md'
   'LICENSE'
-  # Forge-config equivalents for non-GitHub backends (docs/adapters/FORGE.md):
-  '.gitlab-ci.yml'
-  '.gitlab/*'
 )
 
 if [ "${1:-}" = "--list" ]; then

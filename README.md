@@ -37,8 +37,8 @@ only the pipeline that moves any change from idea to `main`:
   at. What is Claude Code-specific is invoking them as `/t-open`, `/t-work`, and so on.
   Another agent runs a stage by being told to follow `.claude/skills/t-work/SKILL.md`;
   it gets the same instructions without the slash command.
-- `docs/adapters/` — `TRACKER.md` and `FORGE.md`: the backend maps (GitHub by default)
-  the skills use for every issue/PR operation. Swap Jira or GitLab in by editing these
+- `docs/adapters/` — `TRACKER.md` and `FORGE.md`: the backend maps (GitHub today) the
+  skills use for every issue/PR operation. Swap in a future backend by editing these
   two files only.
 - `installer/` — the one-command bootstrap that turns this template into a new project.
   `install.sh` is the URL people fetch; `bootstrap.sh` does the work after the clone.

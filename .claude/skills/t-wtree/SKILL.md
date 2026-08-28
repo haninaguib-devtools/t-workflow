@@ -21,9 +21,8 @@ creates no record, edits no task file, and opens nothing on the tracker or the f
    `git worktree list --porcelain` rather than guessing from directory names.
 
 2. **Resolve the task branch idempotently.** `git fetch --prune`, then list local and
-   `origin/` refs matching `wip/<id>-*`, normalizing away the `origin/` prefix. `<id>` in
-   a branch name is the tracker id lowercased (`PROJ-142` → `proj-142`), matching the
-   record filename (ADR-001 §D4):
+   `origin/` refs matching `wip/<id>-*`, normalizing away the `origin/` prefix
+   (ADR-001 §D4):
 
    - exactly one distinct name → reuse it, local or remote;
    - none → derive `wip/<id>-<slug>` from the issue title: lowercase, replace each run

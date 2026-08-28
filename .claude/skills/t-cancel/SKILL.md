@@ -46,8 +46,7 @@ labels, comments, issue edits, gates, branch changes, anything:
    - **A `/t-fix` change** (ADR-001 D3.4): no issue, no record, no dependents. Close
      the PR, delete its branch, and stop — nothing below applies.
 3. **Find what exists**, so the gate can name it: `git fetch --prune origin`, then the
-   branch locally (`git branch --list 'wip/<id>-*'` with `<id>` lowercased, `PROJ-142` →
-   `proj-142` (ADR-001 §D4); `git worktree list`) and on the
+   branch locally (`git branch --list 'wip/<id>-*'`; `git worktree list`) and on the
    remote, plus any PR (`forge:pr-find-by-task <id>`, all states) and whether a record
    file exists on the branch. A task worked in another session leaves nothing local.
 4. **The escape hatch** (ADR-001 D3.1): if the reasoning behind this cancellation is

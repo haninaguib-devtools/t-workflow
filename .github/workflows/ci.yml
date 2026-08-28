@@ -97,33 +97,20 @@ jobs:
             exit 0
           fi
 
-          # Task branches: wip/<id>-<slug>. The id is numeric (GitHub/GitLab) or a
-          # tracker key such as PROJ-142 (Jira) — matching only up to the first hyphen
-          # would truncate a key to "PROJ" and let any PROJ record satisfy the check.
-          # (delimiter is # — the alternation below contains |)
-          id=$(printf '%s' "$HEAD_REF" | sed -n -E 's#^wip/([0-9]+|[A-Za-z]+-[0-9]+)-.+#\1#p')
+          # Task branches: wip/<id>-<slug>. The id is numeric (a GitHub issue number).
+          id=$(printf '%s' "$HEAD_REF" | sed -n -E 's#^wip/([0-9]+)-.+#\1#p')
           if [ -z "$id" ]; then
             echo "FAIL: branch '$HEAD_REF' is neither wip/<id>-<slug> nor fix/<slug>."
             exit 1
           fi
-          # Record filenames lowercase the key (ADR-001 §D4); branch names do too, but
-          # compare case-insensitively so a stray uppercase branch fails loudly elsewhere
-          # rather than silently here.
-          id_lc=$(printf '%s' "$id" | tr '[:upper:]' '[:lower:]')
-          # The bucket is computable from the id (ADR-001 §D4): the numeric part rounded
-          # down to the nearest 100, zero-padded to 6 digits. Checking the exact bucket
-          # is what makes that claim true — any-bucket matching would let 999900/142-x.md
-          # satisfy task 142.
-          num=$(printf '%s' "$id_lc" | sed -n -E 's#^[a-z]*-?([0-9]+)$#\1#p')
-          if [ -z "$num" ]; then
-            echo "FAIL: cannot derive a numeric part from id '$id'."
-            exit 1
-          fi
-          bucket=$(printf '%06d' $(( (10#$num / 100) * 100 )))
-          if grep -qE "^docs/tasks/${bucket}/${id_lc}-[^/]+\.md$" /tmp/changed; then
+          # The bucket is computable from the id (ADR-001 §D4): rounded down to the
+          # nearest 100, zero-padded to 6 digits. Checking the exact bucket is what makes
+          # that claim true — any-bucket matching would let 999900/142-x.md satisfy task 142.
+          bucket=$(printf '%06d' $(( (10#$id / 100) * 100 )))
+          if grep -qE "^docs/tasks/${bucket}/${id}-[^/]+\.md$" /tmp/changed; then
             echo "OK: the diff carries the record for task $id at docs/tasks/${bucket}/."
           else
-            echo "FAIL: no docs/tasks/${bucket}/${id_lc}-<slug>.md in this diff."
+            echo "FAIL: no docs/tasks/${bucket}/${id}-<slug>.md in this diff."
             echo "  Every task PR carries its own record (CONSTITUTION.md §1.2);"
             echo "  a record for another task, or in another bucket, does not satisfy this."
             exit 1
