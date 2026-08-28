@@ -37,3 +37,17 @@ requires the t-fix skill file; and sweep the `/t-fix` references from `AGENTS.md
   that file, at the old line 12, was in scope and removed). Flagged at plan time
   (issue #25's `## Plan` → Risks) for the first two; the third surfaced during
   implementation and is the same category (Claude, 2026-08-28).
+- **Rebased onto `origin/main` after #26 (Drop untested Jira/GitLab support) merged**,
+  exactly the sibling-overlap risk the plan flagged: PR #35 went `CONFLICTING` once #26
+  landed as commit `2418a3d`, since both tasks touched `.github/workflows/ci.yml` and
+  `AGENTS.md`. Resolved by hand: kept #26's already-landed simplifications (numeric-only
+  `id` regex in the `record` job's branch match, and the shorter "Task ID = the
+  tracker's issue number" line in `AGENTS.md`, both from ADR-002's dropped D4
+  non-numeric-key clause — #26's job, not this task's) alongside this task's own removal
+  of the `fix/*` exemption block and every `/t-fix` mention. Re-verified after rebase:
+  `./scripts/consistency-check.sh` exits 0, the protected-paths check on the diff
+  against the new `main` is unchanged (same 11 files), and the living-guidance grep
+  still shows only the same three documented residual hits. New commit `be20e64`
+  (force-pushed, replacing `b539c6e`) — the prior cold review's verdict was for
+  `b539c6e` and needs re-confirming against the rebased head before `/t-ship`
+  (Claude, 2026-08-28).
