@@ -104,9 +104,10 @@ for d in .claude/skills/*/; do
   grep -qE "^\| \`/$s\`" AGENTS.md || err ".claude/skills/$s exists but AGENTS.md's pipeline table has no /$s row"
 done
 
-# --- 4. Load-bearing phrase present where the no-issue fix path is defined ------
-# The phrase is required only where the path itself is defined (ADR-001 §D2).
-for f in docs/adr/001-phase0-delivery-workflow.md .claude/skills/t-fix/SKILL.md; do
+# --- 4. Load-bearing phrase present where the no-issue fix path was defined -----
+# ADR-001 §D2 is historical (the path it defined is removed, ADR-002); the phrase is
+# still required there so the historical record stays legible on its own terms.
+for f in docs/adr/001-phase0-delivery-workflow.md; do
   [ -f "$f" ] && { grep -q "no semantic content" "$f" || err "$f defines/constrains the no-issue fix path but lacks the load-bearing phrase 'no semantic content'"; }
 done
 
@@ -138,20 +139,6 @@ if [ -d docs/adapters ]; then
       || err "skills invoke \`$op\` but no docs/adapters/*.md defines it as an operation"
   done
 fi
-
-# --- 8. The branch-resolution algorithm stays identical in its two homes ---------
-# /t-work and /t-wtree each carry it (skills are self-contained, ADR-001 §D5), so the
-# load-bearing clauses are asserted in both: silent drift means two sessions resolve the
-# same task to different branches.
-# Markdown wraps these clauses across lines, so compare against a whitespace-normalized
-# copy of each file rather than line by line.
-for phrase in "truncate the slug to 40 characters" "never choose lexically" "wip/<id>-*"; do
-  for f in .claude/skills/t-work/SKILL.md .claude/skills/t-wtree/SKILL.md; do
-    [ -f "$f" ] || continue
-    tr '\n' ' ' < "$f" | tr -s ' ' | grep -qiF "$phrase" \
-      || err "$f: branch resolution is missing the clause '$phrase' that its twin carries"
-  done
-done
 
 # --- 9. The protected-path script and CONSTITUTION §3 name the same surfaces ----
 # They are one rule in two forms (CONSTITUTION.md §3), so this check runs BOTH ways.

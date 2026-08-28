@@ -35,15 +35,10 @@ timestamps); they are worth it, and they are the only ones that are. Resolve eve
    reports a quiet pipeline that is not quiet.
 3. **PRs:** `forge:pr-list` (open) — draft vs ready, latest review verdict line
    (`readiness: …`) from `forge:pr-reviews` if present, CI state via `forge:pr-checks`.
-4. **Local:** current branch and whether the tree is clean; stale `wip/*` and `fix/*`
+4. **Local:** current branch and whether the tree is clean; stale `wip/*`
    branches whose PR is merged or closed; worktrees (`git worktree list`) — flag any whose
    branch's PR is merged or closed (one somebody forgot to remove).
-5. **Meaning-free fixes:** merged PRs from `fix/*` branches
-   (`forge:pr-list`, merged, filtered on the head-branch prefix). The delta against the
-   count noted at the last retro is the ADR-001 creep signal. Find that baseline in the
-   most recent record whose task was titled `Workflow retro: <date>`; when none exists
-   yet, say the signal has no baseline rather than reporting a delta against zero.
-6. **Cancellations:** `tracker:list-cancelled` — the count and the titles. The reason for each is in its close comment
+5. **Cancellations:** `tracker:list-cancelled` — the count and the titles. The reason for each is in its close comment
    (ADR-001); this skill does not fetch comments. On a repository bootstrapped before
    `/t-cancel` existed the label was never created and the query returns empty: that is
    correct, not an error.

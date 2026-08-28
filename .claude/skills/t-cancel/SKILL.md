@@ -1,6 +1,6 @@
 ---
 name: t-cancel
-description: Cancel a task that will not be done — record why, force an explicit decision on every dependent, child, and parent issue, then tear down its PR, branch, and worktree. The pipeline's terminal exit. Use to cancel, abandon, drop, or kill a task.
+description: Cancel a task that will not be done — record why, force an explicit decision on every dependent, child, and parent issue, then close its PR and delete its branch. The pipeline's terminal exit. Use to cancel, abandon, drop, or kill a task.
 ---
 
 # Cancel a task
@@ -16,21 +16,7 @@ that ADR differ, the ADR wins and the difference is a defect — flag it, do not
 improvise.
 
 Cancelling destroys work. Nothing belonging to a *task* is destroyed before the gate in
-Phase 3. The one path that never reaches that gate is a `/t-fix` change (Phase 1 step 2),
-which has no issue, no record, and no dependents — closing its PR is the whole of it, and
-the human asking for it is the confirmation.
-
-## Where this runs
-
-Teardown may remove the task's worktree, so this skill cannot run from inside it. Compare
-the current checkout (`git rev-parse --show-toplevel`) with the primary checkout (the
-parent of `git rev-parse --path-format=absolute --git-common-dir`) before any mutation —
-labels, comments, issue edits, gates, branch changes, anything:
-
-- **Inside a linked worktree** → stop, report the primary checkout's absolute path, and
-  say to run `/t-cancel <id>` from a session rooted there.
-- **In the primary checkout** → continue, on `main` or on the task branch. Uncommitted
-  changes stop the skill: report them and never stash, discard, or switch over them.
+Phase 3.
 
 ## Phase 1 — is this really a cancellation
 
@@ -44,8 +30,6 @@ labels, comments, issue edits, gates, branch changes, anything:
      guessing.
    - **A supersession with no successor named.** A task replaced by a different plan
      closes pointing at the issue that replaced it; find or open that issue first.
-   - **A `/t-fix` change** (ADR-001 D3.4): no issue, no record, no dependents. Close
-     the PR, delete its branch, and stop — nothing below applies.
 3. **Find what exists**, so the gate can name it: `git fetch --prune origin`, then the
    branch locally (`git branch --list 'wip/<id>-*'`; `git worktree list`) and on the
    remote, plus any PR (`forge:pr-find-by-task <id>`, all states) and whether a record
@@ -95,7 +79,7 @@ survive, and every neighbour decision from Phase 2. Then the gate, per
 `docs/architecture/confirmation-gates.md`: a plain question (or the environment's native
 question mechanism), last thing in the message —
 
-- evidence: destroys `<PR #, branch, worktree — or 'nothing built yet'>` · reason
+- evidence: destroys `<PR #, branch — or 'nothing built yet'>` · reason
   `<one line>` · neighbours `<n dependents, parent, children — dispositions>`
 - question: "Cancel task #<id> and tear down its work?"
 - options: `confirm` (cancel the task) / `abort` (keep it)
@@ -108,34 +92,34 @@ question mechanism), last thing in the message —
    is missing afterwards leaves work destroyed with the issue still open. Idempotent:
    `tracker:ensure-labels cancelled` (color `6E7781`, description "Task cancelled via
    /t-cancel — see the close comment for the reason", matching the bootstrap script).
-2. **Remove the worktree, if one exists** — a branch checked out in a worktree cannot be
-   deleted. Find it with `git worktree list` rather than assuming a path:
-
-   ```bash
-   git -C <worktree-path> status --porcelain   # empty output = clean
-   git worktree remove <worktree-path>
-   ```
-
-   **Refuse to remove a worktree with uncommitted changes** (never `--force`): report what
-   is uncommitted, stop the teardown there, and let the human decide.
-3. **Close any PR — never repurpose it.** That diff *is* the discarded work, and closing
+2. **Close any PR — never repurpose it.** That diff *is* the discarded work, and closing
    it records the abandonment honestly. **Before composing the close command, re-read
    `docs/adapters/FORGE.md`'s `forge:pr-close` row and check the exact command string you
    are about to run against it** — a command missing the active backend's
    branch-deletion flag (`--delete-branch` on GitHub) closes silently and leaves the
    branch stranded on `origin` (issue #13): `forge:pr-close <pr>` with a comment saying
    why, in prose.
-4. **Delete the branch, if anything is left to delete.** Step 3's `forge:pr-close`
+3. **Delete the branch, if anything is left to delete.** Step 2's `forge:pr-close`
    already removed the branch — local *and* remote — whenever a PR existed, so this step
-   is normally a no-op after a PR, and does the whole job when there was never one.
+   is normally a no-op after a PR, and does the whole job when there was never one. This
+   skill does not touch worktrees (`/t-clean`'s job, run lazily whenever one is actually
+   in the way), so the branch may still be checked out somewhere.
 
-   `git fetch --prune` first, then return the checkout to a clean, current `main` if it
-   is not there already (`git checkout main && git merge --ff-only origin/main`), then
-   delete the local branch only if it survives:
+   If the *invoking* checkout itself is on the target branch, move it off first — this
+   is the only checkout this skill may switch, and only because it is standing on the
+   branch about to be deleted:
 
    ```bash
+   [ "$(git rev-parse --abbrev-ref HEAD)" = "wip/<id>-<slug>" ] &&
+     git checkout main && git merge --ff-only origin/main
    git rev-parse --verify --quiet wip/<id>-<slug> && git branch -D wip/<id>-<slug>
    ```
+
+   **A branch still checked out in another worktree refuses to delete — that is the
+   normal case here, not an error.** Report it as left in place, pointing at the
+   worktree (`git worktree list`), and move on to the remote branch below; never switch
+   or remove a worktree that is not the invoking checkout, and never remove the
+   invoking checkout's own worktree to route around the refusal.
 
    **Then the remote branch, and check before deleting.** `git rev-parse --verify
    refs/remotes/origin/<branch>` failing means there is nothing left to do, which is the
@@ -150,7 +134,7 @@ question mechanism), last thing in the message —
 
    A rejected deletion means another session moved the branch: stop without closing the
    issue and report it. That exact-ID lease is the only permitted force option here.
-5. **Close the issue, carrying the reason.** A record that already merged to `main` stays
+4. **Close the issue, carrying the reason.** A record that already merged to `main` stays
    there; one that only existed on the destroyed branch is gone by design (ADR-001), so
    this comment is the durable account: `tracker:label <id> cancelled`, then
    `tracker:close <id>` as not-planned, the comment carrying why (in prose) and the
@@ -158,7 +142,7 @@ question mechanism), last thing in the message —
 
    The `cancelled` label is what makes cancellations queryable — `/t-status` counts them
    from it. Keep it.
-6. **Execute every Phase 2 disposition** — nothing below happened before the gate; all
+5. **Execute every Phase 2 disposition** — nothing below happened before the gate; all
    of it happens now:
    - **Parent**, if any: `tracker:comment` on it saying this child is cancelled.
    - **Each dependent**: `tracker:remove-blocker <dependent-id> <this-id>` to drop the

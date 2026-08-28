@@ -37,8 +37,9 @@ implementation before editing files.
    covered it, and Phase 3 re-checks it against the real diff.
 
 4. **Get onto the task branch, in the checkout you were invoked from.** A worktree is
-   optional (ADR-001): if the human wanted one they ran `/t-wtree <id>` and this
-   session is rooted there. Resolve the branch idempotently — `git fetch --prune`, then
+   optional (ADR-001, ADR-002): if the human wanted one for this task, it exists —
+   created by hand (`git worktree add`) or by a launching engine — and this session is
+   rooted there. Resolve the branch idempotently — `git fetch --prune`, then
    list local and `origin/` refs matching `wip/<id>-*`, normalizing away the `origin/`
    prefix (ADR-001 §D4):
 

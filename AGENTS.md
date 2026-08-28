@@ -26,24 +26,22 @@ only). Plain `git` is never abstracted.
 |---|---|
 | `/t-open` | Conversation → issue(s). How all work starts. |
 | `/t-plan` | Optional; required before changing a protected surface. Pins scope, risks, and validation onto the issue. |
-| `/t-wtree` | Optional. Creates or reuses the task's own worktree when isolation is wanted. |
 | `/t-work` | Branch, record, implement, check, draft PR. One invocation, in the current checkout. |
 | `/t-review` | Cold-context review; findings posted on the PR. Required before shipping a protected surface. |
 | `/t-ship` | Human-confirmed squash merge. Every path to `main` is a human-confirmed PR. |
-| `/t-cancel` | Terminal exit: the reason recorded on the issue, every neighbour decided, then teardown. |
+| `/t-cancel` | Terminal exit: the reason recorded on the issue, every neighbour decided, then the PR closed and its branch deleted. |
+| `/t-clean` | Optional, lazy. Removes a shipped or cancelled task's stale local worktree/branch, on confirmation. |
 | `/t-status` | Read-only pipeline overview. |
-| `/t-fix` | A change with no semantic content as one PR — no issue, record, or cold review (ADR-001). |
 
 ## Conventions
 
 - **All changes go through the pipeline.** A request to change anything — code, config,
-  docs — is work: open it with `/t-open` (or `/t-fix` for a meaning-free fix) before
-  touching any file. Never edit the tree outside that task's own `/t-work` session,
-  however small the ask. Answering questions, reading, and designing need no task;
-  changing files always does. The **one** exception is repository genesis
-  (`CONSTITUTION.md` §3): the template's placeholder fills and the first commit happen by
-  hand, because there is no tracker and no `main` to open a PR against yet. It expires
-  once that commit is pushed.
+  docs — is work: open it with `/t-open` before touching any file. Never edit the tree
+  outside that task's own `/t-work` session, however small the ask. Answering questions,
+  reading, and designing need no task; changing files always does. The **one** exception
+  is repository genesis (`CONSTITUTION.md` §3): the template's placeholder fills and the
+  first commit happen by hand, because there is no tracker and no `main` to open a PR
+  against yet. It expires once that commit is pushed.
 - **Writing to the tracker needs the human's ask.** Creating or changing anything on the
   tracker — opening an issue, commenting, adding or removing a label, closing or
   reopening one — puts an item on the owner's tracker under the owner's name, so an agent
@@ -76,13 +74,15 @@ only). Plain `git` is never abstracted.
 - Task ID = the tracker's issue number. Branch `wip/<id>-<slug>`. Record
   `docs/tasks/<bucket>/<id>-<slug>.md`, where `<bucket>` is the ID rounded down to the
   nearest 100, zero-padded to 6 digits — e.g. task 142 → `docs/tasks/000100/142-<slug>.md`
-  (ADR-001 §D4). Meaning-free fixes (ADR-001 §D2) use
-  `fix/<slug>` branches — no issue, PR-only.
-- **A task worktree is optional.** `/t-wtree <id>` prepares the sibling
-  `../<repo-name>-<id>` when a task wants its own checkout — two tasks at once, or a
-  long-running one. Otherwise `/t-work` runs on the task branch in the current checkout.
-  Two sessions never share a checkout, and `/t-ship` and `/t-cancel` never run from
-  inside a task worktree.
+  (ADR-001 §D4).
+- **A task worktree is optional.** A task that wants its own checkout — two tasks at
+  once, or a long-running one — gets one by hand (`git worktree add`) or from a
+  launching engine; the pipeline no longer ships a skill for it. Otherwise `/t-work`
+  runs on the task branch in the current checkout. Two sessions never share a checkout.
+  `/t-ship` and `/t-cancel` run from any checkout, including inside a task's own
+  worktree — neither one destroys it (ADR-002); `/t-clean` is the one skill that removes
+  a stale worktree or branch, lazily and on confirmation, and it is the one that cannot
+  run from inside what it might remove.
 - `main` only moves by pull request. Never commit or push to `main` directly. The trunk
   name is `main` literally, throughout the skills and scripts — it is not abstracted the
   way the tracker and forge are; changing it is a find-and-replace across protected
@@ -94,8 +94,7 @@ only). Plain `git` is never abstracted.
 - Out-of-scope work discovered mid-task is never a drive-by change: report it and
   propose an issue, which the human opens or asks you to open (see the tracker rule
   above). Exception (ADR-001): a pure typo or formatting fix in a file already inside the
-  task's scope may ride along, listed in the record. Standalone meaning-free fixes use
-  `/t-fix`.
+  task's scope may ride along, listed in the record.
 
 ## Communication
 
@@ -126,5 +125,4 @@ Where a skill says "run the checks", the current check set is:
 3. `git diff` review against the task's declared scope (always applicable).
 
 `.github/workflows/ci.yml` runs check 2 on every PR today, plus a `record` job asserting
-that a task PR carries its task record (`fix/` branches exempt). Add check 1 to it once
-the stack exists.
+that a task PR carries its task record. Add check 1 to it once the stack exists.

@@ -53,10 +53,12 @@ stages. One stage-level note with no better home: `/t-status` derives everything
 tracker/forge queries and git — status is never a maintained file.
 
 **Never optional:** an issue before the work, a record riding in the PR, a human-confirmed PR
-into `main`. **Chosen per task (ADR-001):** plan, worktree, cold review — except on a protected
-surface (`CONSTITUTION.md` §3), where plan and review are both required, decided from the paths
-the diff touches, not from a label. **Nothing chains:** each stage names the next command and
-stops, and a `not-ready` review blocks shipping either way.
+into `main`. **Chosen per task (ADR-001, trimmed by ADR-002):** plan, cold review — except on a
+protected surface (`CONSTITUTION.md` §3), where plan and review are both required, decided from
+the paths the diff touches, not from a label. A worktree stays available to any task that wants
+one (`git worktree add`, or one a launching engine creates); it is no longer a pipeline stage
+with a skill of its own. **Nothing chains:** each stage names the next command and stops, and a
+`not-ready` review blocks shipping either way.
 
 **Only blocker and high findings hold a review open**; the rest are posted for the human to
 fix, defer, or accept, and judgments no command can settle travel to the merge question, where
@@ -95,9 +97,11 @@ anything durable settled in a PR thread lands in the record, an ADR, or the docs
 
 In force today, *mechanically*: branch protection on `main` (PRs only, squash merges, no
 force pushes); CI running `scripts/consistency-check.sh` and the record-present guard on
-every PR (`.github/workflows/ci.yml`); an hourly scheduled check
-(`.github/workflows/stale-branch.yml`) reporting any `wip/*`/`fix/*` branch a merge or
-close should have deleted but did not. Held by convention, not by machinery:
+every PR (`.github/workflows/ci.yml`); the repo's `delete_branch_on_merge` setting
+(`scripts/github-bootstrap.sh`) deleting a merged branch's remote copy without any
+skill-side step. A stale local worktree or branch left behind by `/t-ship`/`/t-cancel`
+(ADR-002) is cleaned up lazily, on a human's confirmation, by `/t-clean` — nothing
+scans for one automatically. Held by convention, not by machinery:
 self-contained squash commit bodies written from the record — the forge enforces squash
 *merging*, nothing checks what the message says. Still to come: CODEOWNERS approval on protected paths, with
 `CONSTITUTION.md` and `docs/adr/` at a heightened bar (§13 Q9), and required approvals
@@ -130,10 +134,9 @@ page carries shape only. **11.5** A deviation is approved in the moment and land
 record, and **the same deviation twice is a bug in the process**. **11.6 Batch, don't tweak**,
 except mid-incident: workflow changes accumulate and land together at a periodic
 **retro** — an ordinary task, titled `Workflow retro: <date>`, that reviews friction since
-the last one, samples the `/t-fix` merges `/t-status` counts, and records that count in
-its own task record under `## Decisions made along the way`. That title is the convention
-a cold session searches on to find the previous retro and its count; without it the creep
-signal has no baseline to compare against. **11.7 In-flight tasks** meet new rules at their next gate.
+the last one and records what it decided in its own task record under
+`## Decisions made along the way`. That title is the convention a cold session searches
+on to find the previous retro. **11.7 In-flight tasks** meet new rules at their next gate.
 
 ## 12. The flow in practice
 
