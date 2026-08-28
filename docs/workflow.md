@@ -21,14 +21,13 @@ Knowledge lives in the repository, in every clone: `CONSTITUTION.md`, `AGENTS.md
 `docs/architecture/`, `docs/tasks/`, `.claude/skills/`, `.github/`. Process lives in
 the tracker and the forge — issues, PRs, reviews, CI runs — which is reconstructable, not
 load-bearing. The skills reach both only through named operations that
-`docs/adapters/TRACKER.md` and `docs/adapters/FORGE.md` map to the active backends
-(GitHub for both by default; Jira, GitLab, etc. by editing those two files).
+`docs/adapters/TRACKER.md` and `docs/adapters/FORGE.md` map to the active backend
+(GitHub for both today; a future backend adopts by editing those two files).
 
 ## 3. Task identity
 
-A task's ID is its **tracker issue identifier** (on GitHub, the issue number — issues and
-PRs share one atomically minted sequence, so a bare `#142` is never ambiguous; on other
-backends, the native key, e.g. a Jira `PROJ-142`). Everything inherits it: branch `wip/142-<slug>`,
+A task's ID is its **tracker issue number** — issues and PRs share one atomically minted
+sequence, so a bare `#142` is never ambiguous. Everything inherits it: branch `wip/142-<slug>`,
 record `docs/tasks/000100/142-<slug>.md`, squash-commit line `Task: #142`. Records shard into
 **ID buckets of 100** (ADR-001 §D4): the directory is the ID rounded down to the nearest 100,
 zero-padded to 6 digits, so a bucket never exceeds 100 files however fast tasks open, and the
@@ -130,10 +129,9 @@ page carries shape only. **11.5** A deviation is approved in the moment and land
 record, and **the same deviation twice is a bug in the process**. **11.6 Batch, don't tweak**,
 except mid-incident: workflow changes accumulate and land together at a periodic
 **retro** — an ordinary task, titled `Workflow retro: <date>`, that reviews friction since
-the last one, samples the `/t-fix` merges `/t-status` counts, and records that count in
-its own task record under `## Decisions made along the way`. That title is the convention
-a cold session searches on to find the previous retro and its count; without it the creep
-signal has no baseline to compare against. **11.7 In-flight tasks** meet new rules at their next gate.
+the last one and records what it decided in its own task record under
+`## Decisions made along the way`. That title is the convention a cold session searches
+on to find the previous retro. **11.7 In-flight tasks** meet new rules at their next gate.
 
 ## 12. The flow in practice
 

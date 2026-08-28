@@ -15,8 +15,7 @@ only read the change gets before `main`.
 ## Preconditions
 
 Every step below names `<pr>`. **Resolve it from the task id first** with
-`forge:pr-find-by-task <id>`, which matches the head branch `wip/<id>-*` — the id
-lowercased, `PROJ-142` → `proj-142` (ADR-001 §D4).
+`forge:pr-find-by-task <id>`, which matches the head branch `wip/<id>-*`.
 Exactly one open PR → that is `<pr>`. None → the task has not
 reached `/t-work`'s draft-PR step; stop and say so. More than one → stop and report every
 candidate rather than guessing. A PR that is already merged or closed means this task has
@@ -147,11 +146,11 @@ already left the pipeline; say which and stop.
 
    If the tracker auto-closes on merge (`tracker:auto-close-on-merge`), the PR body's
    phrase closes the issue now; otherwise close the issue explicitly here with
-   `tracker:close-done` (as completed — e.g. transition a Jira ticket to Done). Never
+   `tracker:close-done` (as completed). Never
    `tracker:close`, which closes as not-planned and would read as an abandoned blocker.
 4. `git fetch --prune` — deleted `wip/` branches otherwise linger as stale
-   `origin/wip/*` tracking refs. Fetch first, then clean up: the same order in
-   `/t-fix` and `/t-cancel`.
+   `origin/wip/*` tracking refs. Fetch first, then clean up: the same order as
+   `/t-cancel`.
 5. **At most, fast-forward a `main` this checkout happens to be sitting on.** Merging
    asserts no branch-deletion flag (`docs/adapters/FORGE.md`'s `forge:pr-merge` row), so
    the task's worktree, local branch, and this checkout are left exactly as they were —

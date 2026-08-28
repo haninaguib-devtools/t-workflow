@@ -104,9 +104,10 @@ for d in .claude/skills/*/; do
   grep -qE "^\| \`/$s\`" AGENTS.md || err ".claude/skills/$s exists but AGENTS.md's pipeline table has no /$s row"
 done
 
-# --- 4. Load-bearing phrase present where the no-issue fix path is defined ------
-# The phrase is required only where the path itself is defined (ADR-001 §D2).
-for f in docs/adr/001-phase0-delivery-workflow.md .claude/skills/t-fix/SKILL.md; do
+# --- 4. Load-bearing phrase present where the no-issue fix path was defined -----
+# ADR-001 §D2 is historical (the path it defined is removed, ADR-002); the phrase is
+# still required there so the historical record stays legible on its own terms.
+for f in docs/adr/001-phase0-delivery-workflow.md; do
   [ -f "$f" ] && { grep -q "no semantic content" "$f" || err "$f defines/constrains the no-issue fix path but lacks the load-bearing phrase 'no semantic content'"; }
 done
 
@@ -151,15 +152,6 @@ for phrase in "truncate the slug to 40 characters" "never choose lexically" "wip
     tr '\n' ' ' < "$f" | tr -s ' ' | grep -qiF "$phrase" \
       || err "$f: branch resolution is missing the clause '$phrase' that its twin carries"
   done
-done
-
-# --- 8b. Any skill using the branch glob also says how a non-numeric id is cased --
-# Record filenames and branch names lowercase a tracker key (ADR-001 §D4). A skill that
-# resolves `wip/<id>-*` without that rule silently fails on a Jira-style PROJ-142.
-for f in .claude/skills/*/SKILL.md; do
-  grep -qF 'wip/<id>-*' "$f" || continue
-  tr '\n' ' ' < "$f" | tr -s ' ' | grep -qiF 'lowercase' \
-    || err "$f: resolves 'wip/<id>-*' but never says the id is lowercased (PROJ-142 -> proj-142)"
 done
 
 # --- 9. The protected-path script and CONSTITUTION §3 name the same surfaces ----

@@ -19,10 +19,8 @@ tracker issue, and `main` moves only by a PR a human confirmed.
 **Backends are pluggable.** The skills speak in `tracker:*` (issues, labels) and
 `forge:*` (PRs, CI, merges) operations; `docs/adapters/TRACKER.md` and
 `docs/adapters/FORGE.md` map each operation to concrete commands for the active backend
-(GitHub Issues + GitHub PRs by default; Jira, GitLab, etc. by editing those two files
-only). "Issue" and "PR" throughout are the workflow's words — read them as the active
-backend's equivalents (Jira ticket, GitLab merge request). Plain `git` is never
-abstracted.
+(GitHub Issues + GitHub PRs today; a future backend adopts by editing those two files
+only). Plain `git` is never abstracted.
 
 | Skill | Stage |
 |---|---|
@@ -35,18 +33,16 @@ abstracted.
 | `/t-cancel` | Terminal exit: the reason recorded on the issue, every neighbour decided, then the PR closed and its branch deleted. |
 | `/t-clean` | Optional, lazy. Removes a shipped or cancelled task's stale local worktree/branch, on confirmation. |
 | `/t-status` | Read-only pipeline overview. |
-| `/t-fix` | A change with no semantic content as one PR — no issue, record, or cold review (ADR-001). |
 
 ## Conventions
 
 - **All changes go through the pipeline.** A request to change anything — code, config,
-  docs — is work: open it with `/t-open` (or `/t-fix` for a meaning-free fix) before
-  touching any file. Never edit the tree outside that task's own `/t-work` session,
-  however small the ask. Answering questions, reading, and designing need no task;
-  changing files always does. The **one** exception is repository genesis
-  (`CONSTITUTION.md` §3): the template's placeholder fills and the first commit happen by
-  hand, because there is no tracker and no `main` to open a PR against yet. It expires
-  once that commit is pushed.
+  docs — is work: open it with `/t-open` before touching any file. Never edit the tree
+  outside that task's own `/t-work` session, however small the ask. Answering questions,
+  reading, and designing need no task; changing files always does. The **one** exception
+  is repository genesis (`CONSTITUTION.md` §3): the template's placeholder fills and the
+  first commit happen by hand, because there is no tracker and no `main` to open a PR
+  against yet. It expires once that commit is pushed.
 - **Writing to the tracker needs the human's ask.** Creating or changing anything on the
   tracker — opening an issue, commenting, adding or removing a label, closing or
   reopening one — puts an item on the owner's tracker under the owner's name, so an agent
@@ -76,12 +72,10 @@ abstracted.
   cancelled through `/t-cancel`: the reason and every neighbour's disposition land on the
   issue before anything is destroyed, and a cancelled blocker is abandoned, never
   satisfied (ADR-001 D3).
-- Task ID = the tracker's issue identifier (issue number, or e.g. a Jira key). Branch `wip/<id>-<slug>`. Record
+- Task ID = the tracker's issue number. Branch `wip/<id>-<slug>`. Record
   `docs/tasks/<bucket>/<id>-<slug>.md`, where `<bucket>` is the ID rounded down to the
-  nearest 100, zero-padded to 6 digits — e.g. task 142 → `docs/tasks/000100/142-<slug>.md`;
-  a non-numeric key uses its numeric part for the bucket (`PROJ-142` → `000100/proj-142-…`)
-  (ADR-001 §D4). Meaning-free fixes (ADR-001 §D2) use
-  `fix/<slug>` branches — no issue, PR-only.
+  nearest 100, zero-padded to 6 digits — e.g. task 142 → `docs/tasks/000100/142-<slug>.md`
+  (ADR-001 §D4).
 - **A task worktree is optional.** `/t-wtree <id>` prepares the sibling
   `../<repo-name>-<id>` when a task wants its own checkout — two tasks at once, or a
   long-running one. Otherwise `/t-work` runs on the task branch in the current checkout.
@@ -100,8 +94,7 @@ abstracted.
 - Out-of-scope work discovered mid-task is never a drive-by change: report it and
   propose an issue, which the human opens or asks you to open (see the tracker rule
   above). Exception (ADR-001): a pure typo or formatting fix in a file already inside the
-  task's scope may ride along, listed in the record. Standalone meaning-free fixes use
-  `/t-fix`.
+  task's scope may ride along, listed in the record.
 
 ## Communication
 
@@ -132,5 +125,4 @@ Where a skill says "run the checks", the current check set is:
 3. `git diff` review against the task's declared scope (always applicable).
 
 `.github/workflows/ci.yml` runs check 2 on every PR today, plus a `record` job asserting
-that a task PR carries its task record (`fix/` branches exempt). Add check 1 to it once
-the stack exists.
+that a task PR carries its task record. Add check 1 to it once the stack exists.

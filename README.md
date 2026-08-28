@@ -11,7 +11,7 @@ only the pipeline that moves any change from idea to `main`:
 - `AGENTS.md` — what an agent reads on session start: pipeline, conventions, checks.
 - `docs/workflow.md` — the shape of the pipeline, from idea to merge.
 - `.claude/skills/t-*` — the executable stages: `/t-open`, `/t-plan`, `/t-wtree`,
-  `/t-work`, `/t-review`, `/t-ship`, `/t-cancel`, `/t-status`, `/t-fix`.
+  `/t-work`, `/t-review`, `/t-ship`, `/t-cancel`, `/t-status`.
 - `docs/adr/` — the decision log (one file per decision). Ships with ADR-001, the
   baseline decision defining the workflow itself; your project's own decisions start
   at the next number.
@@ -37,8 +37,8 @@ only the pipeline that moves any change from idea to `main`:
   at. What is Claude Code-specific is invoking them as `/t-open`, `/t-work`, and so on.
   Another agent runs a stage by being told to follow `.claude/skills/t-work/SKILL.md`;
   it gets the same instructions without the slash command.
-- `docs/adapters/` — `TRACKER.md` and `FORGE.md`: the backend maps (GitHub by default)
-  the skills use for every issue/PR operation. Swap Jira or GitLab in by editing these
+- `docs/adapters/` — `TRACKER.md` and `FORGE.md`: the backend maps (GitHub today) the
+  skills use for every issue/PR operation. Swap in a future backend by editing these
   two files only.
 - `installer/` — the one-command bootstrap that turns this template into a new project.
   `install.sh` is the URL people fetch; `bootstrap.sh` does the work after the clone.
