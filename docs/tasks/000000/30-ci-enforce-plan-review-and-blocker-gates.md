@@ -161,3 +161,26 @@ check-review-gate.sh
 
 `./scripts/consistency-check.sh` also run locally: `OK: all consistency checks passed`
 (exit 0).
+
+**Live confirmation on PR #42 itself**, the real end-to-end test — this task's own
+issue (#30) has a `## Plan` section, every blocker closed as completed, and the PR
+title/branch match, so `plan-gate`, `title-gate`, `blockers`, `record`, and
+`plumbing-test` all ran against real GitHub state and passed; `cold-review` correctly
+**failed** with `FAIL: no review on this PR`, since none had been posted yet —
+demonstrating on a live PR, not only a fixture, that the gate actually blocks:
+
+```
+$ gh pr checks 42
+cold-review     fail   6s
+blockers        pass   8s
+consistency     pass   4s
+plan-gate       pass   5s
+plumbing-test   pass   6s
+record          pass   4s
+title-gate      pass   4s
+```
+
+The runner's `gh` (Actions "Current runner version" 2.336.0-era image) supports
+`gh api graphql` fine — the `blockers` job's fallback from `gh issue view --json
+blockedBy` was the right call regardless of the runner's exact `gh` version, per the
+Decision above.
