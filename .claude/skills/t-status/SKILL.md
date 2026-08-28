@@ -21,18 +21,17 @@ timestamps); they are worth it, and they are the only ones that are. Resolve eve
 
 ## Procedure
 
-1. **Initiatives:** `tracker:list-initiatives` — for each, its
-   task-list completion (ticked / total). On a repository whose labels were never
-   bootstrapped, a tracker silently drops a label its issue form asks for, so a
-   hand-opened initiative can carry none and go unlisted here: an empty result means
-   "none labelled", not "none exist". Say which, and recommend
+1. **Initiatives:** `tracker:list-initiatives` — for each, its sub-issue completion
+   from the native `subIssuesSummary` it returns (closed / total). On a repository
+   whose labels were never bootstrapped, a tracker silently drops a label its issue
+   form asks for, so a hand-opened initiative can carry none and go unlisted here: an
+   empty result means "none labelled", not "none exist". Say which, and recommend
    `scripts/github-bootstrap.sh`.
-2. **Tasks:** `tracker:list-open` (excluding initiatives) — number,
-   title, and blocked state: a task whose body's every `Blocked-by: #n` references a
-   *closed* issue is **unblocked**. Count the marker in both shapes — the inline
-   `Blocked-by: #n`, and a bare `#n` under a `### Blocked by` heading, which is how an
-   issue form renders it. Highlight unblocked tasks with no branch as "ready to
-   pick up". The operation's contract requires a complete scan; a silently truncated list
+2. **Tasks:** `tracker:list-open` (excluding initiatives) — number, title, and blocked
+   state: a task whose every entry in the `blockedBy` field it returns is a *closed*
+   issue is **unblocked** (ADR-003 — `blockedBy` comes back in the same bulk call, no
+   per-task query needed). Highlight unblocked tasks with no branch as "ready to pick
+   up". The operation's contract requires a complete scan; a silently truncated list
    reports a quiet pipeline that is not quiet.
 3. **PRs:** `forge:pr-list` (open) — draft vs ready, latest review verdict line
    (`readiness: …`) from `forge:pr-reviews` if present, CI state via `forge:pr-checks`.

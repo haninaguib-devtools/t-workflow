@@ -56,27 +56,36 @@ machine-read label belongs here the same day it starts being written by a skill.
 Each operation states its contract, then the command per backend. Where a backend needs
 extra steps, they are listed — a skill treats the whole entry as one operation.
 
-### `tracker:view <id>` — full issue: title, body, state, labels
+**The relation operations below** (`set-parent`, `remove-parent`, `list-children`,
+`add-blocker`, `remove-blocker`, `list-blockers`, `list-blocking`), and the `parent` /
+`blockedBy` / `blocking` / `subIssues` / `subIssuesSummary` fields the read operations
+return, need gh CLI ≥2.94.0 (2026-06-10) — the release that added native sub-issue and
+issue-dependency support to `gh issue`. An older gh rejects these flags and JSON fields
+outright (`Unknown JSON field`) rather than degrading quietly; confirm `gh --version`
+before relying on them (ADR-003).
+
+### `tracker:view <id>` — full issue: number, title, body, state, labels, parent
 
 | Backend | Command |
 |---|---|
-| GitHub | `gh issue view <id>` (state only: `gh issue view <id> --json state,stateReason`) |
+| GitHub | `gh issue view <id> --json number,title,body,state,labels,parent` |
 
-### `tracker:list-open` — ALL open issues with id, title, labels, and full body
+### `tracker:list-open` — ALL open issues with id, title, labels, body, and blockedBy
 
 Contract: the scan must be **complete** (paginate or raise the page size until it is; a
 truncated list must be reported as an incomplete scan, never as "none found") and each
-row carries its labels, so callers can filter initiatives without extra calls.
+row carries its labels and `blockedBy`, so callers can filter initiatives and check
+blocked state without extra per-issue calls.
 
 | Backend | Command |
 |---|---|
-| GitHub | `gh issue list --state open --limit 1000 --json number,title,body,labels` (default limit is 30 — always pass it) |
+| GitHub | `gh issue list --state open --limit 1000 --json number,title,body,labels,blockedBy` (default limit is 30 — always pass it) |
 
-### `tracker:list-initiatives` — open issues labeled `initiative`
+### `tracker:list-initiatives` — open issues labeled `initiative`, with `subIssuesSummary`
 
 | Backend | Command |
 |---|---|
-| GitHub | `gh issue list --label initiative --state open` |
+| GitHub | `gh issue list --label initiative --state open --json number,title,subIssuesSummary` |
 
 ### `tracker:list-cancelled` — closed issues labeled `cancelled`, id + title
 
@@ -125,6 +134,54 @@ bootstrap script when adopting another backend).
 | Backend | Command |
 |---|---|
 | GitHub | `gh issue edit <id> --add-label <label>` |
+
+### `tracker:set-parent <child-id> <parent-id>` — link an issue as another's sub-issue
+
+| Backend | Command |
+|---|---|
+| GitHub | `gh issue edit <child-id> --parent <parent-id>` |
+
+### `tracker:remove-parent <id>` — drop an issue's parent link, promoting it to standalone
+
+| Backend | Command |
+|---|---|
+| GitHub | `gh issue edit <id> --remove-parent` |
+
+### `tracker:list-children <id>` — an issue's sub-issues, each with number, title, state
+
+| Backend | Command |
+|---|---|
+| GitHub | `gh issue view <id> --json subIssues` |
+
+### `tracker:add-blocker <id> <blocker-id>` — mark `<id>` as blocked by `<blocker-id>`
+
+| Backend | Command |
+|---|---|
+| GitHub | `gh issue edit <id> --add-blocked-by <blocker-id>` |
+
+### `tracker:remove-blocker <id> <blocker-id>` — drop one blocked-by edge from `<id>`
+
+| Backend | Command |
+|---|---|
+| GitHub | `gh issue edit <id> --remove-blocked-by <blocker-id>` |
+
+### `tracker:list-blockers <id>` — issues blocking `<id>`, each with number, title, state
+
+Contract: state is required per blocker — the blocker gate (`/t-work`) must tell a
+closed-as-completed blocker from one closed-as-cancelled (abandoned, not satisfied).
+
+| Backend | Command |
+|---|---|
+| GitHub | `gh issue view <id> --json blockedBy` |
+
+### `tracker:list-blocking <id>` — issues `<id>` blocks (its dependents), same fields
+
+Contract: this is the whole of `/t-cancel`'s dependent sweep for one issue — no
+open-issue body scan needed, unlike the retired `Blocked-by:` marker convention.
+
+| Backend | Command |
+|---|---|
+| GitHub | `gh issue view <id> --json blocking` |
 
 ### `tracker:comment <id> <text>` — comment on an issue
 

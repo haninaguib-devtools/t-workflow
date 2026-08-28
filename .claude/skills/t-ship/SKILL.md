@@ -232,16 +232,17 @@ already left the pipeline; say which and stop.
    is already supplied — the forge reported the merge succeeded, so the content is on
    `main`. Skip this delete only when Action 1 left the worktree standing (removal
    refused on uncommitted changes): the branch is checked out there and git will refuse.
-6. If the task belongs to a tracking issue, tick its checkbox
-   (`tracker:edit-body` on the tracking issue's task list).
+6. If `tracker:view <id>`'s `parent` field names a tracking issue, closing the task
+   above already updated its native `subIssuesSummary` — nothing to write. Read that
+   summary (`tracker:view <parent-id>`) to see whether every child is now closed.
 7. Report the merge commit hash, whether a cold review ran, and what happened to the
    branch and any worktree.
 
-   **If that tick completed the tracking issue's list**, say so and ask whether to close
-   the initiative — it is the human's call, never automatic, because an initiative can
-   outlive its checklist. On a yes, close it as completed (`tracker:close-done`) with a
-   comment naming the child tasks that delivered it; on a no, leave it open and say what
-   it is still waiting for.
+   **If `subIssuesSummary` now shows every child closed**, say so and ask whether to
+   close the initiative — it is the human's call, never automatic, because an initiative
+   can outlive a complete child list. On a yes, close it as completed
+   (`tracker:close-done`) with a comment naming the child tasks that delivered it; on a
+   no, leave it open and say what it is still waiting for.
 
 ## Rules
 

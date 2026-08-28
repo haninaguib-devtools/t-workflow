@@ -39,8 +39,9 @@ labels, comments, issue edits, gates, branch changes, anything:
    - **A merged task.** Undoing shipped work is a revert — ordinary forward work with its
      own diff. Hand off to `/t-open`.
    - **"Not now."** Parking, deferring, waiting on something else — cancellation is
-     terminal (ADR-001 D3.5). Deferral is the issue staying open with a `Blocked-by:`
-     line. Ask which is meant rather than guessing.
+     terminal (ADR-001 D3.5). Deferral is the issue staying open with a blocked-by
+     dependency set on it (`tracker:add-blocker`). Ask which is meant rather than
+     guessing.
    - **A supersession with no successor named.** A task replaced by a different plan
      closes pointing at the issue that replaced it; find or open that issue first.
    - **A `/t-fix` change** (ADR-001 D3.4): no issue, no record, no dependents. Close
@@ -58,31 +59,34 @@ labels, comments, issue edits, gates, branch changes, anything:
 ## Phase 2 — neighbours, decided before anything is torn down
 
 ADR-001 D3.2 and D3.3. **Gather and decide here; act on nothing yet** — every comment,
-label, checkbox, and close happens in Phase 4, so an aborted gate leaves every issue
+label, relation change, and close happens in Phase 4, so an aborted gate leaves every issue
 exactly as it was. Never decide any of them silently, and never cascade.
 
-1. **Dependents.** Every open issue whose body carries `Blocked-by: #<id>` — in either
-   shape: inline, or a bare `#<id>` under a `### Blocked by` heading, which is how an
-   issue form renders the field. Sweep bodies client-side with `tracker:list-open` rather
-   than with the tracker's own body-search, whose index can lag and miss a
-   recently-edited issue.
+1. **Dependents.** `tracker:list-blocking <id>` — the cancelled issue's own native
+   `blocking` field names every open issue it blocks directly (ADR-003); no scan of
+   every other open issue's body is needed any more, unlike the retired `Blocked-by:`
+   marker convention.
 
-   A result that reaches the backend's page limit is an incomplete scan: report it and stop rather than
-   reporting "no dependents". A cancelled blocker was **abandoned, not satisfied** — each
-   dependent needs an explicit disposition: proceed anyway, re-point at a different
-   blocker, or cancel too (a separate run, decided on its own merits).
-2. **Parent.** If the body has `Part of: #<n>` (inline, or under a `### Part of`
-   heading), ask the human explicitly whether that
-   initiative still adds up without this step. If it does not, that is a second
-   cancellation, decided separately — never implied by this one.
-3. **Children.** If the issue carries the `initiative` label, list its open children and
-   decide **each one individually**: cancel it, or promote it to standalone by dropping
-   its `Part of:` line. Children are frequently valuable alone.
+   A result that reaches the command's page cap is an incomplete read: report it and
+   stop rather than reporting "no dependents". A cancelled blocker was **abandoned, not
+   satisfied** — each dependent needs an explicit disposition: **proceed anyway**
+   (drop the stale edge with `tracker:remove-blocker`, nothing to replace it), **re-point
+   at a different blocker** (`tracker:remove-blocker` then `tracker:add-blocker` to the
+   new one), or **cancel too** (a separate run, decided on its own merits — leave its
+   edge as is; that run's own teardown is where it gets resolved).
+2. **Parent.** If `tracker:view <id>` (Phase 1 step 1) returned a `parent`, ask the
+   human explicitly whether that initiative still adds up without this step. If it does
+   not, that is a second cancellation, decided separately — never implied by this one.
+3. **Children.** If the issue carries the `initiative` label, `tracker:list-children
+   <id>` and decide **each one individually**: cancel it, or promote it to standalone
+   with `tracker:remove-parent`. Children are frequently valuable alone.
 4. **Spun-off exclusions.** Issues carrying `Split from: #<id>` — opened from this task's
    Non-goals — hold rationale pointing at a task that will not exist: re-point them at the
-   parent or cancel them, never orphan them. Find them in the same `tracker:list-open`
-   sweep as the dependents; an issue opened before that marker existed will not be found,
-   so say so rather than reporting none.
+   parent or cancel them, never orphan them. `Split from:` stays body text (ADR-003 keeps
+   no native equivalent for it), so find them the same way as before: sweep bodies
+   client-side with `tracker:list-open` rather than the tracker's own body-search, whose
+   index can lag and miss a recently-edited issue. An issue opened before that marker
+   existed will not be found, so say so rather than reporting none.
 
 ## Phase 3 — the gate
 
@@ -154,11 +158,18 @@ question mechanism), last thing in the message —
 
    The `cancelled` label is what makes cancellations queryable — `/t-status` counts them
    from it. Keep it.
-6. **Execute every Phase 2 disposition** — `tracker:comment` for each note,
-   `tracker:edit-body` for the tracking issue's checkbox: the tracking-issue comment and
-   checkbox, each dependent's re-point or proceed note, each spun-off issue's new home. None of these
-   happened before the gate; all of them happen now. Report what happened to every
-   neighbour in plain prose.
+6. **Execute every Phase 2 disposition** — nothing below happened before the gate; all
+   of it happens now:
+   - **Parent**, if any: `tracker:comment` on it saying this child is cancelled.
+   - **Each dependent**: `tracker:remove-blocker <dependent-id> <this-id>` to drop the
+     now-stale edge (proceed and re-point both start here; re-point continues with
+     `tracker:add-blocker <dependent-id> <new-blocker-id>`), plus `tracker:comment` on
+     it explaining why.
+   - **Each child promoted to standalone**: `tracker:remove-parent <child-id>`, plus
+     `tracker:comment` on it.
+   - **Each spun-off issue**: `tracker:comment` pointing at its new home.
+
+   Report what happened to every neighbour in plain prose.
 
 ## Rules
 
