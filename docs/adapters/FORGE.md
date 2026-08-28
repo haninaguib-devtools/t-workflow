@@ -134,7 +134,11 @@ they were. A stale local worktree or branch, when one is actually in the way, is
 
 ### `forge:pr-close <pr> <comment>` — close without merging, deleting the branch
 
-Same deletion caveat as `forge:pr-merge`: on `gh` this removes the local branch too.
+**Branch deletion here is not remote-only, unlike `forge:pr-merge` above.** `gh`'s
+`--delete-branch` removes the local branch as well as the remote one, and switches the
+checkout to the default branch when it was on the deleted branch. Treat the branch as
+*possibly already gone* after this operation: `/t-cancel`'s own cleanup must check
+before deleting, and must not treat a missing branch as a failure.
 
 | Backend | Command |
 |---|---|
