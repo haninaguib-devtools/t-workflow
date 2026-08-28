@@ -16,9 +16,7 @@ that ADR differ, the ADR wins and the difference is a defect — flag it, do not
 improvise.
 
 Cancelling destroys work. Nothing belonging to a *task* is destroyed before the gate in
-Phase 3. The one path that never reaches that gate is a `/t-fix` change (Phase 1 step 2),
-which has no issue, no record, and no dependents — closing its PR is the whole of it, and
-the human asking for it is the confirmation.
+Phase 3.
 
 ## Where this runs
 
@@ -43,8 +41,6 @@ labels, comments, issue edits, gates, branch changes, anything:
      line. Ask which is meant rather than guessing.
    - **A supersession with no successor named.** A task replaced by a different plan
      closes pointing at the issue that replaced it; find or open that issue first.
-   - **A `/t-fix` change** (ADR-001 D3.4): no issue, no record, no dependents. Close
-     the PR, delete its branch, and stop — nothing below applies.
 3. **Find what exists**, so the gate can name it: `git fetch --prune origin`, then the
    branch locally (`git branch --list 'wip/<id>-*'`; `git worktree list`) and on the
    remote, plus any PR (`forge:pr-find-by-task <id>`, all states) and whether a record
