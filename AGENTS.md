@@ -26,7 +26,6 @@ only). Plain `git` is never abstracted.
 |---|---|
 | `/t-open` | Conversation → issue(s). How all work starts. |
 | `/t-plan` | Optional; required before changing a protected surface. Pins scope, risks, and validation onto the issue. |
-| `/t-wtree` | Optional. Creates or reuses the task's own worktree when isolation is wanted. |
 | `/t-work` | Branch, record, implement, check, draft PR. One invocation, in the current checkout. |
 | `/t-review` | Cold-context review; findings posted on the PR. Required before shipping a protected surface. |
 | `/t-ship` | Human-confirmed squash merge. Every path to `main` is a human-confirmed PR. |
@@ -75,11 +74,11 @@ only). Plain `git` is never abstracted.
   `docs/tasks/<bucket>/<id>-<slug>.md`, where `<bucket>` is the ID rounded down to the
   nearest 100, zero-padded to 6 digits — e.g. task 142 → `docs/tasks/000100/142-<slug>.md`
   (ADR-001 §D4).
-- **A task worktree is optional.** `/t-wtree <id>` prepares the sibling
-  `../<repo-name>-<id>` when a task wants its own checkout — two tasks at once, or a
-  long-running one. Otherwise `/t-work` runs on the task branch in the current checkout.
-  Two sessions never share a checkout, and `/t-ship` and `/t-cancel` never run from
-  inside a task worktree.
+- **A task worktree is optional.** A task that wants its own checkout — two tasks at
+  once, or a long-running one — gets one by hand (`git worktree add`) or from a
+  launching engine; the pipeline no longer ships a skill for it. Otherwise `/t-work`
+  runs on the task branch in the current checkout. Two sessions never share a checkout,
+  and `/t-ship` and `/t-cancel` never run from inside a task worktree.
 - `main` only moves by pull request. Never commit or push to `main` directly. The trunk
   name is `main` literally, throughout the skills and scripts — it is not abstracted the
   way the tracker and forge are; changing it is a find-and-replace across protected
