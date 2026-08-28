@@ -1,16 +1,25 @@
 # Mechanical enforcement (workflow §9): the checks AGENTS.md §Checks names, run on every
-# PR and on main. The `consistency` job's name is the status-check context
-# `scripts/github-bootstrap.sh` marks required in branch protection — renaming the job
-# means updating that script in the same change.
+# PR and on main, plus the CONSTITUTION.md §3 gates task #30 adds (plan, blockers,
+# record honesty, PR title — the cold-review gate lives in review-gate.yml, since it
+# also needs the pull_request_review trigger). Every job name here is a status-check
+# context `scripts/github-bootstrap.sh` marks required in branch protection — renaming
+# one means updating that script in the same change.
+#
+# `edited` is added to the default pull_request types so a title-only edit (title-gate)
+# or an issue-body-only edit (plan-gate, which reads the issue, not the PR) gets a fresh
+# run without needing a new commit.
 name: CI
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, edited]
   push:
     branches: [main]
 
 permissions:
   contents: read
+  # plan-gate, title-gate, and blockers all read issue state (body, title, blockedBy).
+  issues: read
 
 jobs:
   consistency:
@@ -61,14 +70,112 @@ jobs:
           # nearest 100, zero-padded to 6 digits. Checking the exact bucket is what makes
           # that claim true — any-bucket matching would let 999900/142-x.md satisfy task 142.
           bucket=$(printf '%06d' $(( (10#$id / 100) * 100 )))
-          if grep -qE "^docs/tasks/${bucket}/${id}-[^/]+\.md$" /tmp/changed; then
-            echo "OK: the diff carries the record for task $id at docs/tasks/${bucket}/."
-          else
+          recfile=$(grep -E "^docs/tasks/${bucket}/${id}-[^/]+\.md$" /tmp/changed | head -1)
+          if [ -z "$recfile" ]; then
             echo "FAIL: no docs/tasks/${bucket}/${id}-<slug>.md in this diff."
             echo "  Every task PR carries its own record (CONSTITUTION.md §1.2);"
             echo "  a record for another task, or in another bucket, does not satisfy this."
             exit 1
           fi
+          echo "Found the record for task $id at $recfile — checking it is real:"
+          # A record present but doctored (wrong heading/id line, missing template
+          # sections) is not honest — goal item 4 of #30.
+          bash scripts/check-record.sh "$id" "$recfile"
+
+  # CONSTITUTION.md §3's plan-before-protected-work rule, mechanized (goal item 1 of
+  # #30): a PR whose diff touches a protected surface fails unless its issue carries
+  # exactly one `## Plan` section.
+  plan-gate:
+    name: plan-gate
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - name: A protected diff carries exactly one Plan section
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          id=$(printf '%s' "$HEAD_REF" | sed -n -E 's#^wip/([0-9]+)-.+#\1#p')
+          if [ -z "$id" ]; then
+            echo "FAIL: branch '$HEAD_REF' is not wip/<id>-<slug>."
+            exit 1
+          fi
+          gh issue view "$id" --json body -q .body > /tmp/issue-body.md
+          git -c core.quotePath=false diff --name-only "origin/$BASE_REF"...HEAD |
+            bash scripts/check-plan-gate.sh /tmp/issue-body.md
+
+  # /t-work Phase 3's PR title convention, mechanized (goal item 5 of #30).
+  title-gate:
+    name: title-gate
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: The PR title starts with [<id>], matching the branch
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          id=$(printf '%s' "$HEAD_REF" | sed -n -E 's#^wip/([0-9]+)-.+#\1#p')
+          if [ -z "$id" ]; then
+            echo "FAIL: branch '$HEAD_REF' is not wip/<id>-<slug>."
+            exit 1
+          fi
+          bash scripts/check-title-gate.sh "$id" "$PR_TITLE"
+
+  # ADR-001 §D3.2 over the native blockedBy field (ADR-003), mechanized (goal item 3 of
+  # #30): every blocker of the PR's issue must be closed as completed. Re-evaluated on
+  # every pull_request sync/reopen/edit — the closest approximation to "at merge time"
+  # available without a merge queue (see the Plan's human_checks on this issue); a
+  # human who wants a fresher read before clicking merge can re-run this job.
+  blockers:
+    name: blockers
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Every blocker of this task's issue is closed as completed
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          OWNER: ${{ github.repository_owner }}
+          REPO_NAME: ${{ github.event.repository.name }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          id=$(printf '%s' "$HEAD_REF" | sed -n -E 's#^wip/([0-9]+)-.+#\1#p')
+          if [ -z "$id" ]; then
+            echo "FAIL: branch '$HEAD_REF' is not wip/<id>-<slug>."
+            exit 1
+          fi
+          # `gh api graphql`, not `gh issue view --json blockedBy`: the runner's gh
+          # version is not pinned by this workflow, and stateReason — needed to tell a
+          # cancelled blocker from a completed one (ADR-001 §D3.2) — is promised by the
+          # underlying GraphQL field but not (yet) by docs/adapters/TRACKER.md's
+          # tracker:list-blockers contract table, which names only `state`.
+          gh api graphql -f query='
+            query($owner: String!, $name: String!, $num: Int!) {
+              repository(owner: $owner, name: $name) {
+                issue(number: $num) {
+                  blockedBy(first: 100) { nodes { number state stateReason } }
+                }
+              }
+            }' -F owner="$OWNER" -F name="$REPO_NAME" -F num="$id" \
+            --jq '.data.repository.issue.blockedBy.nodes' > /tmp/blockers.json
+          bash scripts/check-blocker-gate.sh /tmp/blockers.json
+
+  # Regression coverage for the plumbing behind the gates above: protected-paths.sh's
+  # exit codes and quoting, the bucket math, and every check-*.sh script against
+  # fixtures (Done-when 1 and 2 of #30).
+  plumbing-test:
+    name: plumbing-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Gate scripts behave correctly against fixtures
+        run: ./scripts/plumbing-test.sh
 
   # Add the project's build/test command here as a third job once the stack exists —
   # AGENTS.md §Checks item 1 is the single place that names it.
