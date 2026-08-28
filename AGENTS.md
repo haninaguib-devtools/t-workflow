@@ -32,7 +32,8 @@ abstracted.
 | `/t-work` | Branch, record, implement, check, draft PR. One invocation, in the current checkout. |
 | `/t-review` | Cold-context review; findings posted on the PR. Required before shipping a protected surface. |
 | `/t-ship` | Human-confirmed squash merge. Every path to `main` is a human-confirmed PR. |
-| `/t-cancel` | Terminal exit: the reason recorded on the issue, every neighbour decided, then teardown. |
+| `/t-cancel` | Terminal exit: the reason recorded on the issue, every neighbour decided, then the PR closed and its branch deleted. |
+| `/t-clean` | Optional, lazy. Removes a shipped or cancelled task's stale local worktree/branch, on confirmation. |
 | `/t-status` | Read-only pipeline overview. |
 | `/t-fix` | A change with no semantic content as one PR — no issue, record, or cold review (ADR-001). |
 
@@ -84,8 +85,10 @@ abstracted.
 - **A task worktree is optional.** `/t-wtree <id>` prepares the sibling
   `../<repo-name>-<id>` when a task wants its own checkout — two tasks at once, or a
   long-running one. Otherwise `/t-work` runs on the task branch in the current checkout.
-  Two sessions never share a checkout, and `/t-ship` and `/t-cancel` never run from
-  inside a task worktree.
+  Two sessions never share a checkout. `/t-ship` and `/t-cancel` run from any checkout,
+  including inside a task's own worktree — neither one destroys it (ADR-002); `/t-clean`
+  is the one skill that removes a stale worktree or branch, lazily and on confirmation,
+  and it is the one that cannot run from inside what it might remove.
 - `main` only moves by pull request. Never commit or push to `main` directly. The trunk
   name is `main` literally, throughout the skills and scripts — it is not abstracted the
   way the tracker and forge are; changing it is a find-and-replace across protected

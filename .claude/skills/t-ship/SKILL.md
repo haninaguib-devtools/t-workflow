@@ -12,28 +12,11 @@ The merge stage. The human confirmation here is the strategic pass — does this
 does it collide with anything in flight — and, when no cold review ran, it is also the
 only read the change gets before `main`.
 
-## Where this runs
-
-Successful shipping deletes the task branch and removes the task worktree if there is
-one, so this skill cannot run from inside what it is about to delete. Compare the current
-checkout (`git rev-parse --show-toplevel`) with the primary checkout (the parent of
-`git rev-parse --path-format=absolute --git-common-dir`) before any mutation — these
-commands are read-only, and in particular the PR must not be marked ready before this
-check:
-
-- **Inside a linked worktree** → stop. Report the primary checkout's absolute path and
-  say to run `/t-ship <id>` from a session rooted there.
-- **In the primary checkout** → continue, whether it sits on `main` or on the task branch
-  (ADR-001 makes the worktree optional, so the task branch commonly *is* checked out
-  here). Uncommitted changes stop the skill: report them and never stash, discard, or
-  switch over them.
-
 ## Preconditions
 
 Every step below names `<pr>`. **Resolve it from the task id first** with
 `forge:pr-find-by-task <id>`, which matches the head branch `wip/<id>-*` — the id
-lowercased, `PROJ-142` → `proj-142` (ADR-001 §D4). Keep its `headRefName` too: the
-cleanup in step 5 deletes that exact branch, and it is the only place the slug is known.
+lowercased, `PROJ-142` → `proj-142` (ADR-001 §D4).
 Exactly one open PR → that is `<pr>`. None → the task has not
 reached `/t-work`'s draft-PR step; stop and say so. More than one → stop and report every
 candidate rather than guessing. A PR that is already merged or closed means this task has
@@ -148,11 +131,9 @@ already left the pipeline; say which and stop.
    record, via `forge:pr-merge <pr>`. **Before composing that command, re-read
    `docs/adapters/FORGE.md`'s `forge:pr-merge` row and check the exact command string you
    are about to run against it** — the row is the one source of truth, and a command
-   reconstructed from memory at this point merges silently and leaves the branch
-   stranded on `origin` with nothing surfacing the miss (issue #13): verify it includes
-   the active backend's branch-deletion flag (`--delete-branch` on GitHub) before running
-   it. The subject overrides the forge's default entirely, so append the PR reference
-   explicitly — it is not added for you:
+   reconstructed from memory can silently drift from it. The subject overrides the
+   forge's default entirely, so append the PR reference explicitly — it is not added for
+   you:
 
    ```
    subject: [<id>] <issue title> (#<pr>)
@@ -171,72 +152,24 @@ already left the pipeline; say which and stop.
 4. `git fetch --prune` — deleted `wip/` branches otherwise linger as stale
    `origin/wip/*` tracking refs. Fetch first, then clean up: the same order in
    `/t-fix` and `/t-cancel`.
-5. **Clean up: two independent actions, both always taken.** Removing the shipped
-   task's worktree and putting the invoking checkout right are separate concerns — one
-   is about the task's checkout, the other about this session's — and neither replaces
-   the other. Treating them as either/or risks leaving the primary checkout's `main` one
-   commit behind `origin/main` after a clean worktree'd ship: the worktree gets removed,
-   and the fast-forward never runs because Action 2 below was skipped as unnecessary.
-
-   **Action 1 — remove the task's worktree, if it has one** (`git worktree list` — a
-   prepared worktree uses `../<repo-name>-<id>`, but an engine-created one may not, so
-   act on what git reports):
-
-   ```bash
-   git -C <worktree-path> status --porcelain   # empty output = clean
-   git worktree remove <worktree-path>
-   ```
-
-   Refuse on uncommitted changes and never `--force`: the merge already succeeded, so
-   this is not a ship failure — report what is uncommitted and let the human decide.
-   No worktree at all is the ordinary no-op. Either way, continue to Action 2.
-
-   **Action 2 — return the invoking checkout to a clean, current state**, whatever
-   Action 1 did or skipped. What "current" means depends on the branch this checkout is
-   actually on — and the merge may already have moved it: `forge:pr-merge` deletes the
-   local branch too and switches off it, so check rather than assume:
+5. **At most, fast-forward a `main` this checkout happens to be sitting on.** Merging
+   asserts no branch-deletion flag (`docs/adapters/FORGE.md`'s `forge:pr-merge` row), so
+   the task's worktree, local branch, and this checkout are left exactly as they were —
+   cleanup is `/t-clean`'s job, run when a stale one is actually in the way, never a
+   side effect of shipping:
 
    ```bash
    git rev-parse --abbrev-ref HEAD
    ```
 
-   - **On the task branch** (`<headRefName>`): switch and fast-forward —
-
-     ```bash
-     git checkout main
-     git merge --ff-only origin/main
-     ```
-
-   - **On `main`**: fast-forward in place —
-
-     ```bash
-     git merge --ff-only origin/main
-     ```
-
-   - **On any other branch**: leave the checkout exactly where it is and state the
-     reason in the report — it sits on work that is not this task's, and this skill has
-     no business moving it.
-
-   Then **delete the local task branch, if it still exists**. The branch name is the
-   `headRefName` from the resolution step at the top of Preconditions — the slug is never
-   re-derived here, because a guess that does not match deletes nothing and reports
-   success:
-
-   ```bash
-   git rev-parse --verify --quiet <headRefName> && git branch -D <headRefName>
-   ```
-
-   A branch that is already gone is the normal case, not a failure — say so and move on.
-   When it does still exist, `-D` and not `-d`, and only here: a squash merge rewrites the
-   work into a single new commit, so the branch's commits are never ancestors of `main`
-   and `-d` would refuse every time as "not fully merged". The safety `-d` normally gives
-   is already supplied — the forge reported the merge succeeded, so the content is on
-   `main`. Skip this delete only when Action 1 left the worktree standing (removal
-   refused on uncommitted changes): the branch is checked out there and git will refuse.
+   - **On `main`**: fast-forward in place — `git merge --ff-only origin/main`.
+   - **On any other branch**, including the task branch: leave the checkout exactly
+     where it is. That is not a failure to report; it is the normal outcome now that
+     shipping runs from anywhere.
 6. If the task belongs to a tracking issue, tick its checkbox
    (`tracker:edit-body` on the tracking issue's task list).
-7. Report the merge commit hash, whether a cold review ran, and what happened to the
-   branch and any worktree.
+7. Report the merge commit hash, whether a cold review ran, and whether this checkout's
+   `main` was fast-forwarded.
 
    **If that tick completed the tracking issue's list**, say so and ask whether to close
    the initiative — it is the human's call, never automatic, because an initiative can
@@ -248,7 +181,5 @@ already left the pipeline; say which and stop.
 
 - Never merge without the human's explicit confirmation in this conversation.
 - Never force-push; never push `main`.
-- Never `git worktree remove --force`. Uncommitted work outlives the ship; destroying it
-  is the human's call, not this skill's.
 - Do not edit the change while shipping. A defect noticed here is a new finding or a new
   issue, not a drive-by fix on the way to `main`.
