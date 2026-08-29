@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Every script under scripts/ — what it checks or does, and which skill or CI job invokes it.">
+    <meta name="theme-color" content="#ffffff">
+    <title>Scripts — t-workflow Reference</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../styles.css">
+    <script src="../script.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header" data-header>
+      <div class="nav-wrap">
+        <a class="brand" href="../index.html" aria-label="t-workflow home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><circle cx="7" cy="16" r="3"/><circle cx="16" cy="7" r="3"/><circle cx="25" cy="16" r="3"/><circle cx="16" cy="25" r="3"/><path d="M9.5 14.5 13.5 9.5M18.5 9.5l4 5M22.5 18l-4 4.5M13.5 22.5l-4-4.5"/></svg>
+          </span>
+          <span>t-workflow</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a href="../index.html">Home</a>
+          <a href="index.html">Reference</a>
+        </nav>
+        <a class="github-link" href="https://github.com/haninaguib-devtools/t-workflow" aria-label="View t-workflow on GitHub">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.69c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.35 1.09 2.92.83.09-.65.35-1.09.64-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.6 9.6 0 0 1 12 6.7a9.6 9.6 0 0 1 2.5.34c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.86V21c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>
+          <span>GitHub</span>
+        </a>
+      </div>
+    </header>
+
+    <nav class="doc-subnav" aria-label="Reference section pages">
+      <a href="index.html">Overview</a>
+      <a href="skills.html">Skills</a>
+      <a href="structure.html">Project structure</a>
+      <a href="installer.html">Installer</a>
+      <a href="scripts.html" aria-current="page">Scripts</a>
+      <a href="workflows.html">GitHub Actions</a>
+      <a href="migrations.html">Migrations</a>
+      <a href="docs.html">docs/ tour</a>
+    </nav>
+
+    <main id="main">
+      <section class="doc-hero">
+        <p class="section-label">Reference · Scripts</p>
+        <h1>Eleven scripts. Rules the build enforces, not rules to remember.</h1>
+        <p>Every script under <code>scripts/</code> is a pure function over explicit inputs — files, stdin, or arguments — so each one is testable against fixtures without ever calling the tracker or the forge live. <code>scripts/plumbing-test.sh</code> is exactly that fixture suite, and it runs on every PR.</p>
+      </section>
+
+      <div class="doc-main">
+        <div class="doc-section">
+          <h2>The protected-surface list, executable</h2>
+          <div class="doc-card-grid">
+            <article class="doc-card">
+              <h3><code>protected-paths.sh</code></h3>
+              <p><code>CONSTITUTION.md</code> §3's protected-path list, in machine-checkable form — the single source three skills (<code>/t-work</code>, <code>/t-review</code>, <code>/t-ship</code>), <code>/t-status</code>, and CI all read, so no one of them can quietly drift from what the constitution says. Matches paths against an ordered glob list (<code>CONSTITUTION.md</code>, <code>AGENTS.md</code>, <code>.claude/*</code>, <code>docs/adr/*</code>, <code>scripts/*</code>, <code>installer/*</code>, and more) using bash pattern matching, and un-quotes a git-style quoted non-ASCII path first so one can't slip through unprotected.</p>
+              <p><strong>Usage:</strong> <code>protected-paths.sh &lt;path&gt;...</code> (exit 0 if any is protected, 1 if none), <code>--stdin</code> (one path per line — the form every caller with a real diff should prefer), or <code>--list</code> (print the raw patterns). Exit <strong>2</strong> means nothing was even checked — a broken caller, never treated as "clean."</p>
+              <p><strong>Called by:</strong> <code>/t-work</code>, <code>/t-review</code>, <code>/t-ship</code>, <code>/t-status</code>, <code>/t-drive</code>, <code>/t-update</code>, plus <code>check-plan-gate.sh</code> and <code>check-review-gate.sh</code> below, plus <code>consistency-check.sh</code> itself (checking the script and <code>CONSTITUTION.md</code> §3 agree, both directions).</p>
+            </article>
+          </div>
+        </div>
+
+        <div class="doc-section">
+          <h2>Cross-document consistency</h2>
+          <div class="doc-card-grid">
+            <article class="doc-card">
+              <h3><code>consistency-check.sh</code></h3>
+              <p>The mechanized half of keeping the governance documents from drifting apart. Runs ten checks over every "living document" (<code>AGENTS.md</code>, <code>CONSTITUTION.md</code>, <code>README.md</code>, <code>docs/*.md</code>, every ADR, architecture doc, and adapter, the task-record template/README, and every <code>SKILL.md</code>) — deliberately excluding historical task records, which describe the tree as it was, not as it is.</p>
+              <ul>
+                <li>§-references (<code>§3</code>) resolve to a real heading in a document the line actually names.</li>
+                <li><code>ADR-NNN</code> pointers resolve to a real file, and a decision reference (<code>ADR-001 §D4</code>) resolves to a real <code>### D4.</code> heading in it.</li>
+                <li>Named-section references (<code>AGENTS.md §Checks</code>) resolve to a real heading.</li>
+                <li>The <code>AGENTS.md</code> pipeline table and <code>.claude/skills/</code> agree, in both directions — a table row with no skill directory, or a skill directory with no table row, both fail.</li>
+                <li>Retired vocabulary (lane names, <code>ADR-001</code>'s superseded no-issue fix path) doesn't reappear in living guidance.</li>
+                <li>No skill cites a <code>docs/workflow.md</code> section — skills are self-contained by design.</li>
+                <li>Every <code>tracker:*</code>/<code>forge:*</code> operation a skill names is actually defined in an adapter.</li>
+                <li><code>protected-paths.sh</code> and <code>CONSTITUTION.md</code> §3 name the same surfaces, both directions — the reverse direction (a surface named in prose but not enforced) is the load-bearing one.</li>
+                <li>Every code fence opens and closes cleanly (a stray same-line closer leaves a block open, silently rendering the rest of a document as code).</li>
+              </ul>
+              <p><strong>Usage:</strong> <code>./scripts/consistency-check.sh [root]</code>. Exit 0 = clean; non-zero = every violation listed on stdout.</p>
+              <p><strong>Called by:</strong> every skill's standing check set (<code>AGENTS.md</code> §Checks item 2); the <code>consistency</code> job in <code>ci.yml</code>, on every PR and every push to <code>main</code>.</p>
+            </article>
+          </div>
+        </div>
+
+        <div class="doc-section">
+          <h2>The task-record and PR-shape gates</h2>
+          <div class="doc-card-grid">
+            <article class="doc-card">
+              <h3><code>check-record.sh</code></h3>
+              <p>Verifies a task record's identity lines and template shape against the task id its branch names — the record-honesty rule, mechanized. Confirms the heading reads <code>&lt;id&gt; — &lt;Title&gt;</code>, an <code>Issue: #&lt;id&gt;</code> line is present, and every <code>##</code> section <code>docs/tasks/TEMPLATE.md</code> defines appears — read from the template itself, never hardcoded, so it can't silently drift from it.</p>
+              <p><strong>Usage:</strong> <code>check-record.sh &lt;id&gt; &lt;record-file&gt; [template-file]</code> for an ordinary task; <code>check-record.sh --multi &lt;pr-body-file&gt; [template-file]</code> (changed paths on stdin) for a driven initiative's aggregate PR, which locates and checks one record per <code>Task: #&lt;id&gt;</code> line in the PR body.</p>
+              <p><strong>Called by:</strong> the <code>record</code> job in <code>ci.yml</code>.</p>
+            </article>
+
+            <article class="doc-card">
+              <h3><code>check-plan-gate.sh</code></h3>
+              <p>Mechanizes the plan-before-protected-work rule: given the diff's changed paths and the issue body, confirms a protected diff carries exactly one <code>## Plan</code> section — missing or duplicated both fail.</p>
+              <p><strong>Usage:</strong> changed paths on stdin, <code>check-plan-gate.sh &lt;issue-body-file&gt;</code>. Exit 0 on an unprotected diff, or a protected one with exactly one plan; 1 otherwise; 2 if nothing was checked.</p>
+              <p><strong>Called by:</strong> the <code>plan-gate</code> job in <code>ci.yml</code>.</p>
+            </article>
+
+            <article class="doc-card">
+              <h3><code>check-title-gate.sh</code></h3>
+              <p>Confirms a PR's title starts with <code>[&lt;id&gt;]</code>, matching the id parsed from its <code>wip/&lt;id&gt;-&lt;slug&gt;</code> branch — the narrowest possible check, deliberately: <code>/t-ship</code>'s own squash-subject convention is free to differ once merged.</p>
+              <p><strong>Usage:</strong> <code>check-title-gate.sh &lt;id&gt; &lt;pr-title&gt;</code>.</p>
+              <p><strong>Called by:</strong> the <code>title-gate</code> job in <code>ci.yml</code>.</p>
+            </article>
+
+            <article class="doc-card">
+              <h3><code>check-blocker-gate.sh</code></h3>
+              <p>Confirms every blocker of a task's issue is closed <em>as completed</em> — a blocker closed as not-planned (cancelled via <code>/t-cancel</code>) was abandoned, not satisfied, and still fails this.</p>
+              <p><strong>Usage:</strong> <code>check-blocker-gate.sh &lt;blockers-json-file&gt;</code>, a JSON array of <code>{number, state, stateReason}</code> — the shape <code>gh api graphql</code>'s <code>blockedBy</code> field returns.</p>
+              <p><strong>Called by:</strong> the <code>blockers</code> job in <code>ci.yml</code>.</p>
+            </article>
+
+            <article class="doc-card">
+              <h3><code>check-review-gate.sh</code></h3>
+              <p>Mechanizes <code>/t-ship</code>'s review precondition: on a protected diff, the latest review must read <code>readiness: ready</code>, its <code>isolation:</code> line must not be <code>same session</code>, and it must be newer than the head commit (a later commit means the review is about a different diff).</p>
+              <p><strong>Usage:</strong> changed paths on stdin, <code>check-review-gate.sh &lt;head-commit-iso8601&gt; &lt;reviews-json-file&gt;</code>.</p>
+              <p><strong>Called by:</strong> the <code>cold-review</code> job in <code>review-gate.yml</code>.</p>
+            </article>
+          </div>
+        </div>
+
+        <div class="doc-section">
+          <h2>The update manifest</h2>
+          <div class="doc-card-grid">
+            <article class="doc-card">
+              <h3><code>check-manifest.sh</code></h3>
+              <p>The one implementation of the manifest's normalized-hash rule, and the CI lock a consuming project wires in. Strips everything strictly between a <code>&lt;!-- local --&gt;</code>/<code>&lt;!-- /local --&gt;</code> marker pair before hashing, so a consumer's own local-slot content never registers as drift; a symlink is hashed by its target, never its resolved content.</p>
+              <p><strong>Usage:</strong> <code>check-manifest.sh --hash-file &lt;path&gt;</code> prints one file's normalized sha256 (what <code>/t-update</code> writes into the manifest); with no arguments (or <code>--manifest &lt;path&gt;</code>), verifies every file <code>.template-manifest.json</code> lists against the working tree. In this template repo itself it's a deliberate no-op — there is no manifest here, since this repo is the template, not a pinned consumer.</p>
+              <p><strong>Called by:</strong> <code>/t-update</code> (writing and later re-verifying); a consumer's own CI, as a required check this repo doesn't run on itself.</p>
+            </article>
+
+            <article class="doc-card">
+              <h3><code>template-owned-paths.sh</code></h3>
+              <p>Computes the manifest's file list: every tracked file matching a protected pattern, minus the paths that are genesis-only — stamped once at bootstrap (<code>README.md</code>) or deleted outright for every generated project (<code>LICENSE</code>, <code>installer/*</code>, <code>site/*</code>, the installer and pages workflows). It is itself template-owned, so a future change to what counts as template-owned reaches consumers the normal way.</p>
+              <p><strong>Usage:</strong> <code>template-owned-paths.sh --list</code>.</p>
+              <p><strong>Called by:</strong> <code>/t-update</code>, run against the scratch clone of the target tag to get that tag's own view of the file list.</p>
+            </article>
+          </div>
+        </div>
+
+        <div class="doc-section">
+          <h2>Repository setup and regression coverage</h2>
+          <div class="doc-card-grid">
+            <article class="doc-card">
+              <h3><code>github-bootstrap.sh</code></h3>
+              <p>Settings as code: creates the workflow's labels (<code>initiative</code>, <code>cancelled</code>, and the four classification labels), sets squash-only merge mechanics with delete-branch-on-merge, and applies branch protection on <code>main</code> — PRs only, no force pushes, <strong>zero</strong> required approvals on purpose (GitHub forbids approving your own PR, so requiring one in the solo phase would make every PR unmergeable by its only author). Marks CI's job names as required status checks only once they've actually run on <code>main</code> at least once, since GitHub rejects a context it has never seen.</p>
+              <p><strong>Usage:</strong> run once after creating the GitHub repository, from a checkout with <code>gh</code> logged in. Idempotent — safe to re-run, which is exactly how it picks up the required-checks step the first run couldn't do yet.</p>
+              <p><strong>Called by:</strong> <code>installer/bootstrap.sh</code>, when a remote was created; a person, by hand, otherwise (and again once CI has run on <code>main</code>).</p>
+            </article>
+
+            <article class="doc-card">
+              <h3><code>plumbing-test.sh</code></h3>
+              <p>Regression coverage for the plumbing behind every gate above: <code>protected-paths.sh</code>'s exit codes and non-ASCII quoting, the ID-bucket math (<code>&lt;bucket&gt;</code> = id rounded down to the nearest 100), and every <code>check-*.sh</code> script against both a passing and a failing fixture. Entirely fixture-based — nothing here calls the tracker or the forge, so it runs identically locally and in CI.</p>
+              <p><strong>Usage:</strong> <code>./scripts/plumbing-test.sh</code>, from anywhere (paths resolve from the script's own location).</p>
+              <p><strong>Called by:</strong> the <code>plumbing-test</code> job in <code>ci.yml</code>, on every PR.</p>
+            </article>
+          </div>
+        </div>
+
+        <div class="doc-footer-nav">
+          <a href="installer.html">← Installer</a>
+          <a href="workflows.html">GitHub Actions →</a>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-wrap">
+        <a class="brand" href="../index.html" aria-label="Back to t-workflow home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><circle cx="7" cy="16" r="3"/><circle cx="16" cy="7" r="3"/><circle cx="25" cy="16" r="3"/><circle cx="16" cy="25" r="3"/><path d="M9.5 14.5 13.5 9.5M18.5 9.5l4 5M22.5 18l-4 4.5M13.5 22.5l-4-4.5"/></svg>
+          </span>
+          <span>t-workflow</span>
+        </a>
+        <p>A practical delivery workflow for agent-driven software projects.</p>
+        <nav aria-label="Footer navigation">
+          <a href="https://github.com/haninaguib-devtools/t-workflow">GitHub</a>
+          <a href="https://github.com/haninaguib-devtools/t-workflow/blob/main/README.md">Documentation</a>
+          <a href="https://github.com/haninaguib-devtools/t-workflow/blob/main/LICENSE">MIT License</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

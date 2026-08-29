@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="What each /t-* skill does: its steps, and the concrete tracker and forge operations and scripts it calls.">
+    <meta name="theme-color" content="#ffffff">
+    <title>Skills — t-workflow Reference</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../styles.css">
+    <script src="../script.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header" data-header>
+      <div class="nav-wrap">
+        <a class="brand" href="../index.html" aria-label="t-workflow home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><circle cx="7" cy="16" r="3"/><circle cx="16" cy="7" r="3"/><circle cx="25" cy="16" r="3"/><circle cx="16" cy="25" r="3"/><path d="M9.5 14.5 13.5 9.5M18.5 9.5l4 5M22.5 18l-4 4.5M13.5 22.5l-4-4.5"/></svg>
+          </span>
+          <span>t-workflow</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a href="../index.html">Home</a>
+          <a href="index.html">Reference</a>
+        </nav>
+        <a class="github-link" href="https://github.com/haninaguib-devtools/t-workflow" aria-label="View t-workflow on GitHub">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.69c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.35 1.09 2.92.83.09-.65.35-1.09.64-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.6 9.6 0 0 1 12 6.7a9.6 9.6 0 0 1 2.5.34c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.86V21c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>
+          <span>GitHub</span>
+        </a>
+      </div>
+    </header>
+
+    <nav class="doc-subnav" aria-label="Reference section pages">
+      <a href="index.html">Overview</a>
+      <a href="skills.html" aria-current="page">Skills</a>
+      <a href="structure.html">Project structure</a>
+      <a href="installer.html">Installer</a>
+      <a href="scripts.html">Scripts</a>
+      <a href="workflows.html">GitHub Actions</a>
+      <a href="migrations.html">Migrations</a>
+      <a href="docs.html">docs/ tour</a>
+    </nav>
+
+    <main id="main">
+      <section class="doc-hero">
+        <p class="section-label">Reference · Skills</p>
+        <h1>Nine commands, one per stage.</h1>
+        <p>Each skill lives as a <code>SKILL.md</code> file under <code>.claude/skills/&lt;name&gt;/</code>. None of them name a vendor directly — every tracker or forge action below is a named operation that <code>docs/adapters/TRACKER.md</code> and <code>docs/adapters/FORGE.md</code> map to a real command (GitHub by default). This page lists, for each skill, what it does, and exactly which of those operations and which scripts it calls.</p>
+      </section>
+
+      <div class="doc-main">
+        <div class="doc-section">
+          <h2>The five-stage core path</h2>
+          <p class="doc-dek">Every task moves through these, start to merge.</p>
+
+          <div class="doc-card-grid">
+            <article class="doc-card">
+              <h3><code>/t-open</code><span>Entrance</span></h3>
+              <p>Turns a converged conversation into tracker issues — the only way work starts. Makes the shape judgment: one task (fits one PR), an initiative (a tracking issue plus clear child tasks), or an initiative whose only child is a design task when the decomposition isn't known yet. Creates no branch, record, or code.</p>
+              <ul>
+                <li>Ensures labels exist, then creates the issue(s) with a <code>Goal</code> / <code>Done when</code> / <code>Scope</code> / <code>Non-goals</code> body.</li>
+                <li>Applies exactly one classification label (<code>bug</code>, <code>enhancement</code>, <code>documentation</code>, <code>question</code>) to every task issue, plus any already-existing project-specific labels whose fit is unambiguous.</li>
+                <li>Links a tracking issue's children and any named blockers immediately after creation — native relations, not body text.</li>
+                <li>Opens a same-turn issue for any <em>deferred</em> Non-goal, tagged <code>Split from: #&lt;id&gt;</code> (the one relationship GitHub has no native field for).</li>
+              </ul>
+              <p><strong>Tracker/forge operations:</strong> <code>tracker:ensure-labels</code>, <code>tracker:create</code>, <code>tracker:label</code>, <code>tracker:list-labels</code>, <code>tracker:set-parent</code>, <code>tracker:add-blocker</code>.</p>
+              <p><strong>Scripts:</strong> none directly — the issue-form mirrors of this skill's body template live under <code>.github/ISSUE_TEMPLATE/</code>.</p>
+            </article>
+
+            <article class="doc-card">
+              <h3><code>/t-plan</code><span>Before protected work</span></h3>
+              <p>Sharpens an existing issue into a bounded plan, without implementing anything. Optional in general, but required before any change to a protected surface (<code>CONSTITUTION.md</code> §3) — <code>/t-work</code> refuses without one once it discovers the diff needs it.</p>
+              <ul>
+                <li>Writes one <code>## Plan</code> section onto the issue body: <code>Allowed paths</code>, <code>Risks / constraints</code>, and a <code>Validation</code> block splitting <code>agent_checks</code> (each tagged <code>implementation</code>, <code>review</code>, or <code>either</code>) from <code>human_checks</code>.</li>
+                <li>On a re-plan, replaces the section wholesale — an issue carries exactly one, always — and the report quotes the previous Allowed paths verbatim so the task record can capture why they changed.</li>
+                <li>Runs a scope-overlap check against every other open issue, naming any overlap rather than silently proceeding.</li>
+              </ul>
+              <p><strong>Tracker/forge operations:</strong> <code>tracker:view</code>, <code>tracker:edit-body</code>, <code>tracker:list-open</code>.</p>
+              <p><strong>Scripts:</strong> none called directly by this skill; its output is what <code>scripts/check-plan-gate.sh</code> later checks for.</p>
+            </article>
+
+            <article class="doc-card">
+              <h3><code>/t-work</code><span>Implementation</span></h3>
+              <p>One invocation, start to draft PR, in the current checkout. Checks gates, resolves or creates the task branch, writes the task record, implements within the declared scope, runs the checks, and opens a draft pull request. Also runs narrow fix passes when a review left blocker/high findings.</p>
+              <ul>
+                <li><strong>Phase 1 (gates):</strong> reads the issue and its plan; refuses if any blocker isn't closed as completed; checks the declared scope against <code>scripts/protected-paths.sh</code> and stops for <code>/t-plan</code> if a protected path has no plan; resolves the <code>wip/&lt;id&gt;-&lt;slug&gt;</code> branch idempotently.</li>
+                <li><strong>Phase 2 (the work):</strong> stays inside Allowed paths / Scope; updates the record with decisions and deviations as they happen.</li>
+                <li><strong>Phase 3 (checks and PR):</strong> runs the plan's <code>implementation</code>/<code>either</code> checks (or <code>AGENTS.md</code> §Checks with no plan); re-checks protection against the <em>actual</em> diff; commits, pushes, and opens the draft PR titled <code>[&lt;id&gt;] &lt;issue title&gt;</code>.</li>
+              </ul>
+              <p><strong>Tracker/forge operations:</strong> <code>tracker:view</code>, <code>tracker:list-blockers</code>, <code>forge:pr-find-by-task</code>, <code>forge:pr-reviews</code>, <code>forge:pr-create-draft</code>.</p>
+              <p><strong>Scripts:</strong> <code>scripts/protected-paths.sh</code> (twice — expected scope, then actual diff), <code>./scripts/consistency-check.sh</code> (part of the standing check set).</p>
+            </article>
+
+            <article class="doc-card">
+              <h3><code>/t-review</code><span>Cold review</span></h3>
+              <p>One bounded stage: reads the PR's diff in isolation from whoever implemented it, and posts findings plus an explicit readiness verdict. Required before shipping a protected surface; never fixes anything itself.</p>
+              <ul>
+                <li>Resolves the PR from the task id, then establishes isolation — a fresh session, a read-only subagent, or (only for a tiny, unprotected change) the same session, recorded either way.</li>
+                <li>Checks scope, record honesty, constitution conflicts, unexplained removals, and the promotion rule; for a document deliverable, also consistency, ambiguity, and completeness.</li>
+                <li>Runs the plan's <code>review</code>/<code>either</code> checks, then posts one review: an <code>isolation:</code> line, findings ordered blocker/high/medium/low, a <code>## Pending human checks</code> section, and a <code>readiness: ready</code> or <code>readiness: not-ready</code> verdict line.</li>
+              </ul>
+              <p><strong>Tracker/forge operations:</strong> <code>forge:pr-find-by-task</code>, <code>forge:pr-files</code>, <code>forge:pr-diff</code>, <code>forge:pr-view</code>, <code>forge:pr-reviews</code>, <code>forge:pr-review</code>.</p>
+              <p><strong>Scripts:</strong> <code>scripts/protected-paths.sh --stdin</code> (deciding protection and the severity of any drift), <code>./scripts/consistency-check.sh</code> for a document deliverable.</p>
+            </article>
+
+            <article class="doc-card">
+              <h3><code>/t-ship</code><span>Merge</span></h3>
+              <p>The only path to <code>main</code>. Checks every precondition, then stops to ask the human to confirm the merge, and only then squash-merges with a commit written from the task record.</p>
+              <ul>
+                <li><strong>Preconditions:</strong> decides protection from the PR's real files; requires a plan and, on a protected surface, a current cold review with <code>readiness: ready</code> and an isolation that isn't <code>same session</code>; checks CI and mergeability; confirms the local branch tip matches the PR's pushed head; confirms the record is in the diff; carries forward any pending human checks.</li>
+                <li>Marks the PR ready, then asks one confirmation gate showing the evidence — review verdict, CI state, diff summary, pending human checks.</li>
+                <li>On confirmation, squash-merges with a self-contained subject/body built from the record, closes the issue as completed, and (for a driven initiative's aggregate PR) writes one <code>Task: #&lt;id&gt;</code> line per included child.</li>
+              </ul>
+              <p><strong>Tracker/forge operations:</strong> <code>forge:pr-find-by-task</code>, <code>forge:pr-files</code>, <code>forge:pr-reviews</code>, <code>forge:pr-checks</code>, <code>forge:pr-view</code>, <code>forge:pr-ready</code>, <code>forge:pr-draft</code>, <code>forge:pr-merge</code>, <code>forge:pr-approval</code>, <code>tracker:view</code>, <code>tracker:close-done</code>, <code>tracker:auto-close-on-merge</code>.</p>
+              <p><strong>Scripts:</strong> <code>scripts/protected-paths.sh --stdin</code> over the PR's own changed files.</p>
+            </article>
+          </div>
+        </div>
+
+        <div class="doc-section">
+          <h2>Supporting commands</h2>
+          <p class="doc-dek">Driving an initiative, cancellation, template sync, and status.</p>
+
+          <div class="doc-card-grid">
+            <article class="doc-card">
+              <h3><code>/t-drive</code><span>Optional</span></h3>
+              <p>The one explicitly-invoked exception to "nothing auto-chains": walks an initiative's children to completion on one shared integration branch (<code>wip/&lt;initiative-id&gt;-integration</code>), then stops once for a human's confirmation on a single PR to <code>main</code>.</p>
+              <ul>
+                <li>Branches each eligible child from the integration branch, runs <code>/t-plan</code> (if needed), <code>/t-work</code>, and <code>/t-review</code> exactly as they run standalone, retargeting the child's draft PR onto the integration branch.</li>
+                <li>A <code>readiness: ready</code> review authorizes merging that child into the integration branch — never into <code>main</code>. A failing child gets exactly one bounded retry (<code>/t-work</code>'s Fix mode), then is excluded — never auto-merged, never auto-cancelled.</li>
+                <li>Once every child is merged, excluded, or excluded by cascade, opens one aggregate PR to <code>main</code> and runs an ordinary <code>/t-review</code> on it before naming <code>/t-ship</code>.</li>
+              </ul>
+              <p><strong>Tracker/forge operations:</strong> <code>tracker:view</code>, <code>tracker:list-children</code>, <code>tracker:list-blockers</code>, <code>forge:pr-set-base</code>, <code>forge:pr-ready</code>, <code>forge:pr-merge</code>, <code>forge:pr-create-draft</code> — plus every operation <code>/t-plan</code>, <code>/t-work</code>, and <code>/t-review</code> use internally, since it calls them directly rather than reimplementing them.</p>
+              <p><strong>Scripts:</strong> <code>scripts/protected-paths.sh</code>, when deciding whether a child needs a plan.</p>
+            </article>
+
+            <article class="doc-card">
+              <h3><code>/t-cancel</code><span>Terminal exit</span></h3>
+              <p>The pipeline's only non-merge exit. Records why the work is being abandoned and forces an explicit decision on every dependent, child, and parent issue — gathered before the confirmation gate, acted on only after it — then closes the PR and deletes the branch.</p>
+              <ul>
+                <li>Refuses on a merged task, a "not now" (that's a blocked-by dependency, not a cancellation), or a supersession with no successor named.</li>
+                <li>Phase 2 gathers every neighbour's disposition (dependents, parent, children, spun-off exclusions) without acting; Phase 3 is one confirmation gate naming what will be destroyed.</li>
+                <li>Phase 4 closes the PR (deleting its branch), then executes every neighbour disposition gathered earlier, and closes the issue carrying the reason in the close comment.</li>
+              </ul>
+              <p><strong>Tracker/forge operations:</strong> <code>tracker:view</code>, <code>tracker:list-blocking</code>, <code>tracker:list-children</code>, <code>tracker:list-open</code>, <code>tracker:ensure-labels</code>, <code>tracker:label</code>, <code>tracker:close</code>, <code>tracker:remove-blocker</code>, <code>tracker:add-blocker</code>, <code>tracker:remove-parent</code>, <code>tracker:comment</code>, <code>forge:pr-find-by-task</code>, <code>forge:pr-close</code>.</p>
+              <p><strong>Scripts:</strong> none called directly — a stale local worktree or branch left behind is left alone permanently (ADR-005); nothing cleans it up automatically.</p>
+            </article>
+
+            <article class="doc-card">
+              <h3><code>/t-update</code><span>Optional</span></h3>
+              <p>For a repo generated from this template: syncs its template-owned files to a pinned release, preserving local content and applying pending migrations, landed as one ordinary pipeline task. See the <a href="migrations.html">Migrations page</a> for the full mechanism.</p>
+              <ul>
+                <li>Reads the current pin (<code>.template-manifest.json</code>), fetches the target tag into a scratch clone, and refuses outright if any currently-owned file has drifted from what the manifest recorded.</li>
+                <li>Computes what would change, gates on a human's confirmation, then — only after that — opens the task's own issue, branch, and record.</li>
+                <li>Applies file changes and pending migrations in order, writes the new manifest, and runs <code>/t-work</code> Phase 3 verbatim (checks, commit, draft PR).</li>
+              </ul>
+              <p><strong>Tracker/forge operations:</strong> <code>tracker:create</code> (its own task issue) — everything after that reuses <code>/t-work</code> Phase 3's own operations.</p>
+              <p><strong>Scripts:</strong> <code>scripts/check-manifest.sh</code> (<code>--hash-file</code> and verify mode), <code>scripts/template-owned-paths.sh --list</code>, <code>./scripts/consistency-check.sh</code>, <code>scripts/protected-paths.sh</code>.</p>
+            </article>
+
+            <article class="doc-card">
+              <h3><code>/t-status</code><span>Read-only</span></h3>
+              <p>A pipeline overview that never writes, comments, labels, or asks for confirmation — safe to run at any moment. Reports open initiatives and tasks, blocked/unblocked state, PR and CI/review state, and a set of warnings.</p>
+              <ul>
+                <li>Lists initiatives with sub-issue completion, open tasks with blocked state, open PRs with draft/ready and review verdict, local branch/worktree state, and recent cancellations.</li>
+                <li>Surfaces warnings: an open PR touching a protected surface with no review, two open tasks with overlapping scope, an issue edited after its PR opened outside the expected plan exemption, a stalled branch with no PR.</li>
+              </ul>
+              <p><strong>Tracker/forge operations:</strong> <code>tracker:list-initiatives</code>, <code>tracker:list-open</code>, <code>tracker:list-cancelled</code>, <code>forge:pr-list</code>, <code>forge:pr-reviews</code>, <code>forge:pr-checks</code>, <code>forge:pr-files</code>.</p>
+              <p><strong>Scripts:</strong> <code>scripts/protected-paths.sh --stdin</code>, for the protected-surface-with-no-review warning.</p>
+            </article>
+          </div>
+        </div>
+
+        <div class="doc-footer-nav">
+          <a href="index.html">← Overview</a>
+          <a href="structure.html">Project structure →</a>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-wrap">
+        <a class="brand" href="../index.html" aria-label="Back to t-workflow home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><circle cx="7" cy="16" r="3"/><circle cx="16" cy="7" r="3"/><circle cx="25" cy="16" r="3"/><circle cx="16" cy="25" r="3"/><path d="M9.5 14.5 13.5 9.5M18.5 9.5l4 5M22.5 18l-4 4.5M13.5 22.5l-4-4.5"/></svg>
+          </span>
+          <span>t-workflow</span>
+        </a>
+        <p>A practical delivery workflow for agent-driven software projects.</p>
+        <nav aria-label="Footer navigation">
+          <a href="https://github.com/haninaguib-devtools/t-workflow">GitHub</a>
+          <a href="https://github.com/haninaguib-devtools/t-workflow/blob/main/README.md">Documentation</a>
+          <a href="https://github.com/haninaguib-devtools/t-workflow/blob/main/LICENSE">MIT License</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

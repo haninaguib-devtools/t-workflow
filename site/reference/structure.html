@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Every file and directory a project generated from t-workflow starts with, and what each one is for.">
+    <meta name="theme-color" content="#ffffff">
+    <title>Project Structure — t-workflow Reference</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../styles.css">
+    <script src="../script.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header" data-header>
+      <div class="nav-wrap">
+        <a class="brand" href="../index.html" aria-label="t-workflow home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><circle cx="7" cy="16" r="3"/><circle cx="16" cy="7" r="3"/><circle cx="25" cy="16" r="3"/><circle cx="16" cy="25" r="3"/><path d="M9.5 14.5 13.5 9.5M18.5 9.5l4 5M22.5 18l-4 4.5M13.5 22.5l-4-4.5"/></svg>
+          </span>
+          <span>t-workflow</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a href="../index.html">Home</a>
+          <a href="index.html">Reference</a>
+        </nav>
+        <a class="github-link" href="https://github.com/haninaguib-devtools/t-workflow" aria-label="View t-workflow on GitHub">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.69c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.35 1.09 2.92.83.09-.65.35-1.09.64-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.6 9.6 0 0 1 12 6.7a9.6 9.6 0 0 1 2.5.34c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.86V21c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>
+          <span>GitHub</span>
+        </a>
+      </div>
+    </header>
+
+    <nav class="doc-subnav" aria-label="Reference section pages">
+      <a href="index.html">Overview</a>
+      <a href="skills.html">Skills</a>
+      <a href="structure.html" aria-current="page">Project structure</a>
+      <a href="installer.html">Installer</a>
+      <a href="scripts.html">Scripts</a>
+      <a href="workflows.html">GitHub Actions</a>
+      <a href="migrations.html">Migrations</a>
+      <a href="docs.html">docs/ tour</a>
+    </nav>
+
+    <main id="main">
+      <section class="doc-hero">
+        <p class="section-label">Reference · Project structure</p>
+        <h1>Every file the installer places, and what it's for.</h1>
+        <p>This is the whole tree a new project starts with, minus the template-only parts the installer strips out at generation time (noted below). Several entries link to a deeper page — this one is the map.</p>
+      </section>
+
+      <div class="doc-main">
+        <div class="doc-section">
+          <h2>Governance, at the root</h2>
+          <p class="doc-dek">The files every agent reads before touching anything.</p>
+          <div class="doc-table-wrap">
+            <table class="doc-table">
+              <thead><tr><th>Path</th><th>What it is</th></tr></thead>
+              <tbody>
+                <tr><td><code>CONSTITUTION.md</code></td><td>The project's invariants: delivery rules, the decision log's own rules, the protected-surface list (§3), and a reserved §4 for the consuming project's own stack/architecture constraints. Binding on every task; changes only by PR at the heightened approval bar.</td></tr>
+                <tr><td><code>AGENTS.md</code></td><td>What an agent reads on session start: the pipeline table, the tracker-write and scope conventions, the communication rules, and the one place the project's build/test check is named (§Checks). The session-start contract.</td></tr>
+                <tr><td><code>CLAUDE.md</code>, <code>GEMINI.md</code>, <code>.github/copilot-instructions.md</code></td><td>Filesystem symlinks to <code>AGENTS.md</code> — not separate copies. They exist only so Claude Code, Gemini CLI, and GitHub Copilot each find the instructions at the filename they expect. Edit only <code>AGENTS.md</code>; the aliases can never drift.</td></tr>
+                <tr><td><code>.agents/skills</code></td><td>A symlink to <code>.claude/skills/</code>, so a tool that looks for skills in the agent-neutral location finds the same files. Edit only <code>.claude/skills/</code>.</td></tr>
+                <tr><td><code>README.md</code></td><td>Per-project, not template content beyond the version the installer writes from <code>installer/templates/README.md</code> at genesis (project name and provenance filled in). A protected surface once genesis closes.</td></tr>
+                <tr><td><code>.gitignore</code></td><td>OS/editor noise, local secrets, and <code>.claude/settings.local.json</code> (per-machine agent settings that must never be committed).</td></tr>
+                <tr><td><code>LICENSE</code></td><td>MIT, naming the <em>template's</em> copyright holder — stripped from every generated project. A generated project ships with none; its own licence is the project owner's choice.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="doc-section">
+          <h2><code>.claude/</code> — the executable instructions</h2>
+          <p class="doc-dek">The whole directory is a protected surface, not only <code>skills/</code>.</p>
+          <p><code>.claude/skills/&lt;name&gt;/SKILL.md</code> holds one file per stage — <code>t-open</code>, <code>t-plan</code>, <code>t-work</code>, <code>t-review</code>, <code>t-drive</code>, <code>t-ship</code>, <code>t-cancel</code>, <code>t-update</code>, <code>t-status</code> — nine directories today. Full detail on each is the <a href="skills.html">Skills page</a>. A generated project may also carry <code>.claude/agents/</code> (subagent definitions) or <code>.claude/settings.json</code> (hooks and permission allowlists) if the project adds them; neither exists in this template repo itself, but both are covered by the same protected-surface rule the moment they do, since either changes what an agent does when it runs.</p>
+        </div>
+
+        <div class="doc-section">
+          <h2><code>docs/</code> — the durable record</h2>
+          <p class="doc-dek">Everything here is meant to survive losing the tracker and forge. Full tour on the <a href="docs.html">docs/ tour page</a>.</p>
+          <div class="doc-table-wrap">
+            <table class="doc-table">
+              <thead><tr><th>Path</th><th>What it is</th></tr></thead>
+              <tbody>
+                <tr><td><code>docs/workflow.md</code></td><td>The cross-stage shape of the pipeline — what spans stages, not what any one stage does. The skills are self-contained and never cite it for their own instructions.</td></tr>
+                <tr><td><code>docs/adr/</code></td><td>One append-only file per architecture decision, numbered. Ships with ADR-001 (the baseline) through the latest; a consuming project's own decisions start at the next number.</td></tr>
+                <tr><td><code>docs/adapters/TRACKER.md</code>, <code>docs/adapters/FORGE.md</code></td><td>The backend maps: every <code>tracker:*</code> and <code>forge:*</code> operation a skill names, mapped to a concrete command (GitHub by default). Swapping either backend means editing these two files only.</td></tr>
+                <tr><td><code>docs/architecture/</code></td><td>Binding conventions the skills execute against: confirmation gates, issue-template design, local-content slots, the update manifest, and the migrations convention.</td></tr>
+                <tr><td><code>docs/tasks/TEMPLATE.md</code>, <code>docs/tasks/README.md</code></td><td>The shape of every future task record, and the bucketing convention (<code>&lt;bucket&gt;/&lt;id&gt;-&lt;slug&gt;.md</code>). Protected; the individual records under <code>docs/tasks/&lt;bucket&gt;/</code> are not.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-callout"><strong>Task records are emptied at generation time.</strong> The template's own history under <code>docs/tasks/&lt;bucket&gt;/</code> describes this repository, not the one being generated — <code>installer/bootstrap.sh</code> deletes every record subdirectory, keeping only <code>TEMPLATE.md</code> and <code>README.md</code>.</div>
+        </div>
+
+        <div class="doc-section">
+          <h2><code>scripts/</code> and <code>.github/</code> — mechanical enforcement</h2>
+          <p class="doc-dek">Rules the build enforces beat rules a model must remember.</p>
+          <p><code>scripts/</code> holds eleven shell scripts — the executable form of the constitution's protected-path list, the CI gates it feeds, and their own regression tests. <code>.github/workflows/</code> runs most of them on every pull request, plus deploys this website. Both get their own deep-dive pages: <a href="scripts.html">Scripts</a> and <a href="workflows.html">GitHub Actions</a>. <code>.github/ISSUE_TEMPLATE/</code> (<code>task.yml</code>, <code>initiative.yml</code>, <code>config.yml</code>) gives a hand-opened issue the same shape <code>/t-open</code> produces — see <a href="docs.html">docs/ tour</a> for the design spec.</p>
+        </div>
+
+        <div class="doc-section">
+          <h2><code>migrations/</code></h2>
+          <p class="doc-dek">Empty on a fresh project, and empty in this template too — until the first breaking change needs one.</p>
+          <p>Holds one append-only <code>V&lt;n&gt;__&lt;slug&gt;.md</code> file per breaking template change; ships with only a <code>README.md</code> landing pad so the directory exists in git before any migration does. See the <a href="migrations.html">Migrations page</a> for the full shape and how <code>/t-update</code> applies one.</p>
+        </div>
+
+        <div class="doc-section">
+          <h2>What a generated project does <em>not</em> get</h2>
+          <p class="doc-dek">Stripped by <code>installer/bootstrap.sh</code> at generation time — present in this template repo, absent everywhere it produces.</p>
+          <ul>
+            <li><code>.git</code> — a new project gets its own history, not a fork of the template's.</li>
+            <li><code>LICENSE</code> — see above.</li>
+            <li><code>installer/</code> — a project doesn't ship the tool that made it.</li>
+            <li><code>site/</code> — this website describes the template, not the project being generated.</li>
+            <li><code>.github/workflows/installer.yml</code> and <code>.github/workflows/pages.yml</code> — the installer's own test, and this site's deploy workflow; each lives in its own file precisely so removing it is one deletion, never text surgery on a shared, protected CI file.</li>
+          </ul>
+          <p>Full detail on exactly how and when these are stripped is on the <a href="installer.html">Installer page</a>.</p>
+        </div>
+
+        <div class="doc-footer-nav">
+          <a href="skills.html">← Skills</a>
+          <a href="installer.html">Installer →</a>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-wrap">
+        <a class="brand" href="../index.html" aria-label="Back to t-workflow home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><circle cx="7" cy="16" r="3"/><circle cx="16" cy="7" r="3"/><circle cx="25" cy="16" r="3"/><circle cx="16" cy="25" r="3"/><path d="M9.5 14.5 13.5 9.5M18.5 9.5l4 5M22.5 18l-4 4.5M13.5 22.5l-4-4.5"/></svg>
+          </span>
+          <span>t-workflow</span>
+        </a>
+        <p>A practical delivery workflow for agent-driven software projects.</p>
+        <nav aria-label="Footer navigation">
+          <a href="https://github.com/haninaguib-devtools/t-workflow">GitHub</a>
+          <a href="https://github.com/haninaguib-devtools/t-workflow/blob/main/README.md">Documentation</a>
+          <a href="https://github.com/haninaguib-devtools/t-workflow/blob/main/LICENSE">MIT License</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

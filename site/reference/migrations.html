@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="How a generated project stays current with the template over time: the versioned manifest, local-content slots, and /t-update.">
+    <meta name="theme-color" content="#ffffff">
+    <title>Migrations — t-workflow Reference</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../styles.css">
+    <script src="../script.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header" data-header>
+      <div class="nav-wrap">
+        <a class="brand" href="../index.html" aria-label="t-workflow home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><circle cx="7" cy="16" r="3"/><circle cx="16" cy="7" r="3"/><circle cx="25" cy="16" r="3"/><circle cx="16" cy="25" r="3"/><path d="M9.5 14.5 13.5 9.5M18.5 9.5l4 5M22.5 18l-4 4.5M13.5 22.5l-4-4.5"/></svg>
+          </span>
+          <span>t-workflow</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a href="../index.html">Home</a>
+          <a href="index.html">Reference</a>
+        </nav>
+        <a class="github-link" href="https://github.com/haninaguib-devtools/t-workflow" aria-label="View t-workflow on GitHub">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.69c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.35 1.09 2.92.83.09-.65.35-1.09.64-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.6 9.6 0 0 1 12 6.7a9.6 9.6 0 0 1 2.5.34c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.86V21c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>
+          <span>GitHub</span>
+        </a>
+      </div>
+    </header>
+
+    <nav class="doc-subnav" aria-label="Reference section pages">
+      <a href="index.html">Overview</a>
+      <a href="skills.html">Skills</a>
+      <a href="structure.html">Project structure</a>
+      <a href="installer.html">Installer</a>
+      <a href="scripts.html">Scripts</a>
+      <a href="workflows.html">GitHub Actions</a>
+      <a href="migrations.html" aria-current="page">Migrations</a>
+      <a href="docs.html">docs/ tour</a>
+    </nav>
+
+    <main id="main">
+      <section class="doc-hero">
+        <p class="section-label">Reference · Migrations</p>
+        <h1>Staying current, on purpose, on request.</h1>
+        <p>A project is generated from the template exactly once (see the <a href="installer.html">Installer page</a>). Everything on this page is about what happens <em>afterward</em>: how a generated project can later pull in template improvements without losing its own local content, via one command, <code>/t-update</code>.</p>
+      </section>
+
+      <div class="doc-main">
+        <div class="doc-section">
+          <h2>Releases are tags; a consumer pins one</h2>
+          <p>The template's own releases are ordinary git tags on <code>main</code> — <code>v1</code>, <code>v2</code>, and so on — cut by hand after a sync-point PR merges. A generated project always pins one exact tag; it never tracks <code>main</code> or "latest." That pinned tag is the unit <code>/t-update</code> moves between.</p>
+        </div>
+
+        <div class="doc-section">
+          <h2>The manifest: <code>.template-manifest.json</code></h2>
+          <p>Committed at a consumer project's root once it has synced at least once (first adoption has none yet). It records the template repository, the currently-pinned tag, the highest migration number already applied, and — for every template-owned file — a normalized sha256 hash.</p>
+          <div class="doc-table-wrap">
+            <table class="doc-table">
+              <tbody>
+                <tr><td><code>template</code></td><td>The template repo, <code>owner/name</code>. First adoption reads this from the consumer's own <code>README.md</code> provenance line if no manifest and no explicit source exist yet.</td></tr>
+                <tr><td><code>tag</code></td><td>The template release this project is currently synced to.</td></tr>
+                <tr><td><code>migrations_applied</code></td><td>The highest migration number already applied; <code>/t-update</code> applies only what's greater than this.</td></tr>
+                <tr><td><code>files</code></td><td>Every template-owned path at that tag, mapped to its normalized hash at that tag — the exact set the CI lock enforces. Nothing outside it is ever touched by a sync.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p><strong>Which files count as template-owned</strong> is not simply every protected path: <code>scripts/template-owned-paths.sh --list</code> is the executable answer — every protected, tracked file minus the ones that are genesis-only (stamped once, like <code>README.md</code>, or deleted outright for every generated project, like <code>LICENSE</code> or <code>site/</code>) — there is nothing in a consumer repo for those to sync <em>to</em>.</p>
+        </div>
+
+        <div class="doc-section">
+          <h2>Normalized hashing, and local slots</h2>
+          <p>A template-owned file may carry one or more <code>&lt;!-- local --&gt;</code> … <code>&lt;!-- /local --&gt;</code> regions — exactly two exist today, <code>CONSTITUTION.md</code> §4 (stack/architecture constraints) and <code>AGENTS.md</code> §Checks item 1 (the build/test command) — bracketing content that is the consumer's own by design. Before hashing, everything strictly between a marker pair is stripped (the markers themselves stay), so a consumer's own slot edits never register as drift. A file with no markers hashes as-is; a symlink (<code>CLAUDE.md</code>, <code>.agents/skills</code>, …) is hashed by its <em>target</em>, never its resolved content, since one of them points at a directory. <code>scripts/check-manifest.sh --hash-file &lt;path&gt;</code> is the single implementation of this rule — both writing the manifest and later verifying it call the same function, so the two can never compute a hash two different ways.</p>
+        </div>
+
+        <div class="doc-section">
+          <h2>The CI lock</h2>
+          <p><code>scripts/check-manifest.sh</code>, run with no arguments, reads the manifest, recomputes every listed file's normalized hash from the working tree, and fails — listing every path that drifted or went missing — the moment any of them no longer matches. A consuming project wires this into its own CI as a required check; this template repo does not run it on itself, since it carries no manifest and the result would only ever say "no manifest," which is expected, not a failure.</p>
+        </div>
+
+        <div class="doc-section">
+          <h2>Breaking changes: <code>migrations/</code></h2>
+          <p>Most template updates are a plain file sync — copy the new version over the old one, re-apply local slots. A <strong>migration</strong> exists only when that isn't enough: something about the change needs the consumer's own state touched — a renamed operation a consumer's scripts might call, a moved section a cross-reference points at, a file that no longer exists.</p>
+          <p>One append-only file per breaking change lives in <code>migrations/</code>, named <code>V&lt;n&gt;__&lt;slug&gt;.md</code> with a strictly increasing <code>&lt;n&gt;</code> (gaps allowed, renumbering never). Each file states what broke, gives the upgrading agent concrete, followable steps (not prose a human has to interpret), and a Done-when check the agent can run immediately after applying it.</p>
+          <p><code>/t-update</code> reads every migration file in the target tag greater than the manifest's current <code>migrations_applied</code>, applies them strictly in increasing order, checks each one's own Done-when immediately after — stopping the whole update, unresolved, the moment one fails — then writes the new highest applied number back into the manifest.</p>
+        </div>
+
+        <div class="doc-section">
+          <h2>How <code>/t-update</code> puts it all together</h2>
+          <ol>
+            <li>Reads the current pin (or falls back to the README's provenance line on first adoption) and fetches the target tag into a scratch clone outside this repo's own working tree — nothing here is touched yet.</li>
+            <li><strong>Refuses outright if any currently-owned file has drifted</strong> from what the manifest recorded — a hand-edit outside its local slot since the last sync means the manifest can no longer be trusted, and the fix is upstreaming that edit first, never silently overwriting it here.</li>
+            <li>Computes, read-only, exactly what would change: the new file list, which files are added/changed/unchanged, and which migrations would apply.</li>
+            <li><strong>Gates on the human's confirmation</strong> — current tag → target tag, file counts, migrations that would apply — before writing or calling the tracker at all.</li>
+            <li>Only on confirmation does it open its own task: an issue, a branch, and a record — the first file this skill writes inside the repo happens only after the task branch exists.</li>
+            <li>Applies the sync: a plain copy for files with no local-slot markers; for <code>CONSTITUTION.md</code> and <code>AGENTS.md</code>, splices the target tag's file whole but keeps this repo's <em>current</em> content inside every local-slot region; applies pending migrations in order.</li>
+            <li>Writes the new manifest, then runs <code>/t-work</code> Phase 3 verbatim — checks (including <code>check-manifest.sh</code> against what was just written), commit, push, draft PR.</li>
+          </ol>
+          <p>A sync almost always touches a protected surface — template-owned files are protected surfaces by construction — so it gets the same plan-and-review treatment any other protected change does. There is no fast path, by design.</p>
+        </div>
+
+        <div class="doc-callout"><strong>Not the installer, run again.</strong> <code>/t-update</code> never re-runs anything in <code>installer/</code> — a generated project has no <code>installer/</code> directory at all (it was stripped at genesis). This is a wholly separate mechanism, purpose-built for a project that already exists. See the <a href="installer.html">Installer page</a> for how a project is created the one time that happens.</div>
+
+        <div class="doc-footer-nav">
+          <a href="workflows.html">← GitHub Actions</a>
+          <a href="docs.html">docs/ tour →</a>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-wrap">
+        <a class="brand" href="../index.html" aria-label="Back to t-workflow home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><circle cx="7" cy="16" r="3"/><circle cx="16" cy="7" r="3"/><circle cx="25" cy="16" r="3"/><circle cx="16" cy="25" r="3"/><path d="M9.5 14.5 13.5 9.5M18.5 9.5l4 5M22.5 18l-4 4.5M13.5 22.5l-4-4.5"/></svg>
+          </span>
+          <span>t-workflow</span>
+        </a>
+        <p>A practical delivery workflow for agent-driven software projects.</p>
+        <nav aria-label="Footer navigation">
+          <a href="https://github.com/haninaguib-devtools/t-workflow">GitHub</a>
+          <a href="https://github.com/haninaguib-devtools/t-workflow/blob/main/README.md">Documentation</a>
+          <a href="https://github.com/haninaguib-devtools/t-workflow/blob/main/LICENSE">MIT License</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>
