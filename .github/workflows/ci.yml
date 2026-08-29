@@ -2,7 +2,7 @@
 # PR and on main, plus the CONSTITUTION.md §3 gates task #30 adds (plan, blockers,
 # record honesty, PR title — the cold-review gate lives in review-gate.yml, since it
 # also needs the pull_request_review trigger). Every job name here is a status-check
-# context `scripts/github-bootstrap.sh` marks required in branch protection — renaming
+# context `.t-workflow/scripts/github-bootstrap.sh` marks required in branch protection — renaming
 # one means updating that script in the same change.
 #
 # `edited` is added to the default pull_request types so a title-only edit (title-gate)
@@ -28,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Cross-artifact document consistency
-        run: ./scripts/consistency-check.sh
+        run: ./.t-workflow/scripts/consistency-check.sh
 
   # CONSTITUTION.md §1.2 makes "a record rides in its PR" non-optional, and workflow §1.4
   # prefers a rule the build enforces over one the model must remember.
@@ -69,7 +69,7 @@ jobs:
           # `Task: #<id>` line in the PR body, one per included child.
           if printf '%s' "$HEAD_REF" | grep -qE '^wip/[0-9]+-integration$'; then
             printf '%s' "$PR_BODY" > /tmp/pr-body.md
-            cat /tmp/changed | bash scripts/check-record.sh --multi /tmp/pr-body.md
+            cat /tmp/changed | bash .t-workflow/scripts/check-record.sh --multi /tmp/pr-body.md
             exit $?
           fi
 
@@ -93,7 +93,7 @@ jobs:
           echo "Found the record for task $id at $recfile — checking it is real:"
           # A record present but doctored (wrong heading/id line, missing template
           # sections) is not honest — goal item 4 of #30.
-          bash scripts/check-record.sh "$id" "$recfile"
+          bash .t-workflow/scripts/check-record.sh "$id" "$recfile"
 
   # CONSTITUTION.md §3's plan-before-protected-work rule, mechanized (goal item 1 of
   # #30): a PR whose diff touches a protected surface fails unless its issue carries
@@ -129,7 +129,7 @@ jobs:
           fi
           gh issue view "$id" --json body -q .body > /tmp/issue-body.md
           git -c core.quotePath=false diff --name-only "origin/$BASE_REF"...HEAD |
-            bash scripts/check-plan-gate.sh /tmp/issue-body.md
+            bash .t-workflow/scripts/check-plan-gate.sh /tmp/issue-body.md
 
   # /t-work Phase 3's PR title convention, mechanized (goal item 5 of #30).
   title-gate:
@@ -148,7 +148,7 @@ jobs:
             echo "FAIL: branch '$HEAD_REF' is not wip/<id>-<slug>."
             exit 1
           fi
-          bash scripts/check-title-gate.sh "$id" "$PR_TITLE"
+          bash .t-workflow/scripts/check-title-gate.sh "$id" "$PR_TITLE"
 
   # ADR-001 §D3.2 over the native blockedBy field (ADR-003), mechanized (goal item 3 of
   # #30): every blocker of the PR's issue must be closed as completed. Re-evaluated on
@@ -187,7 +187,7 @@ jobs:
               }
             }' -F owner="$OWNER" -F name="$REPO_NAME" -F num="$id" \
             --jq '.data.repository.issue.blockedBy.nodes' > /tmp/blockers.json
-          bash scripts/check-blocker-gate.sh /tmp/blockers.json
+          bash .t-workflow/scripts/check-blocker-gate.sh /tmp/blockers.json
 
   # Regression coverage for the plumbing behind the gates above: protected-paths.sh's
   # exit codes and quoting, the bucket math, and every check-*.sh script against
@@ -198,7 +198,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Gate scripts behave correctly against fixtures
-        run: ./scripts/plumbing-test.sh
+        run: ./.t-workflow/scripts/plumbing-test.sh
 
   # Add the project's build/test command here as a third job once the stack exists —
   # AGENTS.md §Checks item 1 is the single place that names it.

@@ -97,7 +97,7 @@ applied by the skills that own them. Blocked state is derived from the native
 | `name` | `Initiative` |
 | `description` | `Tracking issue: overall intent plus ordered child tasks. Several PRs.` |
 | `title` | (none) |
-| `labels` | `["initiative"]` — GitHub silently drops a label that does not exist, so an initiative opened before `scripts/github-bootstrap.sh` has run carries none. `/t-status` says so rather than reporting no initiatives. |
+| `labels` | `["initiative"]` — GitHub silently drops a label that does not exist, so an initiative opened before `.t-workflow/scripts/github-bootstrap.sh` has run carries none. `/t-status` says so rather than reporting no initiatives. |
 
 Fields, in order:
 

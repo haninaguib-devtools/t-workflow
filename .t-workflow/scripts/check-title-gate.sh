@@ -5,7 +5,7 @@
 # own squash-subject convention is free to differ once merged, and a human is free to
 # edit the rest of a draft PR's title.
 #
-# Usage: scripts/check-title-gate.sh <id> <pr-title>
+# Usage: .t-workflow/scripts/check-title-gate.sh <id> <pr-title>
 # Exit 0 = the title starts with [<id>]; 1 = it does not; 2 = bad usage.
 set -uo pipefail
 

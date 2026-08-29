@@ -23,7 +23,7 @@ filenames.
 `/t-open` tags every task issue (never a tracking issue) with exactly one of these, so
 issues can be grouped/filtered by kind later. Reuses GitHub's own default label set
 already present in this repo rather than inventing a parallel taxonomy; ensured to exist
-via `tracker:ensure-labels` (backed by `scripts/github-bootstrap.sh`).
+via `tracker:ensure-labels` (backed by `.t-workflow/scripts/github-bootstrap.sh`).
 
 | Label | Meaning |
 |---|---|
@@ -122,7 +122,7 @@ Contract: read the current body first; never clobber it.
 
 ### `tracker:ensure-labels <label>…` — idempotently create the workflow's labels
 
-The label set and colors live in `scripts/github-bootstrap.sh` (write the equivalent
+The label set and colors live in `.t-workflow/scripts/github-bootstrap.sh` (write the equivalent
 bootstrap script when adopting another backend).
 
 | Backend | Command |
@@ -216,7 +216,7 @@ blocker gate treats a not-planned close as an abandoned blocker.
 
 ## Bootstrap
 
-`scripts/github-bootstrap.sh` is the GitHub implementation of tracker + forge bootstrap
+`.t-workflow/scripts/github-bootstrap.sh` is the GitHub implementation of tracker + forge bootstrap
 (labels, merge mechanics, branch protection). Issue templates are part of the tracker
 surface too: GitHub's live in `.github/ISSUE_TEMPLATE/` (spec:
 `docs/architecture/issue-templates.md`). Adopting another backend means writing its own

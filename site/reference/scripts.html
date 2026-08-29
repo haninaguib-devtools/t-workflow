@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Every script under scripts/ — what it checks or does, and which skill or CI job invokes it.">
+    <meta name="description" content="Every script under .t-workflow/scripts/ — what it checks or does, and which skill or CI job invokes it.">
     <meta name="theme-color" content="#ffffff">
     <title>Scripts — t-workflow Reference</title>
     <link rel="icon" href="../favicon.svg" type="image/svg+xml">
@@ -47,7 +47,7 @@
       <section class="doc-hero">
         <p class="section-label">Reference · Scripts</p>
         <h1>Eleven scripts. Rules the build enforces, not rules to remember.</h1>
-        <p>Every script under <code>scripts/</code> is a pure function over explicit inputs — files, stdin, or arguments — so each one is testable against fixtures without ever calling the tracker or the forge live. <code>scripts/plumbing-test.sh</code> is exactly that fixture suite, and it runs on every PR.</p>
+        <p>Every script under <code>.t-workflow/scripts/</code> is a pure function over explicit inputs — files, stdin, or arguments — so each one is testable against fixtures without ever calling the tracker or the forge live. <code>.t-workflow/scripts/plumbing-test.sh</code> is exactly that fixture suite, and it runs on every PR.</p>
       </section>
 
       <div class="doc-main">
@@ -56,7 +56,7 @@
           <div class="doc-card-grid">
             <article class="doc-card">
               <h3><code>protected-paths.sh</code></h3>
-              <p><code>CONSTITUTION.md</code> §3's protected-path list, in machine-checkable form — the single source three skills (<code>/t-work</code>, <code>/t-review</code>, <code>/t-ship</code>), <code>/t-status</code>, and CI all read, so no one of them can quietly drift from what the constitution says. Matches paths against an ordered glob list (<code>CONSTITUTION.md</code>, <code>AGENTS.md</code>, <code>.claude/*</code>, <code>docs/adr/*</code>, <code>scripts/*</code>, <code>installer/*</code>, and more) using bash pattern matching, and un-quotes a git-style quoted non-ASCII path first so one can't slip through unprotected.</p>
+              <p><code>CONSTITUTION.md</code> §3's protected-path list, in machine-checkable form — the single source three skills (<code>/t-work</code>, <code>/t-review</code>, <code>/t-ship</code>), <code>/t-status</code>, and CI all read, so no one of them can quietly drift from what the constitution says. Matches paths against an ordered glob list (<code>CONSTITUTION.md</code>, <code>AGENTS.md</code>, <code>.claude/*</code>, <code>docs/adr/*</code>, <code>.t-workflow/scripts/*</code>, <code>installer/*</code>, and more) using bash pattern matching, and un-quotes a git-style quoted non-ASCII path first so one can't slip through unprotected.</p>
               <p><strong>Usage:</strong> <code>protected-paths.sh &lt;path&gt;...</code> (exit 0 if any is protected, 1 if none), <code>--stdin</code> (one path per line — the form every caller with a real diff should prefer), or <code>--list</code> (print the raw patterns). Exit <strong>2</strong> means nothing was even checked — a broken caller, never treated as "clean."</p>
               <p><strong>Called by:</strong> <code>/t-work</code>, <code>/t-review</code>, <code>/t-ship</code>, <code>/t-status</code>, <code>/t-drive</code>, <code>/t-update</code>, plus <code>check-plan-gate.sh</code> and <code>check-review-gate.sh</code> below, plus <code>consistency-check.sh</code> itself (checking the script and <code>CONSTITUTION.md</code> §3 agree, both directions).</p>
             </article>
@@ -80,7 +80,7 @@
                 <li><code>protected-paths.sh</code> and <code>CONSTITUTION.md</code> §3 name the same surfaces, both directions — the reverse direction (a surface named in prose but not enforced) is the load-bearing one.</li>
                 <li>Every code fence opens and closes cleanly (a stray same-line closer leaves a block open, silently rendering the rest of a document as code).</li>
               </ul>
-              <p><strong>Usage:</strong> <code>./scripts/consistency-check.sh [root]</code>. Exit 0 = clean; non-zero = every violation listed on stdout.</p>
+              <p><strong>Usage:</strong> <code>./.t-workflow/scripts/consistency-check.sh [root]</code>. Exit 0 = clean; non-zero = every violation listed on stdout.</p>
               <p><strong>Called by:</strong> every skill's standing check set (<code>AGENTS.md</code> §Checks item 2); the <code>consistency</code> job in <code>ci.yml</code>, on every PR and every push to <code>main</code>.</p>
             </article>
           </div>
@@ -158,7 +158,7 @@
             <article class="doc-card">
               <h3><code>plumbing-test.sh</code></h3>
               <p>Regression coverage for the plumbing behind every gate above: <code>protected-paths.sh</code>'s exit codes and non-ASCII quoting, the ID-bucket math (<code>&lt;bucket&gt;</code> = id rounded down to the nearest 100), and every <code>check-*.sh</code> script against both a passing and a failing fixture. Entirely fixture-based — nothing here calls the tracker or the forge, so it runs identically locally and in CI.</p>
-              <p><strong>Usage:</strong> <code>./scripts/plumbing-test.sh</code>, from anywhere (paths resolve from the script's own location).</p>
+              <p><strong>Usage:</strong> <code>./.t-workflow/scripts/plumbing-test.sh</code>, from anywhere (paths resolve from the script's own location).</p>
               <p><strong>Called by:</strong> the <code>plumbing-test</code> job in <code>ci.yml</code>, on every PR.</p>
             </article>
           </div>

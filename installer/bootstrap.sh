@@ -135,10 +135,10 @@ if [ "$remote" = "yes" ]; then
     remote_done=yes
     note ""
     note "Applying repository settings (labels, squash-only merges, branch protection)..."
-    if ( cd "$target" && ./scripts/github-bootstrap.sh ); then
+    if ( cd "$target" && ./.t-workflow/scripts/github-bootstrap.sh ); then
       :
     else
-      note "scripts/github-bootstrap.sh did not finish cleanly. Re-run it from '$target'."
+      note ".t-workflow/scripts/github-bootstrap.sh did not finish cleanly. Re-run it from '$target'."
     fi
   else
     note "Could not create the repository — the local project at '$target' is fine."
@@ -192,7 +192,7 @@ fills above by hand and fold them into the first commit.
 Then create the repository and apply its settings:
 
     gh repo create $name --$visibility --source . --remote origin --push
-    ./scripts/github-bootstrap.sh
+    ./.t-workflow/scripts/github-bootstrap.sh
 
 That push closes the genesis exception. Every edit to the tree after it goes through
 the pipeline, starting with /t-open.

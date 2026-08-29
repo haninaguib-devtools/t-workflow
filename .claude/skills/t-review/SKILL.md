@@ -38,7 +38,7 @@ holding only the id, so this matters more here than anywhere else.
    review and report its findings back; everything it needs is the task id, the
    tracker, the forge, and the diff — record `isolation: subagent`. **A subagent is
    unavailable** → determine protection first (`forge:pr-files` through `bash
-   scripts/protected-paths.sh --stdin`); on a **protected surface, stop** and ask for a
+   .t-workflow/scripts/protected-paths.sh --stdin`); on a **protected surface, stop** and ask for a
    fresh session — reviewing here anyway produces a verdict `/t-ship` will reject.
    Otherwise continue and record `isolation: same session (<why the change was small
    enough>)`.
@@ -64,14 +64,14 @@ holding only the id, so this matters more here than anywhere else.
    differently?), **completeness** (are the known hard cases addressed?). Do **not**
    judge whether the design is *right* — that is the human's approval.
 6. Run the checks tagged `review` or `either` in the plan, or the set in `AGENTS.md`
-   §Checks when there is no plan (for a document, also `scripts/consistency-check.sh`;
+   §Checks when there is no plan (for a document, also `.t-workflow/scripts/consistency-check.sh`;
    its failures are findings, semantic consistency stays this skill's judgment). A
    failing check is a finding at the severity its consequence deserves. Four things are
    **blocker or high by construction**, never medium or low: a check that failed,
    behavior or content removed without the issue authorizing it, a changed path outside
    the task's declared scope, and a changed path on a protected surface whose issue
    carries no `## Plan` section — decide protection with `bash
-   scripts/protected-paths.sh --stdin` over the changed paths, not by eye (exit 0 =
+   .t-workflow/scripts/protected-paths.sh --stdin` over the changed paths, not by eye (exit 0 =
    protected, 1 = none, 2 = nothing checked, itself a finding). Grading one of these
    down to let it through weakens a guardrail to make work pass, which
    `CONSTITUTION.md` §1.5 forbids.

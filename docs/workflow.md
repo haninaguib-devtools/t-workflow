@@ -107,9 +107,9 @@ anything durable settled in a PR thread lands in the record, an ADR, or the docs
 ## 9. Mechanical enforcement
 
 In force today, *mechanically*: branch protection on `main` (PRs only, squash merges, no
-force pushes); CI running `scripts/consistency-check.sh` and the record-present guard on
+force pushes); CI running `.t-workflow/scripts/consistency-check.sh` and the record-present guard on
 every PR (`.github/workflows/ci.yml`); the repo's `delete_branch_on_merge` setting
-(`scripts/github-bootstrap.sh`) deleting a merged branch's remote copy without any
+(`.t-workflow/scripts/github-bootstrap.sh`) deleting a merged branch's remote copy without any
 skill-side step. A stale local worktree or branch left behind by `/t-ship`/`/t-cancel`
 (ADR-002) is left alone permanently (ADR-005) — nothing cleans it up, and a human removes
 one by hand only if it is ever actually in the way. Held by convention, not by machinery:
@@ -118,7 +118,7 @@ self-contained squash commit bodies written from the record — the forge enforc
 `CONSTITUTION.md` and `docs/adr/` at a heightened bar (§13 Q9), and required approvals
 above zero, which needs a second maintainer. **Platform constraint:** on a private
 repository these need a paid GitHub plan, so until then PR-only `main` runs on convention;
-`scripts/github-bootstrap.sh` applies what the plan permits.
+`.t-workflow/scripts/github-bootstrap.sh` applies what the plan permits.
 
 ## 10. Resilience: losing the GitHub account
 

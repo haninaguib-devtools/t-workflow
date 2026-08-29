@@ -25,7 +25,7 @@ replaces that placeholder with its own real content once it adopts — its own s
 rule, its own build/test command — and a later template sync leaves that content alone.
 
 **Why only item 1 of §Checks is marked, not the whole section**: items 2 and 3
-(`./scripts/consistency-check.sh`, the scope-diff review) and the CI-wiring sentence
+(`./.t-workflow/scripts/consistency-check.sh`, the scope-diff review) and the CI-wiring sentence
 that follows are pipeline machinery every consumer shares — they belong outside the
 marker, so a sync always brings consumers current on them.
 

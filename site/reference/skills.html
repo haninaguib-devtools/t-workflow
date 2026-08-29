@@ -78,19 +78,19 @@
                 <li>Runs a scope-overlap check against every other open issue, naming any overlap rather than silently proceeding.</li>
               </ul>
               <p><strong>Tracker/forge operations:</strong> <code>tracker:view</code>, <code>tracker:edit-body</code>, <code>tracker:list-open</code>.</p>
-              <p><strong>Scripts:</strong> none called directly by this skill; its output is what <code>scripts/check-plan-gate.sh</code> later checks for.</p>
+              <p><strong>Scripts:</strong> none called directly by this skill; its output is what <code>.t-workflow/scripts/check-plan-gate.sh</code> later checks for.</p>
             </article>
 
             <article class="doc-card">
               <h3><code>/t-work</code><span>Implementation</span></h3>
               <p>One invocation, start to draft PR, in the current checkout. Checks gates, resolves or creates the task branch, writes the task record, implements within the declared scope, runs the checks, and opens a draft pull request. Also runs narrow fix passes when a review left blocker/high findings.</p>
               <ul>
-                <li><strong>Phase 1 (gates):</strong> reads the issue and its plan; refuses if any blocker isn't closed as completed; checks the declared scope against <code>scripts/protected-paths.sh</code> and stops for <code>/t-plan</code> if a protected path has no plan; resolves the <code>wip/&lt;id&gt;-&lt;slug&gt;</code> branch idempotently.</li>
+                <li><strong>Phase 1 (gates):</strong> reads the issue and its plan; refuses if any blocker isn't closed as completed; checks the declared scope against <code>.t-workflow/scripts/protected-paths.sh</code> and stops for <code>/t-plan</code> if a protected path has no plan; resolves the <code>wip/&lt;id&gt;-&lt;slug&gt;</code> branch idempotently.</li>
                 <li><strong>Phase 2 (the work):</strong> stays inside Allowed paths / Scope; updates the record with decisions and deviations as they happen.</li>
                 <li><strong>Phase 3 (checks and PR):</strong> runs the plan's <code>implementation</code>/<code>either</code> checks (or <code>AGENTS.md</code> §Checks with no plan); re-checks protection against the <em>actual</em> diff; commits, pushes, and opens the draft PR titled <code>[&lt;id&gt;] &lt;issue title&gt;</code>.</li>
               </ul>
               <p><strong>Tracker/forge operations:</strong> <code>tracker:view</code>, <code>tracker:list-blockers</code>, <code>forge:pr-find-by-task</code>, <code>forge:pr-reviews</code>, <code>forge:pr-create-draft</code>.</p>
-              <p><strong>Scripts:</strong> <code>scripts/protected-paths.sh</code> (twice — expected scope, then actual diff), <code>./scripts/consistency-check.sh</code> (part of the standing check set).</p>
+              <p><strong>Scripts:</strong> <code>.t-workflow/scripts/protected-paths.sh</code> (twice — expected scope, then actual diff), <code>./.t-workflow/scripts/consistency-check.sh</code> (part of the standing check set).</p>
             </article>
 
             <article class="doc-card">
@@ -102,7 +102,7 @@
                 <li>Runs the plan's <code>review</code>/<code>either</code> checks, then posts one review: an <code>isolation:</code> line, findings ordered blocker/high/medium/low, a <code>## Pending human checks</code> section, and a <code>readiness: ready</code> or <code>readiness: not-ready</code> verdict line.</li>
               </ul>
               <p><strong>Tracker/forge operations:</strong> <code>forge:pr-find-by-task</code>, <code>forge:pr-files</code>, <code>forge:pr-diff</code>, <code>forge:pr-view</code>, <code>forge:pr-reviews</code>, <code>forge:pr-review</code>.</p>
-              <p><strong>Scripts:</strong> <code>scripts/protected-paths.sh --stdin</code> (deciding protection and the severity of any drift), <code>./scripts/consistency-check.sh</code> for a document deliverable.</p>
+              <p><strong>Scripts:</strong> <code>.t-workflow/scripts/protected-paths.sh --stdin</code> (deciding protection and the severity of any drift), <code>./.t-workflow/scripts/consistency-check.sh</code> for a document deliverable.</p>
             </article>
 
             <article class="doc-card">
@@ -114,7 +114,7 @@
                 <li>On confirmation, squash-merges with a self-contained subject/body built from the record, closes the issue as completed, and (for a driven initiative's aggregate PR) writes one <code>Task: #&lt;id&gt;</code> line per included child.</li>
               </ul>
               <p><strong>Tracker/forge operations:</strong> <code>forge:pr-find-by-task</code>, <code>forge:pr-files</code>, <code>forge:pr-reviews</code>, <code>forge:pr-checks</code>, <code>forge:pr-view</code>, <code>forge:pr-ready</code>, <code>forge:pr-draft</code>, <code>forge:pr-merge</code>, <code>forge:pr-approval</code>, <code>tracker:view</code>, <code>tracker:close-done</code>, <code>tracker:auto-close-on-merge</code>.</p>
-              <p><strong>Scripts:</strong> <code>scripts/protected-paths.sh --stdin</code> over the PR's own changed files.</p>
+              <p><strong>Scripts:</strong> <code>.t-workflow/scripts/protected-paths.sh --stdin</code> over the PR's own changed files.</p>
             </article>
           </div>
         </div>
@@ -133,7 +133,7 @@
                 <li>Once every child is merged, excluded, or excluded by cascade, opens one aggregate PR to <code>main</code> and runs an ordinary <code>/t-review</code> on it before naming <code>/t-ship</code>.</li>
               </ul>
               <p><strong>Tracker/forge operations:</strong> <code>tracker:view</code>, <code>tracker:list-children</code>, <code>tracker:list-blockers</code>, <code>forge:pr-set-base</code>, <code>forge:pr-ready</code>, <code>forge:pr-merge</code>, <code>forge:pr-create-draft</code> — plus every operation <code>/t-plan</code>, <code>/t-work</code>, and <code>/t-review</code> use internally, since it calls them directly rather than reimplementing them.</p>
-              <p><strong>Scripts:</strong> <code>scripts/protected-paths.sh</code>, when deciding whether a child needs a plan.</p>
+              <p><strong>Scripts:</strong> <code>.t-workflow/scripts/protected-paths.sh</code>, when deciding whether a child needs a plan.</p>
             </article>
 
             <article class="doc-card">
@@ -157,7 +157,7 @@
                 <li>Applies file changes and pending migrations in order, writes the new manifest, and runs <code>/t-work</code> Phase 3 verbatim (checks, commit, draft PR).</li>
               </ul>
               <p><strong>Tracker/forge operations:</strong> <code>tracker:create</code> (its own task issue) — everything after that reuses <code>/t-work</code> Phase 3's own operations.</p>
-              <p><strong>Scripts:</strong> <code>scripts/check-manifest.sh</code> (<code>--hash-file</code> and verify mode), <code>scripts/template-owned-paths.sh --list</code>, <code>./scripts/consistency-check.sh</code>, <code>scripts/protected-paths.sh</code>.</p>
+              <p><strong>Scripts:</strong> <code>.t-workflow/scripts/check-manifest.sh</code> (<code>--hash-file</code> and verify mode), <code>.t-workflow/scripts/template-owned-paths.sh --list</code>, <code>./.t-workflow/scripts/consistency-check.sh</code>, <code>.t-workflow/scripts/protected-paths.sh</code>.</p>
             </article>
 
             <article class="doc-card">
@@ -168,7 +168,7 @@
                 <li>Surfaces warnings: an open PR touching a protected surface with no review, two open tasks with overlapping scope, an issue edited after its PR opened outside the expected plan exemption, a stalled branch with no PR.</li>
               </ul>
               <p><strong>Tracker/forge operations:</strong> <code>tracker:list-initiatives</code>, <code>tracker:list-open</code>, <code>tracker:list-cancelled</code>, <code>forge:pr-list</code>, <code>forge:pr-reviews</code>, <code>forge:pr-checks</code>, <code>forge:pr-files</code>.</p>
-              <p><strong>Scripts:</strong> <code>scripts/protected-paths.sh --stdin</code>, for the protected-surface-with-no-review warning.</p>
+              <p><strong>Scripts:</strong> <code>.t-workflow/scripts/protected-paths.sh --stdin</code>, for the protected-surface-with-no-review warning.</p>
             </article>
           </div>
         </div>

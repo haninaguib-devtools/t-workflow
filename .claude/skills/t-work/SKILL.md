@@ -24,7 +24,7 @@ implementation before editing files.
    native `blockedBy` field per ADR-003).
 3. **Protected surfaces.** If the work will touch a protected path and the issue has no
    `## Plan` section, stop and recommend `/t-plan <id>`. Decide with
-   `scripts/protected-paths.sh <paths>` (`CONSTITUTION.md` §3 in executable form) over
+   `.t-workflow/scripts/protected-paths.sh <paths>` (`CONSTITUTION.md` §3 in executable form) over
    the paths the task's Scope names. Applies mid-task too: work that grows onto a
    protected path stops for a plan rather than continuing under a scope that never
    covered it; Phase 3 re-checks it against the real diff.
@@ -96,7 +96,7 @@ implementation before editing files.
    deletions, and leftover scratch; remove what does not belong. Then re-check
    protection against what the diff *actually* touches — Phase 1 step 3 could only
    judge what the work was expected to touch: `git -c core.quotePath=false diff
-   --name-only main...HEAD | bash scripts/protected-paths.sh --stdin`
+   --name-only main...HEAD | bash .t-workflow/scripts/protected-paths.sh --stdin`
    (`core.quotePath=false` matters — by default git quotes and octal-escapes a
    non-ASCII path, and a gate reading the quoted form would see no protected path).
    Exit **0** = protected, **1** = none, **2** = nothing was checked — on a task with a

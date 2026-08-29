@@ -62,7 +62,7 @@ topological order, one after another.
      own failure (ADR-004 Decision 2).
    - Otherwise → eligible, continue.
 2. **Plan, if needed.** If the child's declared scope touches a protected path
-   (`scripts/protected-paths.sh`) and its issue carries no `## Plan` section, run
+   (`.t-workflow/scripts/protected-paths.sh`) and its issue carries no `## Plan` section, run
    `/t-plan <child-id>` — this is `/t-drive` resolving it, exactly as ADR-004 Decision 1
    describes. If `/t-plan` itself cannot produce one (it stops with a question — an
    incomplete issue, an unresolved ambiguity) that is the "protected path with no plan
@@ -118,7 +118,7 @@ held:
    form and nothing else on the line**: `Task: #<id> — docs/tasks/<bucket>/<id>-<slug>.md`
    (ADR-004 Decision 3, never a blended paragraph). This exact shape is load-bearing, not
    cosmetic — `.github/workflows/ci.yml`'s `record` job parses these lines verbatim
-   (`scripts/check-record.sh --multi`) to find each included child's record; a
+   (`.t-workflow/scripts/check-record.sh --multi`) to find each included child's record; a
    differently-worded or bulleted mention does not satisfy it. Separately, when the
    tracker auto-closes on merge (`tracker:auto-close-on-merge`), also include one
    `Closes #<child-id>` line per included child — the `Task:` line points at that

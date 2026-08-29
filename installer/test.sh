@@ -127,14 +127,14 @@ echo
 
 # --- 7. the generated project is internally consistent -----------------------
 echo "consistency"
-if ( cd "$demo" && ./scripts/consistency-check.sh ) >/dev/null 2>&1; then
-  ok "scripts/consistency-check.sh passes inside the generated project"
+if ( cd "$demo" && ./.t-workflow/scripts/consistency-check.sh ) >/dev/null 2>&1; then
+  ok ".t-workflow/scripts/consistency-check.sh passes inside the generated project"
 else
-  bad "scripts/consistency-check.sh passes inside the generated project"
-  ( cd "$demo" && ./scripts/consistency-check.sh ) 2>&1 | sed 's/^/    /'
+  bad ".t-workflow/scripts/consistency-check.sh passes inside the generated project"
+  ( cd "$demo" && ./.t-workflow/scripts/consistency-check.sh ) 2>&1 | sed 's/^/    /'
 fi
 check "installer/ is protected in the generated project" \
-  bash "$demo/scripts/protected-paths.sh" installer/anything.sh
+  bash "$demo/.t-workflow/scripts/protected-paths.sh" installer/anything.sh
 
 # The generated project inherits every workflow file in this repository. A workflow that
 # calls a script the strip list just deleted goes red on the new owner's first pull

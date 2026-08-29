@@ -10,9 +10,9 @@
 # Section headings are read from the template itself, never hardcoded, so this cannot
 # drift from docs/tasks/TEMPLATE.md.
 #
-# Usage: scripts/check-record.sh <id> <record-file> [template-file]
+# Usage: .t-workflow/scripts/check-record.sh <id> <record-file> [template-file]
 #          Ordinary task: verify one known record file against one known id.
-#        scripts/check-record.sh --multi <pr-body-file> [template-file]
+#        .t-workflow/scripts/check-record.sh --multi <pr-body-file> [template-file]
 #          Driven-initiative aggregate PR (changed paths on stdin): find and verify one
 #          record per `Task: #<id>` line in the PR body.
 # Exit 0 = every record checked is real; 1 = a check failed (reasons on stdout);

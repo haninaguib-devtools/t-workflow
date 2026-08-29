@@ -4,7 +4,7 @@
 
 How a consumer repo pins a template release and verifies it hasn't silently drifted.
 `t-update` (`.claude/skills/t-update/SKILL.md`) is the one thing that writes a
-manifest; `scripts/check-manifest.sh` is the one thing that verifies it — a consumer's
+manifest; `.t-workflow/scripts/check-manifest.sh` is the one thing that verifies it — a consumer's
 own CI runs the check, this repo does not (it is the template, not a pinned consumer,
 and carries no manifest of its own).
 
@@ -52,7 +52,7 @@ genesis-only: stamped once by `installer/bootstrap.sh` and then wholly the consu
 own (`README.md`), or deleted outright for every generated project (`LICENSE`,
 `installer/`, `site/`, `.github/workflows/installer.yml`,
 `.github/workflows/pages.yml`) — there is nothing in a consumer repo for those paths to
-sync *to*. `scripts/template-owned-paths.sh --list` is the executable list: every
+sync *to*. `.t-workflow/scripts/template-owned-paths.sh --list` is the executable list: every
 tracked file matching a protected pattern, minus that genesis-only exclusion set. It is
 itself template-owned, so a future exclusion or inclusion change reaches consumers the
 same way any other template fix does.
@@ -64,9 +64,9 @@ A template-owned file may carry `<!-- local -->` … `<!-- /local -->` regions
 those must never register as drift. Before hashing, every line strictly between a
 marker pair (the markers themselves stay) is stripped; the sha256 of what's left is
 what the manifest records and what `check-manifest.sh` recomputes. A file with no
-markers hashes as-is. `scripts/check-manifest.sh --hash-file <path>` is the one
+markers hashes as-is. `.t-workflow/scripts/check-manifest.sh --hash-file <path>` is the one
 implementation of this rule — `t-update` (writing the manifest) and
-`scripts/check-manifest.sh`'s own verify mode (reading it back) both call it, so the two
+`.t-workflow/scripts/check-manifest.sh`'s own verify mode (reading it back) both call it, so the two
 can never compute the hash two different ways.
 
 `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, and `.agents/skills` are
@@ -80,7 +80,7 @@ separate content.
 
 ## The CI lock
 
-`scripts/check-manifest.sh`, no arguments: reads `.template-manifest.json` at the repo
+`.t-workflow/scripts/check-manifest.sh`, no arguments: reads `.template-manifest.json` at the repo
 root, recomputes every listed file's normalized hash from the working tree, and fails
 (exit 1) listing every path that drifted or went missing. A consumer wires this into
 its own CI as a required check — this repo's `.github/workflows/ci.yml` does not run it,

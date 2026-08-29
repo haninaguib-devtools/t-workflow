@@ -60,7 +60,7 @@
               <li><a href="skills.html">Skills<small>What each <code>/t-*</code> command does, and the tracker/forge operations and scripts it calls</small></a></li>
               <li><a href="structure.html">Project structure<small>Every file and directory a generated project starts with, and what each is for</small></a></li>
               <li><a href="installer.html">Installer<small>How <code>install.sh</code> and <code>bootstrap.sh</code> turn the template into a running project</small></a></li>
-              <li><a href="scripts.html">Scripts<small>Every script under <code>scripts/</code> — what it checks, and who calls it</small></a></li>
+              <li><a href="scripts.html">Scripts<small>Every script under <code>.t-workflow/scripts/</code> — what it checks, and who calls it</small></a></li>
               <li><a href="workflows.html">GitHub Actions<small>Every workflow under <code>.github/workflows/</code> — triggers and enforcement</small></a></li>
               <li><a href="migrations.html">Migrations<small>How a generated project stays in sync with the template over time</small></a></li>
               <li><a href="docs.html">docs/ tour<small>What lives in <code>docs/adr/</code>, <code>docs/adapters/</code>, <code>docs/architecture/</code>, and <code>docs/tasks/</code></small></a></li>
@@ -88,7 +88,7 @@
           <p>Everything above is chosen per task except two things: work always starts from a tracker issue (never a silent edit to the tree), and <code>main</code> only ever moves by a pull request that a human explicitly confirmed. Those two rules carry almost all of the system's safety — every change has a durable, written statement of intent before any code exists, and nothing reaches the trunk unseen.</p>
 
           <h3>Protected surfaces get the full treatment</h3>
-          <p>Some paths in the repository are considered load-bearing for the whole delivery system itself — the constitution, the skills, the CI configuration, the scripts, the architecture docs, and a handful of others. A change touching any of them always requires a plan before the work and an independent review before shipping, regardless of how small it looks. A script, <code>scripts/protected-paths.sh</code>, is the executable, single source of truth for exactly which paths those are — the same list a human reads in prose in <code>CONSTITUTION.md</code> §3.</p>
+          <p>Some paths in the repository are considered load-bearing for the whole delivery system itself — the constitution, the skills, the CI configuration, the scripts, the architecture docs, and a handful of others. A change touching any of them always requires a plan before the work and an independent review before shipping, regardless of how small it looks. A script, <code>.t-workflow/scripts/protected-paths.sh</code>, is the executable, single source of truth for exactly which paths those are — the same list a human reads in prose in <code>CONSTITUTION.md</code> §3.</p>
 
           <h3>The tracker and the forge are pluggable</h3>
           <p>The instructions never say "GitHub" directly. Instead they call named operations like <em>view an issue</em> or <em>open a pull request</em>, and two small adapter documents — <code>docs/adapters/TRACKER.md</code> and <code>docs/adapters/FORGE.md</code> — map each one to a concrete command for whichever tool is actually in use (GitHub Issues and GitHub Pull Requests today). Adopting a different issue tracker or code host later means editing those two files, not rewriting every instruction.</p>

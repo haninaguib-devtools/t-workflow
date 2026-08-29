@@ -9,7 +9,7 @@
 # (`installer/bootstrap.sh`, the strip list) instead of text surgery on a protected file,
 # where a partial edit would leave a broken workflow in someone else's repository.
 #
-# ADVISORY, not required: `scripts/github-bootstrap.sh` is the only place that names
+# ADVISORY, not required: `.t-workflow/scripts/github-bootstrap.sh` is the only place that names
 # required status checks, and it names `consistency` and `record`. This job goes red on
 # failure but branch protection will not block a merge on it until that script lists it
 # too. Deliberate — see task #6.

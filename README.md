@@ -22,9 +22,9 @@ only the pipeline that moves any change from idea to `main`:
 - `.github/ISSUE_TEMPLATE/` — GitHub issue forms mirroring `/t-open`'s task and
   initiative shapes, so hand-opened issues arrive with the same structure
   (`docs/architecture/issue-templates.md` is the spec).
-- `scripts/consistency-check.sh` — cross-artifact document consistency, run by
+- `.t-workflow/scripts/consistency-check.sh` — cross-artifact document consistency, run by
   `.github/workflows/ci.yml` on every PR.
-- `scripts/github-bootstrap.sh` — applies branch protection / repo settings via `gh`.
+- `.t-workflow/scripts/github-bootstrap.sh` — applies branch protection / repo settings via `gh`.
 - `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md` — symlinks to `AGENTS.md`,
   so Claude Code, Gemini CLI, and GitHub Copilot read the same instructions as agents
   that support `AGENTS.md` natively (Codex, Cursor, …). Edit only `AGENTS.md`.
@@ -90,10 +90,10 @@ get there.
   direct push to `main` in any case.
 
 `CONSTITUTION.md` §3 is a third file worth editing early — add your protected application
-surfaces as they appear, along with the matching patterns in `scripts/protected-paths.sh`.
+surfaces as they appear, along with the matching patterns in `.t-workflow/scripts/protected-paths.sh`.
 The two change together, and the same rule about the push applies.
 
-Running `scripts/github-bootstrap.sh` is never a tree edit — it changes settings on the
+Running `.t-workflow/scripts/github-bootstrap.sh` is never a tree edit — it changes settings on the
 forge and produces no diff — so it needs no task, before or after the push. Re-run it
 once CI has run on `main`, which is when the status checks can be marked required.
 
@@ -117,7 +117,7 @@ The installer only automates the steps below; nothing depends on having used it.
    git add -A && git commit -m "Bootstrap the delivery system"
    git push -u origin main
    ```
-6. Run `scripts/github-bootstrap.sh` to set up labels, merge mechanics, and branch
+6. Run `.t-workflow/scripts/github-bootstrap.sh` to set up labels, merge mechanics, and branch
    protection, and re-run it after CI's first run on `main`.
 7. From then on every change goes through the pipeline, starting with `/t-open`.
 
