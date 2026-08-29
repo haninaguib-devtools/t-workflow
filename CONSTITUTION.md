@@ -99,8 +99,10 @@ any other change to this list.
 
 ## 4. Stack & architecture
 
+<!-- local -->
 *(reserved: stack and architecture constraints — add each as a one-line rule here with
 a pointer to the ADR that ratified it.)*
+<!-- /local -->
 
 ## Amendment
 

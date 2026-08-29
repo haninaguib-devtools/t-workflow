@@ -87,7 +87,10 @@ only). Plain `git` is never abstracted.
   name is `main` literally, throughout the skills and scripts — it is not abstracted the
   way the tracker and forge are; changing it is a find-and-replace across protected
   surfaces, done as one task.
-- Commit messages: imperative, descriptive, no `wip`, no trailers.
+- Commit messages: imperative, descriptive, no `wip`, no trailers. A task's
+  squash-merge subject (and the draft PR title `/t-work` opens) is
+  `[<id>] <title> (#<pr>)` — the bracketed issue number ties every commit in
+  `git log --oneline` back to its tracker issue.
 - Decisions live in `docs/adr/` (one file per decision, via PR). Anything durable settled
   in a PR thread is promoted into the record, an ADR, or `docs/architecture/` before
   merge.
@@ -117,10 +120,12 @@ runs, and every stage's reports:
 
 Where a skill says "run the checks", the current check set is:
 
+<!-- local -->
 1. **(none yet — no stack exists.)** When it does, the project's build/test command
    (`npm test`, `cargo test`, `./gradlew check`, …) is named *here*, and nowhere else,
    then added to `.github/workflows/ci.yml`. Until this line names a command there is no
    check 1 to run: say that plainly rather than reporting tests that do not exist.
+<!-- /local -->
 2. `./scripts/consistency-check.sh` — cross-artifact document consistency.
 3. `git diff` review against the task's declared scope (always applicable).
 
