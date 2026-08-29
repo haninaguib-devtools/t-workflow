@@ -93,6 +93,48 @@ expect_rc "a record missing template sections fails" \
   1 scripts/check-record.sh 42 "$work/missing-sections.md"
 
 expect_rc "a missing record file fails" 1 scripts/check-record.sh 42 "$work/does-not-exist.md"
+
+# ADR-004 --multi mode: a driven initiative's aggregate PR, one record per Task: #<id>.
+mkdir -p "$work/docs/tasks/000000"
+cp "$work/good.md" "$work/docs/tasks/000000/42-a-sample-task.md"
+cat > "$work/docs/tasks/000000/43-another-task.md" <<'EOF'
+# 43 — Another Task
+Issue: #43
+
+## Asked
+y
+
+## Done when
+y
+
+## Explicitly not
+y
+
+## Decisions made along the way
+- none
+
+## Deviations / notes
+- none
+EOF
+printf 'Task: #42 — docs/tasks/000000/42-a-sample-task.md\nTask: #43 — docs/tasks/000000/43-another-task.md\n' \
+  > "$work/prbody-both.md"
+printf 'Task: #42 — docs/tasks/000000/42-a-sample-task.md\nTask: #99 — docs/tasks/000000/99-missing.md\n' \
+  > "$work/prbody-missing.md"
+printf 'no Task lines here\n' > "$work/prbody-none.md"
+changed_both=$(printf 'docs/tasks/000000/42-a-sample-task.md\ndocs/tasks/000000/43-another-task.md\n')
+
+# The changed-path entries are repo-relative, matching how ci.yml's `record` job
+# produces them from a real checkout — so run from a fixture "repo root" ($work) with
+# absolute paths for the script, the PR body, and the template.
+expect_rc "--multi: every Task: line has a real record, all pass" \
+  0 bash -c 'cd "$1" && printf "%s\n" "$2" | "$3" --multi "$4" "$5"' \
+  _ "$work" "$changed_both" "$root/scripts/check-record.sh" "$work/prbody-both.md" "$root/docs/tasks/TEMPLATE.md"
+expect_rc "--multi: a Task: line with no matching record fails" \
+  1 bash -c 'cd "$1" && printf "%s\n" "$2" | "$3" --multi "$4" "$5"' \
+  _ "$work" "$changed_both" "$root/scripts/check-record.sh" "$work/prbody-missing.md" "$root/docs/tasks/TEMPLATE.md"
+expect_rc "--multi: no Task: lines at all fails" \
+  1 bash -c 'cd "$1" && printf "%s\n" "$2" | "$3" --multi "$4" "$5"' \
+  _ "$work" "$changed_both" "$root/scripts/check-record.sh" "$work/prbody-none.md" "$root/docs/tasks/TEMPLATE.md"
 echo
 
 # --- 4. scripts/check-plan-gate.sh --------------------------------------------

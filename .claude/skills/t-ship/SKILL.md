@@ -52,7 +52,10 @@ has already left the pipeline, say which and stop.
    PR's head (`forge:pr-view <pr>`). Mismatch → stop, say which commits are unpushed,
    push them (re-runs CI and, on a protected surface, invalidates the review per
    precondition 2). Off the task branch → say the comparison could not be made.
-6. The task record is in the diff and current, deviations included.
+6. The task record is in the diff and current, deviations included — or, for a driven
+   initiative's aggregate PR (`/t-drive`, ADR-004, branch `wip/<id>-integration`), every
+   included child's own record is in the diff, each already current from its own merge
+   into the integration branch.
 7. **Pending human checks**, when a review exists (`forge:pr-reviews <pr>`): its
    `## Pending human checks` section lists judgments no command can settle. **Checks
    listed** → carry them into the confirmation, non-blocking, acknowledged by
@@ -86,7 +89,9 @@ has already left the pipeline, say which and stop.
 3. On confirmation, squash-merge with a **self-contained commit** written from the
    record, via `forge:pr-merge <pr>` — **re-read `docs/adapters/FORGE.md`'s
    `forge:pr-merge` row first and check the exact command against it.** The subject
-   overrides the forge's default entirely, so append the PR reference explicitly:
+   overrides the forge's default entirely, so append the PR reference explicitly.
+
+   **Ordinary task (the common case, unchanged):**
 
    ```
    subject: [<id>] <issue title> (#<pr>)
@@ -98,9 +103,35 @@ has already left the pipeline, say which and stop.
             Task: #<id> — docs/tasks/<bucket>/<id>-<slug>.md
    ```
 
+   **A driven initiative's aggregate PR** (`/t-drive`, ADR-004 Decision 3 — branch
+   `wip/<id>-integration`, `<id>` the initiative's own id): the body's goal/non-goals
+   come from the initiative issue itself, which carries no record of its own; one
+   `Task: #<id>` line per **included** child, never a blended paragraph, each naming
+   that child's own record — read the included/excluded lists straight from the PR's own
+   body, which `/t-drive` Phase 3 step 1 already wrote them into, rather than
+   re-deriving them:
+
+   ```
+   subject: [<id>] <initiative title> (#<pr>)
+   body:    <goal — one line, from the initiative issue>
+
+            Non-goals: <from the initiative issue's own Non-goals>
+            Outcome: <children included, by number; children excluded, by number and
+                     why — from the PR body's own lists>
+
+            Task: #<child-1-id> — docs/tasks/<bucket>/<child-1-id>-<slug>.md
+            Task: #<child-2-id> — docs/tasks/<bucket>/<child-2-id>-<slug>.md
+            …
+   ```
+
    If the tracker auto-closes on merge (`tracker:auto-close-on-merge`), the PR body's
-   phrase closes the issue now; otherwise close it explicitly with `tracker:close-done`
-   (as completed) — never `tracker:close`, which closes as not-planned.
+   phrase closes the issue now — one such phrase per `Task:` line, so a driven PR closes
+   every included child, never only the initiative; otherwise close each explicitly with
+   `tracker:close-done` (as completed) — never `tracker:close`, which closes as
+   not-planned. A child's own PR into the integration branch (`/t-drive` Phase 2 step 6)
+   never carries this phrase — merging into a non-default branch does not trigger the
+   forge's auto-close, and a child is not done until its work reaches `main` through
+   this PR.
 4. `git fetch --prune` (deleted `wip/` branches otherwise linger as stale
    `origin/wip/*` refs), then **at most, fast-forward a `main` this checkout happens to
    be sitting on** (ADR-002) — merging leaves the task's worktree, local branch, and
@@ -113,7 +144,11 @@ has already left the pipeline, say which and stop.
 6. Report the merge commit hash, whether a cold review ran, and whether this checkout's
    `main` was fast-forwarded. **If `subIssuesSummary` (`tracker:view <parent-id>`) now
    shows every child closed**, ask whether to close the initiative too — never
-   automatic. Yes → close as completed (`tracker:close-done`), comment naming the
+   automatic. For a driven run that just shipped, `<parent-id>` is `<id>` itself (the
+   initiative just driven): every included child closed above, and an excluded child, if
+   any, stays open — so `subIssuesSummary` reads all-closed only when nothing was
+   excluded; the same yes/no question applies either way. Yes → close as completed
+   (`tracker:close-done`), comment naming the
    delivering tasks. No → leave it open and say what remains.
 
 ## Rules
