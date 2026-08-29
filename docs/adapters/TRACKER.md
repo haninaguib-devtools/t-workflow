@@ -70,16 +70,17 @@ before relying on them (ADR-003).
 |---|---|
 | GitHub | `gh issue view <id> --json number,title,body,state,labels,parent,subIssuesSummary` |
 
-### `tracker:list-open` — ALL open issues with id, title, labels, body, and blockedBy
+### `tracker:list-open` — ALL open issues with id, title, labels, body, blockedBy, updatedAt
 
 Contract: the scan must be **complete** (paginate or raise the page size until it is; a
 truncated list must be reported as an incomplete scan, never as "none found") and each
-row carries its labels and `blockedBy`, so callers can filter initiatives and check
-blocked state without extra per-issue calls.
+row carries its labels, `blockedBy`, and `updatedAt`, so callers can filter initiatives,
+check blocked state, and detect an issue body edited after its PR opened, all without
+extra per-issue calls.
 
 | Backend | Command |
 |---|---|
-| GitHub | `gh issue list --state open --limit 1000 --json number,title,body,labels,blockedBy` (default limit is 30 — always pass it) |
+| GitHub | `gh issue list --state open --limit 1000 --json number,title,body,labels,blockedBy,updatedAt` (default limit is 30 — always pass it) |
 
 ### `tracker:list-initiatives` — open issues labeled `initiative`, with `subIssuesSummary`
 
