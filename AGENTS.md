@@ -31,7 +31,7 @@ only). Plain `git` is never abstracted.
 | `/t-drive` | Optional. Walks an initiative's children to completion on an integration branch — plan, implement, and independently review each — merging what review authorizes and excluding what fails a bounded retry; stops once, for the human's confirmation on a single PR to `main` (ADR-004). |
 | `/t-ship` | Human-confirmed squash merge. Every path to `main` is a human-confirmed PR. |
 | `/t-cancel` | Terminal exit: the reason recorded on the issue, every neighbour decided, then the PR closed and its branch deleted. |
-| `/t-clean` | Optional, lazy. Removes a shipped or cancelled task's stale local worktree/branch, on confirmation. |
+| `/t-clean` | Optional, lazy. Removes a shipped or cancelled task's stale local worktree/branch, on confirmation. (T_DRIVE_TEST_MARKER_47) |
 | `/t-status` | Read-only pipeline overview. |
 
 ## Conventions
