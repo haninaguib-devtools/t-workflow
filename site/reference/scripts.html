@@ -46,7 +46,7 @@
     <main id="main">
       <section class="doc-hero">
         <p class="section-label">Reference · Scripts</p>
-        <h1>Eleven scripts. Rules the build enforces, not rules to remember.</h1>
+        <h1>Thirteen scripts. Rules the build enforces, not rules to remember.</h1>
         <p>Every script under <code>.t-workflow/scripts/</code> is a pure function over explicit inputs — files, stdin, or arguments — so each one is testable against fixtures without ever calling the tracker or the forge live. <code>.t-workflow/scripts/plumbing-test.sh</code> is exactly that fixture suite, and it runs on every PR.</p>
       </section>
 
@@ -141,6 +141,25 @@
               <p>Computes the manifest's file list: every tracked file matching a protected pattern, minus the paths that are genesis-only — stamped once at bootstrap (<code>README.md</code>) or deleted outright for every generated project (<code>LICENSE</code>, <code>installer/*</code>, <code>site/*</code>, the installer and pages workflows). It is itself template-owned, so a future change to what counts as template-owned reaches consumers the normal way.</p>
               <p><strong>Usage:</strong> <code>template-owned-paths.sh --list</code>.</p>
               <p><strong>Called by:</strong> <code>/t-update</code>, run against the scratch clone of the target tag to get that tag's own view of the file list.</p>
+            </article>
+          </div>
+        </div>
+
+        <div class="doc-section">
+          <h2>Batched read snapshots</h2>
+          <div class="doc-card-grid">
+            <article class="doc-card">
+              <h3><code>status-snapshot.sh</code></h3>
+              <p>The one-shot read phase behind <code>/t-status</code>: replaces five separate sequential tracker/forge queries (initiatives, tasks, PRs, local git state, cancellations) with a single invocation emitting one JSON blob. Strictly read-only — no <code>gh</code> or <code>git</code> subcommand here mutates anything. Computes a few derived fields (a CI state bucket, the latest review, truncation flags) from the raw data, but makes no refusal or judgment call — blocked/unblocked, protected-surface, scope-overlap, and intent-drift decisions all stay in <code>/t-status</code>'s own prose, reading the fields this emits.</p>
+              <p><strong>Usage:</strong> <code>status-snapshot.sh</code> (no arguments) — run from anywhere inside the repository, with <code>gh</code> authenticated. Exit 0 = one JSON object on stdout; exit 2 = bad usage (no live call made).</p>
+              <p><strong>Called by:</strong> <code>/t-status</code>.</p>
+            </article>
+
+            <article class="doc-card">
+              <h3><code>review-snapshot.sh</code></h3>
+              <p>The same treatment for <code>/t-review</code>: replaces separate tracker/forge calls (the issue, the PR diff, the PR's view/files, local git state) with one invocation emitting a single JSON blob. Only fetches already-mechanical facts — isolation, protected-surface, scope/record/constitution, and readiness-verdict decisions all stay in <code>/t-review</code>'s own prose.</p>
+              <p><strong>Usage:</strong> <code>review-snapshot.sh &lt;task-id&gt; &lt;pr&gt;</code> — run from anywhere inside the repository, with <code>gh</code> authenticated. Exit 0 = one JSON object on stdout; exit 2 = bad usage (no live call made).</p>
+              <p><strong>Called by:</strong> <code>/t-review</code>.</p>
             </article>
           </div>
         </div>
