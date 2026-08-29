@@ -64,4 +64,30 @@ and `t-ship` fetching the same PR review twice in one run.
   today, it can keep doing unchanged (haninaguib, during implementation).
 
 ## Deviations / notes
-- none
+- **Fix pass after `/t-review 65`** (haninaguib, 2026-08-29): the cold subagent review
+  on PR #69 found one HIGH finding — `status-snapshot.sh`'s `ci_state` jq function only
+  treated the literal conclusion `FAILURE` as a CI failure, so a check run that ended
+  `CANCELLED`, `TIMED_OUT`, `ACTION_REQUIRED`, `STARTUP_FAILURE`, or `STALE` (all still
+  `status: COMPLETED`) fell through to `"pass"` — a misreport `/t-status` would have
+  surfaced, exactly the class of thing the issue's "no change to what gets reported"
+  done-when rules out. Fixed by enumerating every terminal non-passing conclusion
+  explicitly rather than checking for the single `FAILURE` literal. Unit-tested the new
+  logic against all nine conclusion values (`FAILURE`, `CANCELLED`, `TIMED_OUT`,
+  `ACTION_REQUIRED`, `STARTUP_FAILURE`, `STALE` → `"fail"`; `SUCCESS`, `NEUTRAL`,
+  `SKIPPED` → `"pass"`) plus the pending and no-CI-configured cases before re-running the
+  live script. Re-ran `bash .t-workflow/scripts/status-snapshot.sh` (still exits 0, PR #69
+  now correctly reports `ciState: "fail"` — its `cold-review` check is red pending this
+  very review pass, which is expected), `./.t-workflow/scripts/consistency-check.sh`, and
+  `bash .t-workflow/scripts/plumbing-test.sh` (still 47/47).
+
+  While writing the fix, the first attempt broke `jq`'s outer single-quoted program by
+  adding a comment containing an apostrophe (`GitHub's checkRun API`) inside the script's
+  bash single-quoted jq argument — caught immediately by re-running the script (`jq:
+  error: syntax error, unexpected end of file`), fixed by rewording the comment to avoid
+  the apostrophe rather than escaping it, since bash single-quotes admit no escape
+  sequence at all.
+
+  The two LOW findings from the same review (the `.tasks.truncated` flag's placement,
+  and `cancellations.truncated`'s hardcoded `100`) were not addressed — Fix mode
+  addresses only blocker/high findings; both are named here for the human as unfixed
+  and low-severity, to accept as-is or ask for by number.

@@ -80,9 +80,13 @@ jq -n \
   def pr_for_branch($b): $prs | map(select(.headRefName == $b)) | sort_by(.createdAt) | last;
 
   # CI contract (forge:pr-checks): distinguish "no CI configured" from failing/pending.
+  # Enumerate every terminal non-passing conclusion the checkRun API defines, not just
+  # FAILURE — CANCELLED/TIMED_OUT/ACTION_REQUIRED/STARTUP_FAILURE/STALE are all
+  # `status: COMPLETED` too, so checking only FAILURE let those fall through to "pass".
   def ci_state:
+    ["FAILURE", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED", "STARTUP_FAILURE", "STALE"] as $failing |
     if (.statusCheckRollup | length) == 0 then "none configured"
-    elif ([.statusCheckRollup[] | select(.conclusion == "FAILURE")] | length) > 0 then "fail"
+    elif ([.statusCheckRollup[] | select(.status == "COMPLETED" and ([.conclusion] | inside($failing)))] | length) > 0 then "fail"
     elif ([.statusCheckRollup[] | select(.status != "COMPLETED")] | length) > 0 then "pending"
     else "pass" end;
 
