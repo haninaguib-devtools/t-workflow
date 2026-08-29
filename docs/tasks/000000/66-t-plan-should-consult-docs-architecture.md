@@ -48,3 +48,12 @@ before pushing — so the same class of drift only surfaces once CI runs, on the
   `.claude/skills/t-work/SKILL.md`. No file had been touched under the narrower scope,
   so there is no code-level deviation to reconcile, only this record of why the bound
   changed (haninaguib, 2026-08-29, both `/t-plan` runs this session).
+- Fix pass after cold review (PR #67): the review (isolation: subagent) found a HIGH
+  finding — inserting the new Phase 3 step 3 in `.claude/skills/t-work/SKILL.md` shifted
+  "Push … open the draft PR" from step 4 to step 5, but Phase 1 step 5's own
+  cross-reference ("exactly one once Phase 3 step 4 has run") still pointed at the old
+  number, now landing on "Commit" instead. Corrected to "step 5". The review's MEDIUM
+  finding — `.claude/skills/t-plan/SKILL.md`'s "`/t-work` step 6" reference is now
+  ambiguous, since renumbering gave `t-work` two step-6's — was left as posted per Fix
+  mode (medium/low findings are fixed only when the human asks by number); it still
+  resolves correctly by context (haninaguib, 2026-08-29).

@@ -51,7 +51,7 @@ implementation before editing files.
    origin/main`), stop and report if ahead or diverged. Never commit on `main`.
 
 5. **Normal or fix mode.** Resolve the task's PR, if it has one, from the branch:
-   `forge:pr-find-by-task <id>` — none on a fresh task, exactly one once Phase 3 step 4
+   `forge:pr-find-by-task <id>` — none on a fresh task, exactly one once Phase 3 step 5
    has run, more than one is a stop-and-report. If that PR carries a review
    (`forge:pr-reviews <pr>`) with unresolved `blocker`/`high` findings and the human has
    asked for them to be addressed, read the existing record and go to **Fix mode**
