@@ -29,7 +29,7 @@ Include the tracker's auto-close phrase in the body when the tracker supports it
 |---|---|
 | GitHub | `gh pr create --draft --title "<title>" --body "<body>"` |
 
-### `forge:pr-create <title> <body>` — open a non-draft PR (the `/t-fix` path)
+### `forge:pr-create <title> <body>` — open a non-draft PR directly
 
 | Backend | Command |
 |---|---|
