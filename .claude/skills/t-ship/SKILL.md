@@ -37,10 +37,13 @@ has already left the pipeline, say which and stop.
    in fix mode. No review and no protected path → continue, saying out loud that none
    ran.
 
-   On a protected surface, two more checks: the `isolation:` line must not read `same
-   session` (a missing line is unknown, treated the same way); the latest review's
-   timestamp must be newer than the head commit (`forge:pr-view <pr>`). Either failure →
-   stop, send it back to `/t-review <id>`.
+   On a protected surface, feed the same fetched reviews and the PR's changed paths
+   (precondition 0's own `forge:pr-files <pr>`, already computed) into
+   `.t-workflow/scripts/check-review-gate.sh <head-commit-time> <reviews-file>`
+   (`<head-commit-time>` from `forge:pr-view <pr>`'s head commit), rather than checking
+   the `isolation:` line and staleness by hand. Exit 1 → stop, send it back to
+   `/t-review <id>`, quoting the script's own reason (a missing or `same session`
+   isolation line, or a review older than the head commit).
 3. CI, if configured, is green: `forge:pr-checks <pr>`. No CI configured is acceptable,
    said out loud.
 4. The branch merges cleanly against current `origin/main` (`forge:pr-view <pr>`). A

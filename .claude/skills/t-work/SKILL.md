@@ -18,10 +18,11 @@ implementation before editing files.
    `## Plan` section), the tracking issue if there is one, and any merged design doc the
    issue names. Resolve every `tracker:*` / `forge:*` operation named in this skill via
    `docs/adapters/TRACKER.md` and `docs/adapters/FORGE.md` (GitHub by default).
-2. **Blockers.** `tracker:list-blockers <id>` must come back either empty or with every
-   entry *closed*. A blocker **cancelled** rather than completed was abandoned, not
-   satisfied — stop and say so, even though it is closed (ADR-001 §D3.2, over the
-   native `blockedBy` field per ADR-003).
+2. **Blockers.** `tracker:list-blockers <id>`, written to a file, then
+   `.t-workflow/scripts/check-blocker-gate.sh <file>`. Exit 0 → continue. Exit 1 → stop
+   and say so: a blocker **cancelled** rather than completed was abandoned, not
+   satisfied, even though it is closed (ADR-001 §D3.2, over the native `blockedBy` field
+   plus `stateReason` per ADR-003).
 3. **Protected surfaces.** If the work will touch a protected path and the issue has no
    `## Plan` section, stop and recommend `/t-plan <id>`. Decide with
    `.t-workflow/scripts/protected-paths.sh <paths>` (`CONSTITUTION.md` §3 in executable form) over

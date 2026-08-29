@@ -166,14 +166,18 @@ bootstrap script when adopting another backend).
 |---|---|
 | GitHub | `gh issue edit <id> --remove-blocked-by <blocker-id>` |
 
-### `tracker:list-blockers <id>` — issues blocking `<id>`, each with number, title, state
+### `tracker:list-blockers <id>` — issues blocking `<id>`, each with number, state, stateReason
 
-Contract: state is required per blocker — the blocker gate (`/t-work`) must tell a
-closed-as-completed blocker from one closed-as-cancelled (abandoned, not satisfied).
+Contract: state **and** stateReason are required per blocker — `check-blocker-gate.sh`
+(invoked by `/t-work` and `/t-drive`) must tell a closed-as-completed blocker from one
+closed-as-cancelled (abandoned, not satisfied). `gh issue view <id> --json blockedBy`
+does not return `stateReason` — confirmed empirically against this repo, returning only
+`id, number, state, title, url` — so the command below goes straight to GraphQL, the
+same query `.github/workflows/ci.yml`'s `blockers` job already runs.
 
 | Backend | Command |
 |---|---|
-| GitHub | `gh issue view <id> --json blockedBy` |
+| GitHub | `gh api graphql -f query='query($owner:String!,$name:String!,$num:Int!){repository(owner:$owner,name:$name){issue(number:$num){blockedBy(first:100){nodes{number state stateReason}}}}}' -F owner="$(gh repo view --json owner -q .owner.login)" -F name="$(gh repo view --json name -q .name)" -F num=<id> --jq '.data.repository.issue.blockedBy.nodes'` |
 
 ### `tracker:list-blocking <id>` — issues `<id>` blocks (its dependents), same fields
 
