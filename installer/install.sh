@@ -32,13 +32,10 @@ Usage:
   install.sh [options]
 
 Options:
-  --name <name>          Project name. Becomes the directory name and, with a remote,
-                         the repository name. Prompted for when omitted.
+  --name <name>          Project name. Becomes the directory name, and the repository
+                         name if you create a remote afterwards. Prompted for when
+                         omitted.
   --dir <path>           Parent directory to create the project in. Default: .
-  --no-remote            Do not create a remote repository. Local project only.
-  --remote               Create the remote repository without asking.
-  --private              Create the remote repository private. Default.
-  --public               Create the remote repository public.
   --source <url|path>    Where to clone the template from.
                          Default: the public t-workflow repository.
   --ref <ref>            Branch or tag to clone. Default: main. Not a raw commit id:
@@ -46,14 +43,17 @@ Options:
                          than quietly installing something else.
   -h, --help             Print this and exit.
 
-With --name and either --remote or --no-remote, the installer asks nothing and is safe
-to run unattended. Without a terminal (no /dev/tty) those flags are required, because
-there is nowhere to ask.
+The installer produces a local project only — it never touches the network beyond the
+clone, and never creates a repository on a forge. It prints the commands to do that
+yourself on exit.
+
+With --name, the installer asks nothing and is safe to run unattended. Without a
+terminal (no /dev/tty) that flag is required, because there is nowhere to ask.
 
 Passing flags through a pipe needs `bash -s --`, because otherwise bash reads them as
 its own options and refuses:
 
-  curl -fsSL <url> | bash -s -- --name my-project --no-remote
+  curl -fsSL <url> | bash -s -- --name my-project
 
 The generated project ships with NO LICENSE file: it is not this template's place to
 choose one for you. Two things the installer cannot know are left for you to fill in —
@@ -67,8 +67,6 @@ name=""
 parent="."
 source_repo="$DEFAULT_SOURCE"
 ref="$DEFAULT_REF"
-remote="ask"          # ask | yes | no
-visibility="private"
 
 need_value() { [ "$2" -ge 2 ] || die "$1 needs a value (see --help)"; }
 
@@ -82,10 +80,6 @@ while [ $# -gt 0 ]; do
     --source=*)                         source_repo="${1#*=}"; shift ;;
     --ref)     need_value --ref $#;     ref="$2";         shift 2 ;;
     --ref=*)                            ref="${1#*=}";    shift ;;
-    --no-remote) remote="no";  shift ;;
-    --remote)    remote="yes"; shift ;;
-    --private)   visibility="private"; shift ;;
-    --public)    visibility="public";  shift ;;
     -h|--help) usage; exit 0 ;;
     *) usage >&2; die "unknown option: $1" ;;
   esac
@@ -102,7 +96,7 @@ have_tty() { { true >/dev/tty; } 2>/dev/null; }
 
 ask() { # ask <prompt> <default> <varname>
   local prompt="$1" default="$2" __var="$3" reply=""
-  have_tty || die "no terminal available for prompts. Pass --name and --remote/--no-remote (see --help)."
+  have_tty || die "no terminal available for prompts. Pass --name (see --help)."
   if [ -n "$default" ]; then
     printf '%s [%s]: ' "$prompt" "$default" >/dev/tty
   else
@@ -111,22 +105,6 @@ ask() { # ask <prompt> <default> <varname>
   IFS= read -r reply </dev/tty || reply=""
   [ -n "$reply" ] || reply="$default"
   printf -v "$__var" '%s' "$reply"
-}
-
-ask_yes_no() { # ask_yes_no <prompt> <default y|n> <varname>
-  local prompt="$1" default="$2" __var="$3" reply=""
-  have_tty || die "no terminal available for prompts. Pass --name and --remote/--no-remote (see --help)."
-  local hint="y/N"; [ "$default" = "y" ] && hint="Y/n"
-  while :; do
-    printf '%s [%s]: ' "$prompt" "$hint" >/dev/tty
-    IFS= read -r reply </dev/tty || reply=""
-    [ -n "$reply" ] || reply="$default"
-    case "$(printf '%s' "$reply" | tr '[:upper:]' '[:lower:]')" in
-      y|yes) printf -v "$__var" '%s' yes; return 0 ;;
-      n|no)  printf -v "$__var" '%s' no;  return 0 ;;
-    esac
-    printf 'Please answer y or n.\n' >/dev/tty
-  done
 }
 
 # A project name is both a directory name and a repository name, so it is held to the
@@ -158,21 +136,6 @@ valid_name "$name" || die "not a usable project name: '$name'"
 parent=$(cd "$parent" && pwd) || die "cannot read parent directory: $parent"
 target="$parent/$name"
 [ -e "$target" ] && die "'$target' already exists. Choose another name, or another --dir."
-
-if [ "$remote" = "ask" ]; then
-  if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
-    ask_yes_no "Create the GitHub repository '$name' now?" y remote
-    if [ "$remote" = "yes" ]; then
-      public_answer=""
-      ask_yes_no "Make it public?" n public_answer
-      if [ "$public_answer" = "yes" ]; then visibility="public"; else visibility="private"; fi
-    fi
-  else
-    note "GitHub CLI not found or not logged in — creating a local project only."
-    note "  Finish by hand later: gh auth login, gh repo create, then .t-workflow/scripts/github-bootstrap.sh"
-    remote="no"
-  fi
-fi
 
 # --- clone ------------------------------------------------------------------
 command -v git >/dev/null 2>&1 || die "git is required and was not found on PATH."
@@ -210,7 +173,5 @@ rm -f "$clone_err"
 TWORKFLOW_SRC="$tmp/src" \
 TWORKFLOW_NAME="$name" \
 TWORKFLOW_TARGET="$target" \
-TWORKFLOW_REMOTE="$remote" \
-TWORKFLOW_VISIBILITY="$visibility" \
 TWORKFLOW_SOURCE_URL="$source_repo" \
   bash "$tmp/src/installer/bootstrap.sh"

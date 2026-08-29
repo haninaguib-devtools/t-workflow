@@ -54,15 +54,16 @@ curl -fsSL https://raw.githubusercontent.com/haninaguib-devtools/t-workflow/main
 ```
 
 It asks for a project name, creates a directory with that name, puts the workflow in it,
-and makes the first commit. If you let it, it then creates the GitHub repository, pushes
-`main`, and applies the repository settings.
+and makes the first commit. That is all it does: the project is local-only, nothing is
+pushed, and no repository is created anywhere — it prints the `gh repo create` and
+`.t-workflow/scripts/github-bootstrap.sh` commands for you to run when you are ready.
 
 To run it without questions, the flags have to reach the script rather than `bash`, which
 means `-s --`:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/haninaguib-devtools/t-workflow/main/installer/install.sh \
-  | bash -s -- --name my-project --no-remote
+  | bash -s -- --name my-project
 ```
 
 `--help` lists every option. What it deliberately does not do: choose a licence for you
@@ -81,13 +82,12 @@ been pushed.** That is the genesis exception (`CONSTITUTION.md` §3), and **the 
 ends when that first commit is pushed** — the same end-point whichever route you took to
 get there.
 
-- **Not pushed yet** (you answered no to the remote, or passed `--no-remote`) — the
-  exception is still open. Edit both files by hand and fold them into the first commit,
-  then create the repository and push.
-- **Already pushed** (the default path: the installer created the repository and pushed
-  `main`) — the exception has closed. Both files are protected surfaces, so each fill is
-  ordinary work: `/t-open`, then a plan, then a review. Branch protection will refuse a
-  direct push to `main` in any case.
+The installer never pushes, so right after it runs the exception is always still open:
+edit both files by hand, fold them into the first commit, then create the repository and
+push — the exact commands the installer prints on exit. Once you have pushed, the
+exception has closed: both files are protected surfaces, so each fill is ordinary work —
+`/t-open`, then a plan, then a review — and branch protection will refuse a direct push
+to `main` in any case.
 
 `CONSTITUTION.md` §3 is a third file worth editing early — add your protected application
 surfaces as they appear, along with the matching patterns in `.t-workflow/scripts/protected-paths.sh`.

@@ -13,10 +13,10 @@ Generated from t-workflow @ {{TWORKFLOW_REF}} — {{TWORKFLOW_URL}}
 
 ## Bootstrapping
 
-Genesis has already happened: the installer filled the project name, made the first
-commit, and — if a remote was created — pushed it and applied the repository settings.
-Under `CONSTITUTION.md` §3 the genesis exception ends at that pushed commit, so from
-here on **every** change to the tree goes through the pipeline, starting with `/t-open`.
+Genesis has already happened: the installer filled the project name and made the first
+commit, locally — it pushes nothing. Under `CONSTITUTION.md` §3 the genesis exception
+ends when that first commit is pushed, and from then on **every** change to the tree
+goes through the pipeline, starting with `/t-open`.
 
 Two placeholders remain, because no installer can know them. They are the last things
 that may be filled in by hand only if you have not yet pushed; after the push they are
@@ -30,7 +30,7 @@ ordinary pipeline work like anything else:
    only place the workflow reads it from. Name it there first, then add the same command
    to `.github/workflows/ci.yml` as a third job alongside `consistency` and `record`.
 
-If the installer did not create a remote repository, create one and apply the settings:
+The installer does not create a remote repository. Create one and apply the settings:
 
 ```
 gh repo create <name> --private --source . --remote origin --push
