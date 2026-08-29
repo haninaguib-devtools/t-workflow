@@ -52,3 +52,17 @@ for this one, explicitly-invoked case — everything else about D1 stands unchan
   plus a short body stating `/t-drive` is not implemented yet and pointing at ADR-004
   and #41 — no part of the real driven-initiative behavior. `./scripts/consistency-check.sh`
   now passes.
+- **Fix pass after cold review (2026-08-28).** The independent review
+  (`isolation: subagent`) on PR #45 returned `readiness: not-ready` with one high
+  finding: Decision 1 never said how `/t-drive`'s single `main`-bound PR satisfies the
+  repository's already-required `cold-review` CI gate (`scripts/check-review-gate.sh`),
+  since only the children were reviewed individually — the final aggregate PR had no
+  review of its own. Human direction: "the final PR review requirements should be the
+  same as any other PR." Addressed by amending ADR-004 (disclaimer paragraph, end of
+  Decision 1, a new Rationale bullet, a new Alternatives-considered bullet, and the
+  Consequences paragraph) to state explicitly that `/t-drive`'s final integration-branch
+  → `main` PR goes through an ordinary `/t-review` — same bar, same required CI check,
+  no special-casing — before `/t-drive` hands it to `/t-ship`. The two medium findings
+  from the same review (a likely dropped "cannot" in Decision 2, and `CONSTITUTION.md`
+  §3 carrying no pointer to ADR-004 alongside §1.4's) were not addressed — the human did
+  not ask for them by number, and Fix mode addresses only named blocker/high findings.

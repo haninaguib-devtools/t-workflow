@@ -8,11 +8,12 @@ This ADR does not supersede any of ADR-001's numbered decisions. D1's rule — "
 auto-chains: each stage ends by naming the next command and stopping" — stands for every
 stage and every task exactly as ADR-001 states it. This ADR adds exactly one,
 explicitly-invoked, opt-in exception: when a human runs `/t-drive <initiative-id>`,
-that one stage chains `/t-plan`+`/t-work`+`/t-review` across an initiative's children
-and performs the merges Decision 1 below authorizes, without stopping to ask "should I
-continue?" between them. `/t-drive` itself still stops once, exactly as D1 requires,
-when it hands the initiative's combined result to `/t-ship` for the human's one
-confirmation. Nothing here touches D1 for a task run any other way.
+that one stage chains `/t-plan`+`/t-work`+`/t-review` across an initiative's children,
+performs the merges Decision 1 below authorizes, and then takes the initiative's
+combined result through an ordinary `/t-review` of its own — without stopping to ask
+"should I continue?" at any of those points. `/t-drive` itself still stops once, exactly
+as D1 requires, when it hands that reviewed, combined result to `/t-ship` for the
+human's one confirmation. Nothing here touches D1 for a task run any other way.
 
 ## Context
 
@@ -59,10 +60,18 @@ carrying that child's own `Task: #<id>` line per Decision 3) and moves on.
 
 Once every included child (Decision 2 decides which children are included) is merged
 into the integration branch, `/t-drive` opens exactly one PR from the integration branch
-to `main` and stops — naming `/t-ship` as the next command, unchanged. A human confirms
-and squash-merges that PR exactly as any other task's; `/t-drive` never merges to `main`
-itself. `main` still only moves by a human-confirmed PR — what changes is that the human
-is asked once, for the initiative's combined result, instead of once per child.
+to `main`. **That PR is not a special case: it goes through `/t-review` exactly as any
+other PR would** — the same independent cold review, the same `readiness: ready` bar,
+the same required `cold-review` CI status check (`.github/workflows/review-gate.yml`,
+`scripts/check-review-gate.sh`) every protected-surface PR already clears — reviewing
+the initiative's full combined diff, not only each child's individual diff a moment
+earlier. Only once that review reads `readiness: ready` does `/t-drive` stop, naming
+`/t-ship` as the next command, unchanged. A human confirms and squash-merges that PR
+exactly as any other task's; `/t-drive` never merges to `main` itself, and a child's
+earlier review is never treated as a substitute for the final PR's own. `main` still
+only moves by a human-confirmed PR that has cleared the same review gate every other
+protected-surface PR clears — what changes is that the human is asked to confirm once,
+for the initiative's combined result, instead of once per child.
 
 ### 2. Bounded self-correction: one retry per failing child, then exclusion — never auto-merged, never auto-cancelled
 
@@ -111,6 +120,12 @@ legible per child before the final squash to `main` collapses it into one commit
 
 ## Rationale
 
+- **The final `main`-bound PR gets no special exemption from review.** It clears
+  `/t-review` exactly like any other protected-surface PR does — the same review this
+  repository already, mechanically, requires of every PR reaching `main`
+  (`scripts/check-review-gate.sh`, a required branch-protection check). `/t-drive` does
+  not special-case that gate or invent a substitute for it, and a reviewer gets one more
+  look at the initiative's combined diff, not only at each child's individual diff.
 - **Reusing the independent review as the merge-authorization mechanism adds no new
   trust primitive.** `/t-drive` does not invent an automated gate more permissive than
   what a protected surface already accepts; it relocates where that same, already-ratified
@@ -162,6 +177,13 @@ legible per child before the final squash to `main` collapses it into one commit
   loses the ability to `grep` `git log` for a specific task's landing commit — the exact
   property the bracketed-id convention exists for — and blurs §1.4's "self-contained"
   bar into a summary that can drift from what each child's own record says.
+- **No independent review of the final aggregate PR — treat the children's reviews as
+  sufficient and let `/t-ship` merge it directly** — rejected: this repository's
+  required `cold-review` CI check gates a merge to `main` on a review of *that* PR, and
+  skipping it for the aggregate PR would mean either weakening a guardrail
+  (`CONSTITUTION.md` §1.5 forbids that) or special-casing the gate for exactly the PR
+  where a reviewer's look at the combined effect of several children landing together
+  matters most.
 
 ## Consequences / revisit triggers
 
@@ -170,8 +192,11 @@ confirmation of their own — the independent review is the only gate between "c
 passes" and "child lands in the batch that will reach `main`." This is the deliberate
 trade this ADR names, not an oversight: the same authority `CONSTITUTION.md` §3 already
 treats as sufficient pending a human's final say, spent consistently rather than doubled
-up. A human confirming the driven run's one `main`-bound PR is trusting the reviews that
-already ran per child, not necessarily re-reading each child's diff line by line.
+up. The initiative's combined result then gets its own independent review — the same
+one any other protected-surface PR gets, satisfying the same required CI gate — right
+before the human's one confirmation at `/t-ship`; a human confirming that PR is trusting
+both that final review and the reviews that already ran per child, not re-reading each
+child's diff line by line unassisted.
 
 Any of these reopens this decision, as a new ADR:
 
