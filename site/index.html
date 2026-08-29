@@ -153,8 +153,8 @@
       <section class="skills section" id="skills" aria-labelledby="skills-title">
         <div class="section-heading">
           <p class="section-label">Skill reference</p>
-          <h2 id="skills-title">Nine focused commands cover the full lifecycle.</h2>
-          <p>The five core commands move a task forward. Four supporting commands handle isolation, status, cancellation, and tiny non-semantic fixes.</p>
+          <h2 id="skills-title">Ten focused commands cover the full lifecycle.</h2>
+          <p>The five core commands move a task forward. Five supporting commands handle driving an initiative, cancellation, cleanup, template sync, and status.</p>
         </div>
         <div class="skill-grid">
           <article class="skill-card">
@@ -168,11 +168,6 @@
             <p>Add binding allowed paths, risks, constraints, and validation ownership to an existing issue.</p>
           </article>
           <article class="skill-card">
-            <div class="skill-title"><code>/t-wtree</code><span>Optional</span></div>
-            <h3>Create a worktree</h3>
-            <p>Prepare an isolated sibling checkout when tasks need to run in parallel or in long-lived sessions.</p>
-          </article>
-          <article class="skill-card">
             <div class="skill-title"><code>/t-work</code><span>Core</span></div>
             <h3>Implement a task</h3>
             <p>Check the gates, create or resume the task branch, write the record, implement, verify, and open a draft PR.</p>
@@ -183,14 +178,14 @@
             <p>Independently inspect the task in cold context and post prioritized findings with an explicit readiness verdict.</p>
           </article>
           <article class="skill-card">
+            <div class="skill-title"><code>/t-drive</code><span>Optional</span></div>
+            <h3>Drive an initiative</h3>
+            <p>Walk an initiative's children to completion on one integration branch — plan, implement, and independently review each — then stop once for a single confirmed pull request to main.</p>
+          </article>
+          <article class="skill-card">
             <div class="skill-title"><code>/t-ship</code><span>Core</span></div>
             <h3>Ship a task</h3>
             <p>Check the PR and review evidence, obtain human confirmation, then squash-merge and close the task.</p>
-          </article>
-          <article class="skill-card">
-            <div class="skill-title"><code>/t-status</code><span>Read only</span></div>
-            <h3>Show pipeline status</h3>
-            <p>Summarize open initiatives and tasks, blockers, pull requests, CI, reviews, and useful warnings without changing anything.</p>
           </article>
           <article class="skill-card">
             <div class="skill-title"><code>/t-cancel</code><span>Terminal</span></div>
@@ -198,9 +193,19 @@
             <p>Record why the work stopped, decide the effect on related issues, and clean up the PR, branch, and worktree.</p>
           </article>
           <article class="skill-card">
-            <div class="skill-title"><code>/t-fix</code><span>Fast path</span></div>
-            <h3>Ship a tiny fix</h3>
-            <p>Handle a typo, punctuation, formatting, or broken-link correction as one PR when the change has no semantic content.</p>
+            <div class="skill-title"><code>/t-clean</code><span>Optional</span></div>
+            <h3>Clean up a stale worktree</h3>
+            <p>Remove a shipped or cancelled task's stale local worktree and branch, lazily, and only on confirmation.</p>
+          </article>
+          <article class="skill-card">
+            <div class="skill-title"><code>/t-update</code><span>Optional</span></div>
+            <h3>Sync template updates</h3>
+            <p>For a repo generated from this template: sync its template-owned files to a pinned release, preserving local slots and applying pending migrations.</p>
+          </article>
+          <article class="skill-card">
+            <div class="skill-title"><code>/t-status</code><span>Read only</span></div>
+            <h3>Show pipeline status</h3>
+            <p>Summarize open initiatives and tasks, blockers, pull requests, CI, reviews, and useful warnings without changing anything.</p>
           </article>
         </div>
       </section>
