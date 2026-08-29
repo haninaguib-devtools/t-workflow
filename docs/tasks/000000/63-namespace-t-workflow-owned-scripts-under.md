@@ -88,3 +88,23 @@ existing convention that tooling this repository owns is dot-prefixed (`.claude/
   workflows.html). The re-plan also widened the validation grep's `--include` list to
   add `*.html` — the first pass's check would not have caught a stale reference left in
   the site pages even if they went unfixed.
+
+- **Fix pass after `/t-review 63`** (haninaguib, 2026-08-29): the cold subagent review
+  on PR #64 found one high finding — `site/reference/docs.html:108` still read
+  `scripts/check-record.sh`, one of the 8 `site/reference/*.html` pages named in the
+  Allowed paths, missed in the first implementation pass. Fixed to
+  `.t-workflow/scripts/check-record.sh`; re-ran `./.t-workflow/scripts/consistency-check.sh`
+  (still exits 0) and a corrected whole-repo scan (filtering by file path, not line
+  content — see below) to confirm no other stale reference remains.
+
+  The review also identified *why* this slipped past the plan's validation grep: its
+  `| grep -v 'docs/tasks/'` filter matches the whole line, not the file path, and
+  `docs.html`'s own prose a few words later happens to contain the literal text
+  `docs/tasks/<bucket>/...`, so the exclusion coincidentally swallowed a genuinely
+  stale line. This is a second defect in the validation command, distinct from the
+  `.t-workflow/scripts/` substring self-match already noted above — that one produced
+  false failures, this one produced a false pass and hid a real miss. Not fixed here
+  (the plan's Validation text itself is not in this task's Allowed paths, and amending
+  it would need another re-plan for a documentation nit); flagged here and in the
+  closing report as worth fixing forward, e.g. `grep -v '^docs/tasks/' -v '^docs/adr/'`
+  anchored to the path column rather than a blanket content match.
