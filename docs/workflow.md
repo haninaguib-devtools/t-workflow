@@ -76,6 +76,14 @@ before emitters — but need **not** satisfy runtime backwards compatibility, si
 mean old code never runs against the new schema. **6.3** Migrations are separate PRs from
 feature logic; a destructive one fails CI on its own branch until the code stops using what it
 drops, so the build dictates the order. **6.4** Cross-cutting work splits one task per module.
+**6.5 Driving an initiative** ([ADR-004](adr/004-autonomous-initiative-driving.md)) is the
+opt-in alternative to 6.1's one-PR-per-child default: `/t-drive <initiative-id>` chains
+`/t-plan`+`/t-work`+`/t-review` across an initiative's children on one integration branch,
+merging each child into it once that child's own review authorizes the merge, excluding —
+never auto-cancelling — a child that still fails after one bounded retry, then stopping once
+for the human's single confirmation on the initiative's combined PR to `main`. It is the one
+explicitly-invoked exception to §5's "nothing chains" rule (ADR-001 D1), narrowed to exactly
+this case; every other stage still stops and names the next command.
 
 ## 7. Design work
 

@@ -46,6 +46,8 @@ jobs:
           # characters the shell would interpret.
           HEAD_REF: ${{ github.head_ref }}
           BASE_REF: ${{ github.base_ref }}
+          # Only read in the driven-initiative branch below.
+          PR_BODY: ${{ github.event.pull_request.body }}
         run: |
           base="origin/$BASE_REF"
           # Keep the list on disk and feed it with --stdin: `xargs` behaves differently
@@ -58,6 +60,17 @@ jobs:
           if [ "$count" -eq 0 ]; then
             echo "FAIL: this PR changes no files."
             exit 1
+          fi
+
+          # ADR-004: a driven initiative's aggregate PR to `main` comes from the fixed
+          # wip/<initiative-id>-integration branch shape. It carries no record of its
+          # own — the initiative issue has none (docs/workflow.md §6.1) — so instead of
+          # one record matching the branch's own numeric id, check one record per
+          # `Task: #<id>` line in the PR body, one per included child.
+          if printf '%s' "$HEAD_REF" | grep -qE '^wip/[0-9]+-integration$'; then
+            printf '%s' "$PR_BODY" > /tmp/pr-body.md
+            cat /tmp/changed | bash scripts/check-record.sh --multi /tmp/pr-body.md
+            exit $?
           fi
 
           # Task branches: wip/<id>-<slug>. The id is numeric (a GitHub issue number).
@@ -99,6 +112,16 @@ jobs:
           BASE_REF: ${{ github.base_ref }}
           GH_TOKEN: ${{ github.token }}
         run: |
+          # ADR-004: a driven initiative's aggregate PR (wip/<id>-integration) carries no
+          # `## Plan` of its own — the initiative issue never has one. Every child that
+          # touched a protected surface was already plan-gated individually, on its own
+          # PR against this same branch, before /t-drive merged it in (ADR-004 Decision
+          # 1) — this job's check already ran, successfully, once per included child.
+          if printf '%s' "$HEAD_REF" | grep -qE '^wip/[0-9]+-integration$'; then
+            echo "OK: $HEAD_REF is a driven-initiative integration branch — each included child was already plan-gated individually."
+            exit 0
+          fi
+
           id=$(printf '%s' "$HEAD_REF" | sed -n -E 's#^wip/([0-9]+)-.+#\1#p')
           if [ -z "$id" ]; then
             echo "FAIL: branch '$HEAD_REF' is not wip/<id>-<slug>."

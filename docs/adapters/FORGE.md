@@ -35,6 +35,19 @@ Include the tracker's auto-close phrase in the body when the tracker supports it
 |---|---|
 | GitHub | `gh pr create --title "<title>" --body "<body>"` |
 
+### `forge:pr-set-base <pr> <base>` — retarget an existing PR's base branch
+
+Contract: `forge:pr-create-draft` has no way to name a non-default base, so it always
+lands against the repository's default branch — confirmed empirically (`/t-drive`'s own
+task record, #41): a PR opened from a branch with no `--base` targets the default branch
+regardless of that branch's actual git parent. `/t-drive` uses this operation
+(ADR-004 Decision 1) to move a child's freshly-opened draft PR from that default onto the
+initiative's integration branch.
+
+| Backend | Command |
+|---|---|
+| GitHub | `gh pr edit <pr> --base <base>` |
+
 ### `forge:pr-ready <pr>` — take the PR out of draft
 
 | Backend | Command |
