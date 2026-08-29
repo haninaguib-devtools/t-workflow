@@ -8,7 +8,7 @@
 # Changed paths come from stdin, the same contract as protected-paths.sh --stdin, so
 # this stays a pure function over its inputs and is testable against fixtures.
 #
-# Usage: scripts/check-review-gate.sh <head-commit-iso8601> <reviews-json-file>
+# Usage: .t-workflow/scripts/check-review-gate.sh <head-commit-iso8601> <reviews-json-file>
 #   The file holds a JSON array of {"submittedAt":, "body":} objects, any order — the
 #   latest by submittedAt is the one judged.
 # Exit 0 = not protected, or protected with a current, cold, ready review.

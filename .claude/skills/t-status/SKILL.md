@@ -26,7 +26,7 @@ timestamps); they are worth it, and they are the only ones that are. Resolve eve
    whose labels were never bootstrapped, a tracker silently drops a label its issue
    form asks for, so a hand-opened initiative can carry none and go unlisted here: an
    empty result means "none labelled", not "none exist". Say which, and recommend
-   `scripts/github-bootstrap.sh`.
+   `.t-workflow/scripts/github-bootstrap.sh`.
 2. **Tasks:** `tracker:list-open` (excluding initiatives) — number, title, and blocked
    state: a task whose every entry in the `blockedBy` field it returns is a *closed*
    issue is **unblocked** (ADR-003 — `blockedBy` comes back in the same bulk call, no
@@ -49,7 +49,7 @@ timestamps); they are worth it, and they are the only ones that are. Resolve eve
   was closed as **cancelled**, which is abandonment, not satisfaction.
 - A PR with `readiness: ready` sitting unmerged — name it as awaiting `/t-ship`.
 - **An open PR touching a protected surface with no review comment** — decide protection
-  by piping `forge:pr-files` through `bash scripts/protected-paths.sh --stdin`, never by
+  by piping `forge:pr-files` through `bash .t-workflow/scripts/protected-paths.sh --stdin`, never by
   reading `CONSTITUTION.md` §3 by eye. Exit 2 means the file list came back empty; report
   that rather than counting the PR as unprotected. Review is optional in general and required for those paths, so this is the
   one missing review that blocks shipping.

@@ -19,7 +19,7 @@ so. More than one → stop, report every candidate. Already merged or closed →
 has already left the pipeline, say which and stop.
 
 0. **Protected surfaces, from the diff.** Get the PR's own file list
-   (`forge:pr-files <pr>`) and pipe it into `bash scripts/protected-paths.sh --stdin`
+   (`forge:pr-files <pr>`) and pipe it into `bash .t-workflow/scripts/protected-paths.sh --stdin`
    (`CONSTITUTION.md` §3 in executable form) — never a label, never what the issue
    predicted — to decide preconditions 1 and 2. Read the exit code exactly: **0** =
    protected (paths echoed), **1** = checked, none protected, **2** = nothing was

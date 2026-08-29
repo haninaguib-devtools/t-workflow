@@ -32,16 +32,16 @@ to update — this skill exists for the repos generated from it.
 3. **Refuse if dirty.** Skip this step on first adoption (there is nothing to compare
    against). Otherwise, for every path the current manifest lists, recompute its
    normalized hash from this repo's working tree
-   (`scripts/check-manifest.sh --hash-file <path>`) and compare to the manifest's
+   (`.t-workflow/scripts/check-manifest.sh --hash-file <path>`) and compare to the manifest's
    recorded value for the *current* pin. Any mismatch means the file was hand-edited
    outside its slot since the last sync — **stop, list every offending path, and go no
    further.** The fix is upstreaming that edit as its own change first, never
-   overwriting it here. Equivalently: `scripts/check-manifest.sh` itself failing against
+   overwriting it here. Equivalently: `.t-workflow/scripts/check-manifest.sh` itself failing against
    the current tree is the same refusal, reached the same way.
 
 4. **Compute what would change**, entirely from the scratch clone and this repo's
    working tree — nothing written yet:
-   - the new file list: `scripts/template-owned-paths.sh --list`, run **in the scratch
+   - the new file list: `.t-workflow/scripts/template-owned-paths.sh --list`, run **in the scratch
      clone** (the target tag's own view of what's template-owned, which may have grown
      or shrunk);
    - for each file: added (new in the list), changed (normalized hash differs from the
@@ -87,14 +87,14 @@ to update — this skill exists for the repos generated from it.
      fails — reported, not worked around, the same as a dirty-file refusal.
 
 8. **Write the new manifest**: target tag, the new file list with each file's
-   normalized hash (`scripts/check-manifest.sh --hash-file`), and `migrations_applied`
+   normalized hash (`.t-workflow/scripts/check-manifest.sh --hash-file`), and `migrations_applied`
    set to the highest migration number actually applied (unchanged if none applied).
 
 9. **Checks, commit, draft PR** — `/t-work` Phase 3, verbatim: run the checks
-   (`./scripts/consistency-check.sh`, plus `scripts/check-manifest.sh` against the
+   (`./.t-workflow/scripts/consistency-check.sh`, plus `.t-workflow/scripts/check-manifest.sh` against the
    freshly written manifest — it must pass against what was just synced, or the sync
    itself has a bug), read the diff for scope drift, re-check
-   `scripts/protected-paths.sh` against what the diff actually touches, commit, push,
+   `.t-workflow/scripts/protected-paths.sh` against what the diff actually touches, commit, push,
    open the draft PR (title `[<id>] Update template to <target-tag>`).
 
 10. **Stop and report.** Say in ordinary language what moved (old tag → new tag, what

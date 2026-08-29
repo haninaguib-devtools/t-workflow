@@ -7,7 +7,7 @@
 # issue body comes from a file. That keeps this a pure function over both inputs, so it
 # is testable against fixtures without a live tracker call.
 #
-# Usage: scripts/check-plan-gate.sh <issue-body-file>   (changed paths on stdin)
+# Usage: .t-workflow/scripts/check-plan-gate.sh <issue-body-file>   (changed paths on stdin)
 # Exit 0 = not protected, or protected with exactly one Plan section.
 # Exit 1 = protected and the Plan section is missing or duplicated.
 # Exit 2 = nothing to check (stdin was empty) or bad usage.

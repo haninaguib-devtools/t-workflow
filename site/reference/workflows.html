@@ -58,12 +58,12 @@
             <table class="doc-table">
               <thead><tr><th>Job</th><th>Runs on</th><th>Enforces</th></tr></thead>
               <tbody>
-                <tr><td><code>consistency</code></td><td>PR + push to main</td><td><code>./scripts/consistency-check.sh</code> — the only job that also runs on plain pushes to <code>main</code>, not just PRs.</td></tr>
+                <tr><td><code>consistency</code></td><td>PR + push to main</td><td><code>./.t-workflow/scripts/consistency-check.sh</code> — the only job that also runs on plain pushes to <code>main</code>, not just PRs.</td></tr>
                 <tr><td><code>record</code></td><td>PR only</td><td>A task PR carries its own <code>docs/tasks/&lt;bucket&gt;/&lt;id&gt;-&lt;slug&gt;.md</code>, verified with <code>check-record.sh</code> — or, on a driven initiative's <code>wip/&lt;id&gt;-integration</code> branch, one record per <code>Task: #&lt;id&gt;</code> line via <code>check-record.sh --multi</code>.</td></tr>
                 <tr><td><code>plan-gate</code></td><td>PR only</td><td>A protected diff carries exactly one <code>## Plan</code> section, via <code>check-plan-gate.sh</code> — skipped (reported OK) on a driven initiative's integration branch, since each included child was already plan-gated individually before being merged in.</td></tr>
                 <tr><td><code>title-gate</code></td><td>PR only</td><td>The PR title starts with <code>[&lt;id&gt;]</code> matching the branch, via <code>check-title-gate.sh</code>.</td></tr>
                 <tr><td><code>blockers</code></td><td>PR only</td><td>Every blocker of the task's issue is closed as completed, via a live <code>gh api graphql</code> query (for <code>stateReason</code>, not yet in the tracker adapter's own contract table) piped into <code>check-blocker-gate.sh</code>.</td></tr>
-                <tr><td><code>plumbing-test</code></td><td>PR only</td><td><code>./scripts/plumbing-test.sh</code> — regression coverage for every gate script above, against fixtures.</td></tr>
+                <tr><td><code>plumbing-test</code></td><td>PR only</td><td><code>./.t-workflow/scripts/plumbing-test.sh</code> — regression coverage for every gate script above, against fixtures.</td></tr>
               </tbody>
             </table>
           </div>
@@ -73,7 +73,7 @@
         <div class="doc-section">
           <h2><code>review-gate.yml</code></h2>
           <p class="doc-dek">Triggers: PR opened/synchronized/reopened, <strong>and</strong> <code>pull_request_review</code> submitted — split from <code>ci.yml</code> specifically because a new push invalidates the previous verdict, and a submitted review is what produces one to check in the first place.</p>
-          <p>Its one job, <code>cold-review</code>, fetches the PR's reviews and its head commit's timestamp, then hands both to <code>check-review-gate.sh</code> — confirming a protected PR carries a current, cold (not <code>same session</code>), <code>readiness: ready</code> review. This is the required status-check context named <code>cold-review</code> in branch protection; renaming the job means updating <code>scripts/github-bootstrap.sh</code> in the same change.</p>
+          <p>Its one job, <code>cold-review</code>, fetches the PR's reviews and its head commit's timestamp, then hands both to <code>check-review-gate.sh</code> — confirming a protected PR carries a current, cold (not <code>same session</code>), <code>readiness: ready</code> review. This is the required status-check context named <code>cold-review</code> in branch protection; renaming the job means updating <code>.t-workflow/scripts/github-bootstrap.sh</code> in the same change.</p>
         </div>
 
         <div class="doc-section">
@@ -88,7 +88,7 @@
           <p>Deploys this website. <code>build</code> checks out the repository and uploads <code>site/</code> as a Pages artifact; <code>deploy</code> (depending on <code>build</code>) publishes it to GitHub Pages. Like <code>installer.yml</code>, it lives in its own file — stripped for every generated project along with the <code>site/</code> directory it deploys, since that project has no template website to publish.</p>
         </div>
 
-        <div class="doc-callout"><strong>Every job name here is load-bearing.</strong> Each is a status-check context <code>scripts/github-bootstrap.sh</code> marks required in branch protection (once it has actually run on <code>main</code> at least once) — renaming a job means updating that script in the same change, or branch protection silently stops enforcing it.</div>
+        <div class="doc-callout"><strong>Every job name here is load-bearing.</strong> Each is a status-check context <code>.t-workflow/scripts/github-bootstrap.sh</code> marks required in branch protection (once it has actually run on <code>main</code> at least once) — renaming a job means updating that script in the same change, or branch protection silently stops enforcing it.</div>
 
         <div class="doc-footer-nav">
           <a href="scripts.html">← Scripts</a>

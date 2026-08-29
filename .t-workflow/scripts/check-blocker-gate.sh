@@ -4,7 +4,7 @@
 # not-planned (cancelled via /t-cancel) was abandoned, not satisfied, and still fails
 # this — closed alone is not enough.
 #
-# Usage: scripts/check-blocker-gate.sh <blockers-json-file>
+# Usage: .t-workflow/scripts/check-blocker-gate.sh <blockers-json-file>
 #   The file holds a JSON array of {"number":, "state":, "stateReason":} objects — the
 #   shape `gh api graphql`'s `blockedBy(first: N) { nodes { number state stateReason } }`
 #   returns. Testable directly against a fixture file; no live tracker call required.

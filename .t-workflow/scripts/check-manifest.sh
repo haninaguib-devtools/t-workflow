@@ -11,12 +11,12 @@
 # CI as a required check.
 #
 # Usage:
-#   scripts/check-manifest.sh [--manifest <path>]
+#   .t-workflow/scripts/check-manifest.sh [--manifest <path>]
 #     Verify every file the manifest lists against the working tree (paths are
 #     resolved relative to the manifest's own directory).
 #     Exit 0 = every file matches; 1 = at least one drifted or is missing (listed);
 #     2 = no manifest found, or it lists no files — nothing was checked.
-#   scripts/check-manifest.sh --hash-file <path>
+#   .t-workflow/scripts/check-manifest.sh --hash-file <path>
 #     Print the normalized sha256 for one file. This is what t-update writes into the
 #     manifest, and the only place the normalization rule is implemented — verify mode
 #     below calls the same function, so the two can never compute it two different ways.

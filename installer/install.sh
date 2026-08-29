@@ -169,7 +169,7 @@ if [ "$remote" = "ask" ]; then
     fi
   else
     note "GitHub CLI not found or not logged in — creating a local project only."
-    note "  Finish by hand later: gh auth login, gh repo create, then scripts/github-bootstrap.sh"
+    note "  Finish by hand later: gh auth login, gh repo create, then .t-workflow/scripts/github-bootstrap.sh"
     remote="no"
   fi
 fi

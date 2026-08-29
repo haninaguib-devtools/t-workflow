@@ -34,10 +34,10 @@ If the installer did not create a remote repository, create one and apply the se
 
 ```
 gh repo create <name> --private --source . --remote origin --push
-./scripts/github-bootstrap.sh
+./.t-workflow/scripts/github-bootstrap.sh
 ```
 
-Re-run `./scripts/github-bootstrap.sh` once CI has run on `main` — that is when the
+Re-run `./.t-workflow/scripts/github-bootstrap.sh` once CI has run on `main` — that is when the
 status checks can be marked required.
 
 ## Licence

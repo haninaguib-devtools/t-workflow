@@ -5,13 +5,13 @@
 # fixture and passes on a clean one (Done-when 1). Pure fixtures throughout — nothing
 # here calls the tracker or the forge, so it runs the same locally and in CI.
 #
-# Usage: scripts/plumbing-test.sh   (from the repo root, or anywhere — paths resolve
+# Usage: .t-workflow/scripts/plumbing-test.sh   (from the repo root, or anywhere — paths resolve
 #                                     from this file)
 # Exit 0 = every assertion passed.
 set -uo pipefail
 
 here="$(cd "$(dirname "$0")" && pwd)"
-root="$(cd "$here/.." && pwd)"
+root="$(cd "$here/../.." && pwd)"
 cd "$root" || exit 2
 
 work=$(mktemp -d "${TMPDIR:-/tmp}/t-workflow-plumbing-test.XXXXXX") || exit 2
@@ -29,13 +29,13 @@ expect_rc() {
   if [ "$got" -eq "$want" ]; then ok "$desc (rc=$got)"; else bad "$desc (want rc=$want, got rc=$got)"; fi
 }
 
-# --- 1. scripts/protected-paths.sh: exit codes and quoting ------------------
+# --- 1. .t-workflow/scripts/protected-paths.sh: exit codes and quoting ------------------
 echo "protected-paths.sh"
-expect_rc "exit 0 on a protected path"        0 scripts/protected-paths.sh scripts/foo.sh
-expect_rc "exit 1 when none are protected"    1 scripts/protected-paths.sh README2.txt src/app.js
-expect_rc "exit 2 when nothing was given"     2 scripts/protected-paths.sh
-expect_rc "exit 2 on empty stdin"             2 bash -c 'printf "" | scripts/protected-paths.sh --stdin'
-out=$(printf '"docs/adr/002-caf\303\251.md"\n' | scripts/protected-paths.sh --stdin)
+expect_rc "exit 0 on a protected path"        0 .t-workflow/scripts/protected-paths.sh .t-workflow/scripts/foo.sh
+expect_rc "exit 1 when none are protected"    1 .t-workflow/scripts/protected-paths.sh README2.txt src/app.js
+expect_rc "exit 2 when nothing was given"     2 .t-workflow/scripts/protected-paths.sh
+expect_rc "exit 2 on empty stdin"             2 bash -c 'printf "" | .t-workflow/scripts/protected-paths.sh --stdin'
+out=$(printf '"docs/adr/002-caf\303\251.md"\n' | .t-workflow/scripts/protected-paths.sh --stdin)
 case "$out" in
   *"docs/adr/002-café.md"*) ok "un-quotes and un-escapes a quoted non-ASCII path" ;;
   *) bad "un-quotes and un-escapes a quoted non-ASCII path (got: $out)" ;;
@@ -58,7 +58,7 @@ check_bucket 142 000100
 check_bucket 7031 007000
 echo
 
-# --- 3. scripts/check-record.sh against fixture diffs -------------------------
+# --- 3. .t-workflow/scripts/check-record.sh against fixture diffs -------------------------
 echo "check-record.sh"
 cat > "$work/good.md" <<'EOF'
 # 42 — A Sample Task
@@ -79,20 +79,20 @@ x
 ## Deviations / notes
 - none
 EOF
-expect_rc "a correct record passes" 0 scripts/check-record.sh 42 "$work/good.md"
+expect_rc "a correct record passes" 0 .t-workflow/scripts/check-record.sh 42 "$work/good.md"
 
 printf '# 99 — Wrong id in the heading\nIssue: #42\n' > "$work/bad-heading.md"
-expect_rc "a heading with the wrong id fails" 1 scripts/check-record.sh 42 "$work/bad-heading.md"
+expect_rc "a heading with the wrong id fails" 1 .t-workflow/scripts/check-record.sh 42 "$work/bad-heading.md"
 
 printf '# 42 — Right heading\nIssue: #420\n' > "$work/bad-issue-line.md"
 expect_rc "an Issue line that only prefix-matches (#420 vs #42) fails" \
-  1 scripts/check-record.sh 42 "$work/bad-issue-line.md"
+  1 .t-workflow/scripts/check-record.sh 42 "$work/bad-issue-line.md"
 
 printf '# 42 — Right heading\nIssue: #42\n\n## Asked\nx\n' > "$work/missing-sections.md"
 expect_rc "a record missing template sections fails" \
-  1 scripts/check-record.sh 42 "$work/missing-sections.md"
+  1 .t-workflow/scripts/check-record.sh 42 "$work/missing-sections.md"
 
-expect_rc "a missing record file fails" 1 scripts/check-record.sh 42 "$work/does-not-exist.md"
+expect_rc "a missing record file fails" 1 .t-workflow/scripts/check-record.sh 42 "$work/does-not-exist.md"
 
 # ADR-004 --multi mode: a driven initiative's aggregate PR, one record per Task: #<id>.
 mkdir -p "$work/docs/tasks/000000"
@@ -128,53 +128,53 @@ changed_both=$(printf 'docs/tasks/000000/42-a-sample-task.md\ndocs/tasks/000000/
 # absolute paths for the script, the PR body, and the template.
 expect_rc "--multi: every Task: line has a real record, all pass" \
   0 bash -c 'cd "$1" && printf "%s\n" "$2" | "$3" --multi "$4" "$5"' \
-  _ "$work" "$changed_both" "$root/scripts/check-record.sh" "$work/prbody-both.md" "$root/docs/tasks/TEMPLATE.md"
+  _ "$work" "$changed_both" "$root/.t-workflow/scripts/check-record.sh" "$work/prbody-both.md" "$root/docs/tasks/TEMPLATE.md"
 expect_rc "--multi: a Task: line with no matching record fails" \
   1 bash -c 'cd "$1" && printf "%s\n" "$2" | "$3" --multi "$4" "$5"' \
-  _ "$work" "$changed_both" "$root/scripts/check-record.sh" "$work/prbody-missing.md" "$root/docs/tasks/TEMPLATE.md"
+  _ "$work" "$changed_both" "$root/.t-workflow/scripts/check-record.sh" "$work/prbody-missing.md" "$root/docs/tasks/TEMPLATE.md"
 expect_rc "--multi: no Task: lines at all fails" \
   1 bash -c 'cd "$1" && printf "%s\n" "$2" | "$3" --multi "$4" "$5"' \
-  _ "$work" "$changed_both" "$root/scripts/check-record.sh" "$work/prbody-none.md" "$root/docs/tasks/TEMPLATE.md"
+  _ "$work" "$changed_both" "$root/.t-workflow/scripts/check-record.sh" "$work/prbody-none.md" "$root/docs/tasks/TEMPLATE.md"
 echo
 
-# --- 4. scripts/check-plan-gate.sh --------------------------------------------
+# --- 4. .t-workflow/scripts/check-plan-gate.sh --------------------------------------------
 echo "check-plan-gate.sh"
 printf 'no plan section here\n' > "$work/body-noplan.md"
 printf '## Plan\nsome text\n' > "$work/body-plan.md"
 printf '## Plan\nfirst\n## Plan\nsecond\n' > "$work/body-twoplan.md"
 
 expect_rc "protected diff, no Plan section: fails" \
-  1 bash -c 'printf "scripts/foo.sh\n" | scripts/check-plan-gate.sh "$1"' _ "$work/body-noplan.md"
+  1 bash -c 'printf ".t-workflow/scripts/foo.sh\n" | .t-workflow/scripts/check-plan-gate.sh "$1"' _ "$work/body-noplan.md"
 expect_rc "protected diff, one Plan section: passes" \
-  0 bash -c 'printf "scripts/foo.sh\n" | scripts/check-plan-gate.sh "$1"' _ "$work/body-plan.md"
+  0 bash -c 'printf ".t-workflow/scripts/foo.sh\n" | .t-workflow/scripts/check-plan-gate.sh "$1"' _ "$work/body-plan.md"
 expect_rc "protected diff, two Plan sections: fails" \
-  1 bash -c 'printf "scripts/foo.sh\n" | scripts/check-plan-gate.sh "$1"' _ "$work/body-twoplan.md"
+  1 bash -c 'printf ".t-workflow/scripts/foo.sh\n" | .t-workflow/scripts/check-plan-gate.sh "$1"' _ "$work/body-twoplan.md"
 expect_rc "unprotected diff: passes regardless of the issue body" \
-  0 bash -c 'printf "README2.txt\n" | scripts/check-plan-gate.sh "$1"' _ "$work/body-noplan.md"
+  0 bash -c 'printf "README2.txt\n" | .t-workflow/scripts/check-plan-gate.sh "$1"' _ "$work/body-noplan.md"
 echo
 
-# --- 5. scripts/check-title-gate.sh -------------------------------------------
+# --- 5. .t-workflow/scripts/check-title-gate.sh -------------------------------------------
 echo "check-title-gate.sh"
-expect_rc "title starting [<id>] passes"  0 scripts/check-title-gate.sh 30 "[30] The issue title"
-expect_rc "title with no prefix fails"    1 scripts/check-title-gate.sh 30 "The issue title"
-expect_rc "title with the wrong id fails" 1 scripts/check-title-gate.sh 30 "[300] The issue title"
+expect_rc "title starting [<id>] passes"  0 .t-workflow/scripts/check-title-gate.sh 30 "[30] The issue title"
+expect_rc "title with no prefix fails"    1 .t-workflow/scripts/check-title-gate.sh 30 "The issue title"
+expect_rc "title with the wrong id fails" 1 .t-workflow/scripts/check-title-gate.sh 30 "[300] The issue title"
 echo
 
-# --- 6. scripts/check-blocker-gate.sh -----------------------------------------
+# --- 6. .t-workflow/scripts/check-blocker-gate.sh -----------------------------------------
 echo "check-blocker-gate.sh"
 printf '[{"number":25,"state":"CLOSED","stateReason":"COMPLETED"}]' > "$work/blockers-ok.json"
 printf '[{"number":25,"state":"OPEN","stateReason":null}]'         > "$work/blockers-open.json"
 printf '[{"number":25,"state":"CLOSED","stateReason":"NOT_PLANNED"}]' > "$work/blockers-cancelled.json"
 printf '[]' > "$work/blockers-none.json"
 
-expect_rc "every blocker closed as completed: passes" 0 scripts/check-blocker-gate.sh "$work/blockers-ok.json"
-expect_rc "no blockers at all: passes"                0 scripts/check-blocker-gate.sh "$work/blockers-none.json"
-expect_rc "an open blocker: fails"                    1 scripts/check-blocker-gate.sh "$work/blockers-open.json"
+expect_rc "every blocker closed as completed: passes" 0 .t-workflow/scripts/check-blocker-gate.sh "$work/blockers-ok.json"
+expect_rc "no blockers at all: passes"                0 .t-workflow/scripts/check-blocker-gate.sh "$work/blockers-none.json"
+expect_rc "an open blocker: fails"                    1 .t-workflow/scripts/check-blocker-gate.sh "$work/blockers-open.json"
 expect_rc "a cancelled (not-planned) blocker: fails — abandoned, not satisfied" \
-  1 scripts/check-blocker-gate.sh "$work/blockers-cancelled.json"
+  1 .t-workflow/scripts/check-blocker-gate.sh "$work/blockers-cancelled.json"
 echo
 
-# --- 7. scripts/check-review-gate.sh ------------------------------------------
+# --- 7. .t-workflow/scripts/check-review-gate.sh ------------------------------------------
 echo "check-review-gate.sh"
 head_time="2026-08-28T22:44:11Z"
 cat > "$work/rev-ready.json"       <<'EOF'
@@ -195,22 +195,22 @@ EOF
 printf '[]' > "$work/rev-none.json"
 
 expect_rc "protected + current ready fresh review: passes" \
-  0 bash -c 'printf "scripts/foo.sh\n" | scripts/check-review-gate.sh "$1" "$2"' _ "$head_time" "$work/rev-ready.json"
+  0 bash -c 'printf ".t-workflow/scripts/foo.sh\n" | .t-workflow/scripts/check-review-gate.sh "$1" "$2"' _ "$head_time" "$work/rev-ready.json"
 expect_rc "protected + readiness not-ready: fails" \
-  1 bash -c 'printf "scripts/foo.sh\n" | scripts/check-review-gate.sh "$1" "$2"' _ "$head_time" "$work/rev-notready.json"
+  1 bash -c 'printf ".t-workflow/scripts/foo.sh\n" | .t-workflow/scripts/check-review-gate.sh "$1" "$2"' _ "$head_time" "$work/rev-notready.json"
 expect_rc "protected + isolation same session: fails" \
-  1 bash -c 'printf "scripts/foo.sh\n" | scripts/check-review-gate.sh "$1" "$2"' _ "$head_time" "$work/rev-samesession.json"
+  1 bash -c 'printf ".t-workflow/scripts/foo.sh\n" | .t-workflow/scripts/check-review-gate.sh "$1" "$2"' _ "$head_time" "$work/rev-samesession.json"
 expect_rc "protected + no isolation line: fails (unknown, not cold)" \
-  1 bash -c 'printf "scripts/foo.sh\n" | scripts/check-review-gate.sh "$1" "$2"' _ "$head_time" "$work/rev-noisolation.json"
+  1 bash -c 'printf ".t-workflow/scripts/foo.sh\n" | .t-workflow/scripts/check-review-gate.sh "$1" "$2"' _ "$head_time" "$work/rev-noisolation.json"
 expect_rc "protected + review predates head commit: fails" \
-  1 bash -c 'printf "scripts/foo.sh\n" | scripts/check-review-gate.sh "$1" "$2"' _ "$head_time" "$work/rev-stale.json"
+  1 bash -c 'printf ".t-workflow/scripts/foo.sh\n" | .t-workflow/scripts/check-review-gate.sh "$1" "$2"' _ "$head_time" "$work/rev-stale.json"
 expect_rc "protected + no review at all: fails" \
-  1 bash -c 'printf "scripts/foo.sh\n" | scripts/check-review-gate.sh "$1" "$2"' _ "$head_time" "$work/rev-none.json"
+  1 bash -c 'printf ".t-workflow/scripts/foo.sh\n" | .t-workflow/scripts/check-review-gate.sh "$1" "$2"' _ "$head_time" "$work/rev-none.json"
 expect_rc "unprotected diff: passes without needing a review" \
-  0 bash -c 'printf "README2.txt\n" | scripts/check-review-gate.sh "$1" "$2"' _ "$head_time" "$work/rev-none.json"
+  0 bash -c 'printf "README2.txt\n" | .t-workflow/scripts/check-review-gate.sh "$1" "$2"' _ "$head_time" "$work/rev-none.json"
 echo
 
-# --- 8. scripts/check-manifest.sh (issue #20) ---------------------------------
+# --- 8. .t-workflow/scripts/check-manifest.sh (issue #20) ---------------------------------
 echo "check-manifest.sh"
 
 # Normalization: a real <!-- local --> ... <!-- /local --> region never affects the
@@ -224,11 +224,11 @@ printf 'a\n<!-- local -->\nsecret\n<!-- /local -->\nb-changed\n' > "$work/slot-a
 printf 'x\nThis doc mentions `<!-- local -->` and `<!-- /local -->` in prose.\ny\n' > "$work/prose-a.md"
 printf 'x\nThis doc mentions `<!-- local -->` and `<!-- /local -->` in prose.\nCHANGED\n' > "$work/prose-a-edited.md"
 
-h_slot=$(scripts/check-manifest.sh --hash-file "$work/slot-a.md")
-h_slot_inside=$(scripts/check-manifest.sh --hash-file "$work/slot-a-editedinside.md")
-h_slot_outside=$(scripts/check-manifest.sh --hash-file "$work/slot-a-editedoutside.md")
-h_prose=$(scripts/check-manifest.sh --hash-file "$work/prose-a.md")
-h_prose_edited=$(scripts/check-manifest.sh --hash-file "$work/prose-a-edited.md")
+h_slot=$(.t-workflow/scripts/check-manifest.sh --hash-file "$work/slot-a.md")
+h_slot_inside=$(.t-workflow/scripts/check-manifest.sh --hash-file "$work/slot-a-editedinside.md")
+h_slot_outside=$(.t-workflow/scripts/check-manifest.sh --hash-file "$work/slot-a-editedoutside.md")
+h_prose=$(.t-workflow/scripts/check-manifest.sh --hash-file "$work/prose-a.md")
+h_prose_edited=$(.t-workflow/scripts/check-manifest.sh --hash-file "$work/prose-a-edited.md")
 
 if [ "$h_slot" = "$h_slot_inside" ]; then ok "an edit inside a real slot does not change the hash"
 else bad "an edit inside a real slot does not change the hash"; fi
@@ -238,31 +238,31 @@ if [ "$h_prose" != "$h_prose_edited" ]; then ok "an edit after a prose mention o
 else bad "an edit after a prose mention of the markers still changes the hash"; fi
 
 expect_rc "--hash-file on a symlink-to-directory does not error" \
-  0 bash -c 'ln -sfn ../x "$1/link-to-dir" && scripts/check-manifest.sh --hash-file "$1/link-to-dir"' _ "$work"
-h_link1=$(scripts/check-manifest.sh --hash-file "$work/link-to-dir")
+  0 bash -c 'ln -sfn ../x "$1/link-to-dir" && .t-workflow/scripts/check-manifest.sh --hash-file "$1/link-to-dir"' _ "$work"
+h_link1=$(.t-workflow/scripts/check-manifest.sh --hash-file "$work/link-to-dir")
 ln -sfn ../y "$work/link-to-dir"
-h_link2=$(scripts/check-manifest.sh --hash-file "$work/link-to-dir")
+h_link2=$(.t-workflow/scripts/check-manifest.sh --hash-file "$work/link-to-dir")
 if [ "$h_link1" != "$h_link2" ]; then ok "a symlink's hash changes when its target changes"
 else bad "a symlink's hash changes when its target changes"; fi
 
-expect_rc "--hash-file on a missing file fails" 2 scripts/check-manifest.sh --hash-file "$work/does-not-exist.md"
+expect_rc "--hash-file on a missing file fails" 2 .t-workflow/scripts/check-manifest.sh --hash-file "$work/does-not-exist.md"
 expect_rc "no arguments and no manifest at CWD fails (nothing checked)" \
-  2 bash -c 'cd "$1" && "$2/scripts/check-manifest.sh"' _ "$work" "$root"
+  2 bash -c 'cd "$1" && "$2/.t-workflow/scripts/check-manifest.sh"' _ "$work" "$root"
 
 # Verify mode against a small fixture manifest.
 mkdir -p "$work/mrepo"
 printf 'a\n<!-- local -->\nsecret\n<!-- /local -->\nb\n' > "$work/mrepo/f.md"
-h_f=$("$root/scripts/check-manifest.sh" --hash-file "$work/mrepo/f.md")
+h_f=$("$root/.t-workflow/scripts/check-manifest.sh" --hash-file "$work/mrepo/f.md")
 printf '{"template":"x/y","tag":"v1","migrations_applied":0,"files":{"f.md":"%s"}}' "$h_f" \
   > "$work/mrepo/.template-manifest.json"
 expect_rc "verify mode: clean tree matches its manifest" \
-  0 bash -c 'cd "$1" && "$2/scripts/check-manifest.sh"' _ "$work/mrepo" "$root"
+  0 bash -c 'cd "$1" && "$2/.t-workflow/scripts/check-manifest.sh"' _ "$work/mrepo" "$root"
 printf 'a\n<!-- local -->\nsecret\n<!-- /local -->\nb-drifted\n' > "$work/mrepo/f.md"
 expect_rc "verify mode: an edit outside the slot is reported as drift" \
-  1 bash -c 'cd "$1" && "$2/scripts/check-manifest.sh"' _ "$work/mrepo" "$root"
+  1 bash -c 'cd "$1" && "$2/.t-workflow/scripts/check-manifest.sh"' _ "$work/mrepo" "$root"
 rm "$work/mrepo/f.md"
 expect_rc "verify mode: a file the manifest lists but the tree lacks fails" \
-  1 bash -c 'cd "$1" && "$2/scripts/check-manifest.sh"' _ "$work/mrepo" "$root"
+  1 bash -c 'cd "$1" && "$2/.t-workflow/scripts/check-manifest.sh"' _ "$work/mrepo" "$root"
 echo
 
 echo "$pass passed, $fail failed"

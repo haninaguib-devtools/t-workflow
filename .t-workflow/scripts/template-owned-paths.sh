@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # The manifest's file-list source (docs/architecture/manifest.md): every tracked file
-# under a protected pattern (CONSTITUTION.md §3, scripts/protected-paths.sh), minus the
+# under a protected pattern (CONSTITUTION.md §3, .t-workflow/scripts/protected-paths.sh), minus the
 # paths that are genesis-only — stamped once for a consumer at bootstrap time
 # (README.md) or deleted outright for every generated project (LICENSE, installer/,
 # site/, the installer and pages workflows) by installer/bootstrap.sh. Those have
 # nothing in a consumer repo to sync to, so they are never template-owned there.
 #
 # Usage:
-#   scripts/template-owned-paths.sh --list
+#   .t-workflow/scripts/template-owned-paths.sh --list
 #     Print every manifest-eligible path, one per line, resolved against the current
 #     working tree (real tracked files, not the raw protected-paths.sh patterns).
 set -uo pipefail

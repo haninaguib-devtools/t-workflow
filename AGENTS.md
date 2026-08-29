@@ -127,7 +127,7 @@ Where a skill says "run the checks", the current check set is:
    then added to `.github/workflows/ci.yml`. Until this line names a command there is no
    check 1 to run: say that plainly rather than reporting tests that do not exist.
 <!-- /local -->
-2. `./scripts/consistency-check.sh` — cross-artifact document consistency.
+2. `./.t-workflow/scripts/consistency-check.sh` — cross-artifact document consistency.
 3. `git diff` review against the task's declared scope (always applicable).
 
 `.github/workflows/ci.yml` runs check 2 on every PR today, plus a `record` job asserting

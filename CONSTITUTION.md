@@ -48,7 +48,7 @@ approvals on the forge stay at zero because a sole author cannot approve their o
 When a second maintainer joins, the bar rises to their approval on the forge as well, and
 workflow §13 Q9 decides which surfaces need more than one.
 
-This list has an executable twin: `scripts/protected-paths.sh` decides the same question
+This list has an executable twin: `.t-workflow/scripts/protected-paths.sh` decides the same question
 for the skills and for CI. The two are one rule in two forms and change in the same task;
 where they disagree, that is a defect to fix, not a judgment call to make.
 
@@ -68,7 +68,7 @@ where they disagree, that is a defect to fix, not a judgment call to make.
 - `docs/adapters/` (the tracker/forge backend maps the skills execute through)
 - `docs/architecture/` (binding conventions the skills execute against)
 - `.github/` (CI, CODEOWNERS, rulesets)
-- `scripts/` (the mechanical checks and settings-as-code)
+- `.t-workflow/scripts/` (the mechanical checks and settings-as-code)
 - `installer/` (the one-command bootstrap that generates every new project from this
   template — a defect here is inherited by repositories nobody in this one will review)
 - `docs/tasks/TEMPLATE.md` and `docs/tasks/README.md` (the shape of every future record —
@@ -90,7 +90,7 @@ exactly those placeholder fills and that first commit, and nothing else. **The e
 ends when that first commit is pushed** — one end-point, stated the same way in
 `README.md` §Bootstrapping. Every *edit to the tree* after that push goes through the
 pipeline, including further edits to those same files. Running
-`scripts/github-bootstrap.sh` is not such an edit — it changes settings on the forge and
+`.t-workflow/scripts/github-bootstrap.sh` is not such an edit — it changes settings on the forge and
 produces no diff — so it needs no task, before or after the push. The exception never
 covers a second round of "just this once".
 

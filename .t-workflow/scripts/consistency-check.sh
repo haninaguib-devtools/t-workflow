@@ -29,8 +29,12 @@ cons_has() { grep -qE "^## ${1}\." CONSTITUTION.md; }
 while IFS= read -r f <&3; do
   while IFS= read -r line; do
     cands=""
+    # ".t-workflow/" (the scripts directory) contains "workflow" as a substring — strip
+    # it before matching so a line naming that path alone doesn't falsely candidate
+    # docs/workflow.md.
+    wfline="${line//.t-workflow/}"
     case "$line" in *CONSTITUTION*) cands="$cands cons";; esac
-    case "$line" in *workflow*)     cands="$cands wf";;   esac
+    case "$wfline" in *workflow*)   cands="$cands wf";;   esac
     # The file's own document is always a legitimate target for its §-references.
     case "$f" in
       docs/workflow.md) cands="$cands wf";;
@@ -78,9 +82,13 @@ done 3< <(living_docs)
 while IFS= read -r f <&3; do
   while IFS= read -r line; do
     cands=""
+    # ".t-workflow/" (the scripts directory) contains "workflow" as a substring — strip
+    # it before matching so a line naming that path alone doesn't falsely candidate
+    # docs/workflow.md.
+    wfline="${line//.t-workflow/}"
     case "$line" in *AGENTS*)       cands="$cands AGENTS.md";;       esac
     case "$line" in *CONSTITUTION*) cands="$cands CONSTITUTION.md";; esac
-    case "$line" in *workflow*)     cands="$cands docs/workflow.md";; esac
+    case "$wfline" in *workflow*)   cands="$cands docs/workflow.md";; esac
     case "$line" in *README*)       cands="$cands README.md";;       esac
     [ -z "$cands" ] && continue
     # §D4-style ADR decision refs are handled by check 2, not here: a bare "D" would
@@ -149,8 +157,8 @@ fi
 # copied by zip/cp/rsync, or a clone with core.fileMode=false, can arrive without the exec
 # bit, and skipping the check silently while still printing OK is exactly the
 # absence-indistinguishable-from-a-pass failure this script exists to prevent.
-if [ ! -f scripts/protected-paths.sh ]; then
-  err "scripts/protected-paths.sh is missing; CONSTITUTION.md §3 has no executable twin to check against"
+if [ ! -f .t-workflow/scripts/protected-paths.sh ]; then
+  err ".t-workflow/scripts/protected-paths.sh is missing; CONSTITUTION.md §3 has no executable twin to check against"
 else
   # Only §3's bullet list counts as "named" — bullets plus their wrapped continuation
   # lines. The section's surrounding prose mentions paths too (it points at this very
@@ -171,8 +179,8 @@ else
   while IFS= read -r pat; do
     base=${pat%\*}                        # docs/adr/* -> docs/adr/ ; README.md -> README.md
     printf '%s\n' "$named" | grep -qxF "$base" \
-      || err "scripts/protected-paths.sh protects '$pat' but CONSTITUTION.md §3 never names '$base'"
-  done < <(bash scripts/protected-paths.sh --list)
+      || err ".t-workflow/scripts/protected-paths.sh protects '$pat' but CONSTITUTION.md §3 never names '$base'"
+  done < <(bash .t-workflow/scripts/protected-paths.sh --list)
 
   # 9b. §3 -> script: every surface §3 names is actually enforced. Each backticked
   # path-like token in the bullets becomes a probe path passed to the script, so this
@@ -187,8 +195,8 @@ else
     case "$tok" in *[!A-Za-z0-9._/-]*) continue;; esac
     probe="$tok"
     case "$tok" in */) probe="${tok}probe.md";; esac
-    bash scripts/protected-paths.sh "$probe" >/dev/null \
-      || err "CONSTITUTION.md §3 names '$tok' as protected but scripts/protected-paths.sh does not protect it (probed '$probe')"
+    bash .t-workflow/scripts/protected-paths.sh "$probe" >/dev/null \
+      || err "CONSTITUTION.md §3 names '$tok' as protected but .t-workflow/scripts/protected-paths.sh does not protect it (probed '$probe')"
   done < <(printf '%s\n' "$named")
 fi
 
