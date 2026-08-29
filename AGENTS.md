@@ -31,7 +31,6 @@ only). Plain `git` is never abstracted.
 | `/t-drive` | Optional. Walks an initiative's children to completion on an integration branch — plan, implement, and independently review each — merging what review authorizes and excluding what fails a bounded retry; stops once, for the human's confirmation on a single PR to `main` (ADR-004). |
 | `/t-ship` | Human-confirmed squash merge. Every path to `main` is a human-confirmed PR. |
 | `/t-cancel` | Terminal exit: the reason recorded on the issue, every neighbour decided, then the PR closed and its branch deleted. |
-| `/t-clean` | Optional, lazy. Removes a shipped or cancelled task's stale local worktree/branch, on confirmation. |
 | `/t-update` | For a repo generated from this template. Syncs its template-owned files to a pinned release, preserving local slots and applying pending migrations, as one ordinary task. |
 | `/t-status` | Read-only pipeline overview. |
 
@@ -82,9 +81,9 @@ only). Plain `git` is never abstracted.
   launching engine; the pipeline no longer ships a skill for it. Otherwise `/t-work`
   runs on the task branch in the current checkout. Two sessions never share a checkout.
   `/t-ship` and `/t-cancel` run from any checkout, including inside a task's own
-  worktree — neither one destroys it (ADR-002); `/t-clean` is the one skill that removes
-  a stale worktree or branch, lazily and on confirmation, and it is the one that cannot
-  run from inside what it might remove.
+  worktree — neither one destroys it (ADR-002), and nothing else does either: a stale
+  local worktree or branch is left alone permanently (ADR-005), removed by hand
+  (`git worktree remove`, `git branch -D`) only if it is ever actually in the way.
 - `main` only moves by pull request. Never commit or push to `main` directly. The trunk
   name is `main` literally, throughout the skills and scripts — it is not abstracted the
   way the tracker and forge are; changing it is a find-and-replace across protected

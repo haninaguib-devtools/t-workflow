@@ -79,8 +79,8 @@ survives, and every neighbour decision from Phase 2. Then the gate, per
    branch stranded on `origin`: `forge:pr-close <pr>` with a comment saying why.
 3. **Delete the branch, if anything is left to delete.** Step 2 already removed it
    (local and remote) whenever a PR existed — normally a no-op after a PR, the whole
-   job otherwise. This skill does not touch worktrees (`/t-clean`'s job), so the branch
-   may still be checked out somewhere.
+   job otherwise. This skill does not touch worktrees — a stale one is left alone
+   permanently (ADR-005) — so the branch may still be checked out somewhere.
 
    If the *invoking* checkout is on the target branch, move it off first — the only
    checkout this skill may switch, and only because it stands on the branch about to
