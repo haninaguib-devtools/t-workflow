@@ -135,7 +135,7 @@ has already left the pipeline, say which and stop.
 4. `git fetch --prune` (deleted `wip/` branches otherwise linger as stale
    `origin/wip/*` refs), then **at most, fast-forward a `main` this checkout happens to
    be sitting on** (ADR-002) — merging leaves the task's worktree, local branch, and
-   this checkout untouched, `/t-clean` is cleanup's job, lazy, never a side effect of
+   this checkout untouched, left alone permanently (ADR-005), never a side effect of
    shipping: `git rev-parse --abbrev-ref HEAD`, then **on `main`**: `git merge --ff-only
    origin/main`; **on any other branch**, including the task branch: leave it exactly
    where it is — the normal outcome now that shipping runs from anywhere.

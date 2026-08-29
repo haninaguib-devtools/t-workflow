@@ -111,8 +111,8 @@ force pushes); CI running `scripts/consistency-check.sh` and the record-present 
 every PR (`.github/workflows/ci.yml`); the repo's `delete_branch_on_merge` setting
 (`scripts/github-bootstrap.sh`) deleting a merged branch's remote copy without any
 skill-side step. A stale local worktree or branch left behind by `/t-ship`/`/t-cancel`
-(ADR-002) is cleaned up lazily, on a human's confirmation, by `/t-clean` — nothing
-scans for one automatically. Held by convention, not by machinery:
+(ADR-002) is left alone permanently (ADR-005) — nothing cleans it up, and a human removes
+one by hand only if it is ever actually in the way. Held by convention, not by machinery:
 self-contained squash commit bodies written from the record — the forge enforces squash
 *merging*, nothing checks what the message says. Still to come: CODEOWNERS approval on protected paths, with
 `CONSTITUTION.md` and `docs/adr/` at a heightened bar (§13 Q9), and required approvals
