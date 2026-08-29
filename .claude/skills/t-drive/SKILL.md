@@ -22,8 +22,11 @@ and that ADR differ, the ADR wins — flag it, do not improvise.
    directly.
 2. `tracker:list-children <id>` — every sub-issue, with state. **Refuse** an initiative
    with no open children — nothing to drive; say so.
-3. For each open child, `tracker:list-blockers <child-id>` — build the dependency graph
-   among this initiative's own children, and note any blocker outside it (Phase 2 step 1
+3. `tracker:list-open` **once**, filtered client-side to this initiative's open
+   children — the same bulk `blockedBy`-bearing call `t-status` already relies on
+   (ADR-003), not a `tracker:list-blockers <child-id>` loop: one round trip for the
+   whole dependency graph instead of one per child. Build the graph from each child's
+   `blockedBy` field, and note any blocker outside the initiative (Phase 2 step 1
    handles both cases). A child already closed (merged in an earlier `/t-drive` run, or
    cancelled) is done; report it and skip it below.
 
