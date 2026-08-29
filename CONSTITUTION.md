@@ -20,8 +20,10 @@ by ADRs as decisions are ratified.
    process. Which products fill those roles is a mechanical choice made in
    `docs/adapters/` (GitHub for both by default), not a constitutional one. Nothing
    binding exists only in an issue or PR thread — if it isn't merged, it isn't decided.
-4. Squash commits are self-contained: goal, non-goals, outcome, and a `Task: #<id>` line
-   written from the task record.
+4. Squash commits are self-contained: goal, non-goals, outcome, and one or more
+   `Task: #<id>` lines, each written from the task record it names — an ordinary merge
+   carries exactly one; only `/t-drive`'s single PR closing an initiative's included
+   children carries more than one, one line per included child (ADR-004).
 5. Guardrails are never weakened to make work pass. A failing check is fixed by fixing
    the work. Loosening any gate is a protected change (workflow §11.3) with an ADR.
 
