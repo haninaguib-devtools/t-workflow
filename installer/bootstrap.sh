@@ -9,8 +9,6 @@
 #   TWORKFLOW_SRC         the clone to build the project from
 #   TWORKFLOW_NAME        project name
 #   TWORKFLOW_TARGET      directory to create
-#   TWORKFLOW_REMOTE      yes | no
-#   TWORKFLOW_VISIBILITY  private | public
 #   TWORKFLOW_SOURCE_URL  where the clone came from, for the provenance line
 #
 # bash 3.2 compatible: macOS still ships it.
@@ -22,8 +20,6 @@ note() { printf '%s\n' "$*" >&2; }
 src="${TWORKFLOW_SRC:?TWORKFLOW_SRC is not set — run installer/install.sh}"
 name="${TWORKFLOW_NAME:?TWORKFLOW_NAME is not set}"
 target="${TWORKFLOW_TARGET:?TWORKFLOW_TARGET is not set}"
-remote="${TWORKFLOW_REMOTE:-no}"
-visibility="${TWORKFLOW_VISIBILITY:-private}"
 source_url="${TWORKFLOW_SOURCE_URL:-}"
 
 [ -d "$src/.git" ] || die "$src is not a git clone."
@@ -122,29 +118,6 @@ Genesis (CONSTITUTION.md section 3): this commit is made outside the pipeline
 because there is no tracker and no main to open a pull request against yet.
 The exception ends here — every change from now on goes through the pipeline."
 
-# --- the remote -------------------------------------------------------------
-# Never a hard failure. A local project with printed instructions is a good outcome; a
-# half-created remote is not.
-remote_done=no
-if [ "$remote" = "yes" ]; then
-  if ! command -v gh >/dev/null 2>&1; then
-    note "GitHub CLI (gh) not found — skipping the remote."
-  elif ! gh auth status >/dev/null 2>&1; then
-    note "GitHub CLI is not logged in — skipping the remote. Run: gh auth login"
-  elif gh repo create "$name" "--$visibility" --source "$target" --remote origin --push; then
-    remote_done=yes
-    note ""
-    note "Applying repository settings (labels, squash-only merges, branch protection)..."
-    if ( cd "$target" && ./.t-workflow/scripts/github-bootstrap.sh ); then
-      :
-    else
-      note ".t-workflow/scripts/github-bootstrap.sh did not finish cleanly. Re-run it from '$target'."
-    fi
-  else
-    note "Could not create the repository — the local project at '$target' is fine."
-  fi
-fi
-
 # --- what the person needs to know ------------------------------------------
 cat >&2 <<EOF
 
@@ -163,24 +136,11 @@ No LICENSE file was created. A project with no licence is "all rights reserved" 
 default, which is the safe place to start — add the one you want before publishing.
 EOF
 
-# Which of these is true decides how those two fills may be made, so it is stated
-# rather than left for the person to work out. CONSTITUTION.md section 3: the genesis
-# exception ends when the first commit is pushed.
-if [ "$remote_done" = "yes" ]; then
-  cat >&2 <<EOF
-
-The remote repository exists and main has been pushed, so the genesis exception has
-closed. Both fills above are now ordinary work: open each one with /t-open and let it
-go through the pipeline like any other change. CONSTITUTION.md and AGENTS.md are
-protected surfaces, so each needs a plan and a review — and branch protection will
-refuse a direct push to main anyway.
-
-    cd $target
-    /t-open
-
-EOF
-else
-  cat >&2 <<EOF
+# Nothing has been pushed, so the genesis exception is open by construction — the
+# installer never creates a remote or pushes. Stating what that permits, and what ends
+# it, is the point of this message. CONSTITUTION.md section 3: the genesis exception
+# ends when the first commit is pushed.
+cat >&2 <<EOF
 
 Nothing has been pushed yet, so the genesis exception is still open: you may make both
 fills above by hand and fold them into the first commit.
@@ -191,11 +151,10 @@ fills above by hand and fold them into the first commit.
 
 Then create the repository and apply its settings:
 
-    gh repo create $name --$visibility --source . --remote origin --push
+    gh repo create $name --private --source . --remote origin --push
     ./.t-workflow/scripts/github-bootstrap.sh
 
 That push closes the genesis exception. Every edit to the tree after it goes through
 the pipeline, starting with /t-open.
 
 EOF
-fi

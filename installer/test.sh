@@ -55,17 +55,22 @@ git -C "$root" push --quiet "$srcrepo" "HEAD:refs/heads/main" || {
 echo "--help"
 help_out=$(bash "$root/installer/install.sh" --help 2>&1); help_rc=$?
 [ "$help_rc" -eq 0 ] && ok "exits 0" || bad "exits 0 (got $help_rc)"
-for flag in --name --dir --no-remote --remote --private --public --source --ref --help; do
+for flag in --name --dir --source --ref --help; do
   case "$help_out" in *"$flag"*) ok "documents $flag" ;; *) bad "documents $flag" ;; esac
+done
+# The remote flags are gone, not merely undocumented: their appearance anywhere in
+# --help would mean the remote-creation path is growing back.
+for flag in --no-remote --remote --private --public; do
+  case "$help_out" in *"$flag"*) bad "does not mention $flag" ;; *) ok "does not mention $flag" ;; esac
 done
 echo
 
 # --- 2. a full non-interactive run ------------------------------------------
-echo "install --name demo --no-remote"
+echo "install --name demo"
 # stdin is closed on purpose: a prompt that read stdin instead of /dev/tty would show up
 # here as a hang or an empty answer rather than passing quietly.
 run_out=$(bash "$root/installer/install.sh" \
-            --name demo --dir "$work" --no-remote \
+            --name demo --dir "$work" \
             --source "$srcrepo" </dev/null 2>&1); run_rc=$?
 if [ "$run_rc" -ne 0 ]; then
   bad "exits 0 (got $run_rc)"
@@ -173,8 +178,6 @@ fi
 if TWORKFLOW_SRC="$work/clone" \
    TWORKFLOW_NAME=urltest \
    TWORKFLOW_TARGET="$work/urltest" \
-   TWORKFLOW_REMOTE=no \
-   TWORKFLOW_VISIBILITY=private \
    TWORKFLOW_SOURCE_URL="https://github.com/example/t-workflow.git" \
    bash "$root/installer/bootstrap.sh" >/dev/null 2>&1; then
   ok "installs from a URL source"
@@ -184,7 +187,6 @@ if TWORKFLOW_SRC="$work/clone" \
 else
   bad "installs from a URL source"
   TWORKFLOW_SRC="$work/clone" TWORKFLOW_NAME=urltest2 TWORKFLOW_TARGET="$work/urltest2" \
-  TWORKFLOW_REMOTE=no TWORKFLOW_VISIBILITY=private \
   TWORKFLOW_SOURCE_URL="https://github.com/example/t-workflow.git" \
   bash "$root/installer/bootstrap.sh" 2>&1 | sed 's/^/    /' | tail -5
 fi
@@ -202,13 +204,13 @@ echo
 
 # --- 9. refusing an existing directory --------------------------------------
 echo "refusals"
-if bash "$root/installer/install.sh" --name demo --dir "$work" --no-remote \
+if bash "$root/installer/install.sh" --name demo --dir "$work" \
         --source "$srcrepo" </dev/null >/dev/null 2>&1; then
   bad "refuses to overwrite an existing directory"
 else
   ok "refuses to overwrite an existing directory"
 fi
-if bash "$root/installer/install.sh" --name "../escape" --dir "$work" --no-remote \
+if bash "$root/installer/install.sh" --name "../escape" --dir "$work" \
         --source "$srcrepo" </dev/null >/dev/null 2>&1; then
   bad "rejects a path-traversing project name"
 else
@@ -223,7 +225,7 @@ if { true >/dev/tty; } 2>/dev/null; then
 else
   runner=""
   command -v timeout >/dev/null 2>&1 && runner="timeout 30"
-  if $runner bash "$root/installer/install.sh" --no-remote \
+  if $runner bash "$root/installer/install.sh" \
           --source "$srcrepo" </dev/null >/dev/null 2>&1; then
     bad "refuses to prompt when there is no terminal"
   else
