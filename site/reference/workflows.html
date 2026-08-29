@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Every GitHub Actions workflow under .github/workflows/ — its triggers and what each job enforces.">
+    <meta name="theme-color" content="#ffffff">
+    <title>GitHub Actions — t-workflow Reference</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../styles.css">
+    <script src="../script.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header" data-header>
+      <div class="nav-wrap">
+        <a class="brand" href="../index.html" aria-label="t-workflow home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><circle cx="7" cy="16" r="3"/><circle cx="16" cy="7" r="3"/><circle cx="25" cy="16" r="3"/><circle cx="16" cy="25" r="3"/><path d="M9.5 14.5 13.5 9.5M18.5 9.5l4 5M22.5 18l-4 4.5M13.5 22.5l-4-4.5"/></svg>
+          </span>
+          <span>t-workflow</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a href="../index.html">Home</a>
+          <a href="index.html">Reference</a>
+        </nav>
+        <a class="github-link" href="https://github.com/haninaguib-devtools/t-workflow" aria-label="View t-workflow on GitHub">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.69c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.35 1.09 2.92.83.09-.65.35-1.09.64-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.6 9.6 0 0 1 12 6.7a9.6 9.6 0 0 1 2.5.34c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.86V21c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>
+          <span>GitHub</span>
+        </a>
+      </div>
+    </header>
+
+    <nav class="doc-subnav" aria-label="Reference section pages">
+      <a href="index.html">Overview</a>
+      <a href="skills.html">Skills</a>
+      <a href="structure.html">Project structure</a>
+      <a href="installer.html">Installer</a>
+      <a href="scripts.html">Scripts</a>
+      <a href="workflows.html" aria-current="page">GitHub Actions</a>
+      <a href="migrations.html">Migrations</a>
+      <a href="docs.html">docs/ tour</a>
+    </nav>
+
+    <main id="main">
+      <section class="doc-hero">
+        <p class="section-label">Reference · GitHub Actions</p>
+        <h1>Four workflows: gate every PR, and deploy this site.</h1>
+        <p>Every job below is thin — it gathers the tracker/forge context a script needs (issue body, PR diff, review list) and hands it to one of the scripts on the <a href="scripts.html">Scripts page</a>. The logic lives in the scripts, which is what lets <code>plumbing-test.sh</code> test it without a live GitHub Actions run.</p>
+      </section>
+
+      <div class="doc-main">
+        <div class="doc-section">
+          <h2><code>ci.yml</code></h2>
+          <p class="doc-dek">Triggers: every PR (opened, synchronized, reopened, <strong>edited</strong> — so a title-only or issue-body-only edit gets a fresh run without a new commit) and every push to <code>main</code>.</p>
+          <div class="doc-table-wrap">
+            <table class="doc-table">
+              <thead><tr><th>Job</th><th>Runs on</th><th>Enforces</th></tr></thead>
+              <tbody>
+                <tr><td><code>consistency</code></td><td>PR + push to main</td><td><code>./scripts/consistency-check.sh</code> — the only job that also runs on plain pushes to <code>main</code>, not just PRs.</td></tr>
+                <tr><td><code>record</code></td><td>PR only</td><td>A task PR carries its own <code>docs/tasks/&lt;bucket&gt;/&lt;id&gt;-&lt;slug&gt;.md</code>, verified with <code>check-record.sh</code> — or, on a driven initiative's <code>wip/&lt;id&gt;-integration</code> branch, one record per <code>Task: #&lt;id&gt;</code> line via <code>check-record.sh --multi</code>.</td></tr>
+                <tr><td><code>plan-gate</code></td><td>PR only</td><td>A protected diff carries exactly one <code>## Plan</code> section, via <code>check-plan-gate.sh</code> — skipped (reported OK) on a driven initiative's integration branch, since each included child was already plan-gated individually before being merged in.</td></tr>
+                <tr><td><code>title-gate</code></td><td>PR only</td><td>The PR title starts with <code>[&lt;id&gt;]</code> matching the branch, via <code>check-title-gate.sh</code>.</td></tr>
+                <tr><td><code>blockers</code></td><td>PR only</td><td>Every blocker of the task's issue is closed as completed, via a live <code>gh api graphql</code> query (for <code>stateReason</code>, not yet in the tracker adapter's own contract table) piped into <code>check-blocker-gate.sh</code>.</td></tr>
+                <tr><td><code>plumbing-test</code></td><td>PR only</td><td><code>./scripts/plumbing-test.sh</code> — regression coverage for every gate script above, against fixtures.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>A future project's own build/test command is added here as a third job once the stack exists — <code>AGENTS.md</code> §Checks item 1 is the one place that names it first.</p>
+        </div>
+
+        <div class="doc-section">
+          <h2><code>review-gate.yml</code></h2>
+          <p class="doc-dek">Triggers: PR opened/synchronized/reopened, <strong>and</strong> <code>pull_request_review</code> submitted — split from <code>ci.yml</code> specifically because a new push invalidates the previous verdict, and a submitted review is what produces one to check in the first place.</p>
+          <p>Its one job, <code>cold-review</code>, fetches the PR's reviews and its head commit's timestamp, then hands both to <code>check-review-gate.sh</code> — confirming a protected PR carries a current, cold (not <code>same session</code>), <code>readiness: ready</code> review. This is the required status-check context named <code>cold-review</code> in branch protection; renaming the job means updating <code>scripts/github-bootstrap.sh</code> in the same change.</p>
+        </div>
+
+        <div class="doc-section">
+          <h2><code>installer.yml</code></h2>
+          <p class="doc-dek">Triggers: every PR, and every push to <code>main</code>.</p>
+          <p>Deliberately its own file rather than a job in <code>ci.yml</code>: every file in this repository is copied into the projects the installer generates, and a generated project has no <code>installer/</code> directory at all — a job living in the shared <code>ci.yml</code> would be inherited by every generated project as a check pointing at a script that isn't there, red on that project's very first PR for a reason its owner couldn't diagnose. Its one job runs <code>./installer/test.sh</code> against a full-history checkout (the test pushes <code>HEAD</code> into a throwaway repository and installs from that). <strong>Advisory only</strong> — <code>github-bootstrap.sh</code> doesn't name it as a required check, so it goes red on failure but doesn't block a merge on its own.</p>
+        </div>
+
+        <div class="doc-section">
+          <h2><code>pages.yml</code></h2>
+          <p class="doc-dek">Triggers: push to <code>main</code>, or manually (<code>workflow_dispatch</code>).</p>
+          <p>Deploys this website. <code>build</code> checks out the repository and uploads <code>site/</code> as a Pages artifact; <code>deploy</code> (depending on <code>build</code>) publishes it to GitHub Pages. Like <code>installer.yml</code>, it lives in its own file — stripped for every generated project along with the <code>site/</code> directory it deploys, since that project has no template website to publish.</p>
+        </div>
+
+        <div class="doc-callout"><strong>Every job name here is load-bearing.</strong> Each is a status-check context <code>scripts/github-bootstrap.sh</code> marks required in branch protection (once it has actually run on <code>main</code> at least once) — renaming a job means updating that script in the same change, or branch protection silently stops enforcing it.</div>
+
+        <div class="doc-footer-nav">
+          <a href="scripts.html">← Scripts</a>
+          <a href="migrations.html">Migrations →</a>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-wrap">
+        <a class="brand" href="../index.html" aria-label="Back to t-workflow home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><circle cx="7" cy="16" r="3"/><circle cx="16" cy="7" r="3"/><circle cx="25" cy="16" r="3"/><circle cx="16" cy="25" r="3"/><path d="M9.5 14.5 13.5 9.5M18.5 9.5l4 5M22.5 18l-4 4.5M13.5 22.5l-4-4.5"/></svg>
+          </span>
+          <span>t-workflow</span>
+        </a>
+        <p>A practical delivery workflow for agent-driven software projects.</p>
+        <nav aria-label="Footer navigation">
+          <a href="https://github.com/haninaguib-devtools/t-workflow">GitHub</a>
+          <a href="https://github.com/haninaguib-devtools/t-workflow/blob/main/README.md">Documentation</a>
+          <a href="https://github.com/haninaguib-devtools/t-workflow/blob/main/LICENSE">MIT License</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

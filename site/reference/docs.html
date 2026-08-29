@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A tour of docs/: the decision log, the tracker and forge adapters, the architecture conventions, and the task-record shape.">
+    <meta name="theme-color" content="#ffffff">
+    <title>docs/ Tour — t-workflow Reference</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../styles.css">
+    <script src="../script.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header" data-header>
+      <div class="nav-wrap">
+        <a class="brand" href="../index.html" aria-label="t-workflow home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><circle cx="7" cy="16" r="3"/><circle cx="16" cy="7" r="3"/><circle cx="25" cy="16" r="3"/><circle cx="16" cy="25" r="3"/><path d="M9.5 14.5 13.5 9.5M18.5 9.5l4 5M22.5 18l-4 4.5M13.5 22.5l-4-4.5"/></svg>
+          </span>
+          <span>t-workflow</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a href="../index.html">Home</a>
+          <a href="index.html">Reference</a>
+        </nav>
+        <a class="github-link" href="https://github.com/haninaguib-devtools/t-workflow" aria-label="View t-workflow on GitHub">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.69c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.35 1.09 2.92.83.09-.65.35-1.09.64-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.6 9.6 0 0 1 12 6.7a9.6 9.6 0 0 1 2.5.34c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.86V21c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>
+          <span>GitHub</span>
+        </a>
+      </div>
+    </header>
+
+    <nav class="doc-subnav" aria-label="Reference section pages">
+      <a href="index.html">Overview</a>
+      <a href="skills.html">Skills</a>
+      <a href="structure.html">Project structure</a>
+      <a href="installer.html">Installer</a>
+      <a href="scripts.html">Scripts</a>
+      <a href="workflows.html">GitHub Actions</a>
+      <a href="migrations.html">Migrations</a>
+      <a href="docs.html" aria-current="page">docs/ tour</a>
+    </nav>
+
+    <main id="main">
+      <section class="doc-hero">
+        <p class="section-label">Reference · docs/ tour</p>
+        <h1>What lives under docs/, and why it's there.</h1>
+        <p><code>docs/workflow.md</code> aside (the cross-stage shape — covered on the <a href="index.html">Overview page</a>), <code>docs/</code> has four subdirectories: decisions, backend adapters, binding architecture conventions, and task records. Everything here is meant to survive losing the tracker and the forge entirely — it lives in git, in every clone.</p>
+      </section>
+
+      <div class="doc-main">
+        <div class="doc-section">
+          <h2><code>docs/adr/</code> — the decision log</h2>
+          <p class="doc-dek">One append-only file per decision, numbered, never edited after acceptance — only superseded by a later one.</p>
+          <div class="doc-table-wrap">
+            <table class="doc-table">
+              <thead><tr><th>ADR</th><th>Decides</th></tr></thead>
+              <tbody>
+                <tr><td><code>001</code></td><td>The Phase 0 baseline: two invariants (issue-first, human-confirmed-PR-only <code>main</code>), everything else chosen per task except protected surfaces; the (later superseded) no-issue fix path; cancellation's five safety rules; the 100-ID record-bucket scheme; one home per fact; enumeration never silently truncates.</td></tr>
+                <tr><td><code>002</code></td><td>Trims the baseline after a week of real use: drops the optional worktree stage and the no-issue fix path entirely, replaces ship/cancel's automatic teardown with (at the time) a deferred <code>/t-clean</code> skill, and drops the non-numeric tracker-key clause.</td></tr>
+                <tr><td><code>003</code></td><td>Replaces body-text <code>Part of:</code>/<code>Blocked-by:</code> markers with GitHub's native sub-issues and issue dependencies, keeping <code>Split from:</code> as body text (no native equivalent exists) and the <code>initiative</code> label (native fields give progress, not identity).</td></tr>
+                <tr><td><code>004</code></td><td>Introduces <code>/t-drive</code>: one integration branch per driven initiative, a bounded one-retry-then-exclude self-correction policy, and generalizing the squash-commit convention to one <code>Task: #&lt;id&gt;</code> line per included child.</td></tr>
+                <tr><td><code>005</code></td><td>Retires <code>/t-clean</code> itself (ADR-002's own replacement, now judged unused by the same standing-cost test ADR-002 applied to what it removed): a stale local worktree or branch is left alone permanently, cleaned up by hand only if it's ever actually in the way.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Each carries its own context, decision, rationale, alternatives considered, and revisit triggers in full — this table is a map, not a substitute for reading one.</p>
+        </div>
+
+        <div class="doc-section">
+          <h2><code>docs/adapters/</code> — pluggable backends</h2>
+          <p class="doc-dek">The reason no skill instruction ever names "GitHub" directly.</p>
+          <p><code>TRACKER.md</code> and <code>FORGE.md</code> each declare an <code>active-backend</code> (GitHub for both, today) and map every named operation a skill calls — <code>tracker:view</code>, <code>tracker:create</code>, <code>forge:pr-merge</code>, and so on — to one concrete command for that backend. <code>TRACKER.md</code> also carries the four classification labels (<code>bug</code>, <code>enhancement</code>, <code>documentation</code>, <code>question</code>) and the workflow-reserved labels (<code>initiative</code>, <code>cancelled</code>) that stay outside a human's own labeling vocabulary. Several relation operations (<code>set-parent</code>, <code>add-blocker</code>, and the fields they read) need <code>gh</code> ≥ 2.94.0 — an older client rejects them outright rather than degrading quietly. Adopting a different tracker or forge means editing these two files only; every skill instruction is unchanged.</p>
+        </div>
+
+        <div class="doc-section">
+          <h2><code>docs/architecture/</code> — binding conventions</h2>
+          <p class="doc-dek">Not decisions with alternatives-considered rationale (that's what ADRs are for) — settled conventions the skills execute against.</p>
+          <div class="doc-card-grid">
+            <article class="doc-card">
+              <h3>confirmation-gates.md</h3>
+              <p>The single home for how every human-confirmation gate behaves, so <code>/t-ship</code>, <code>/t-cancel</code>, and <code>/t-update</code> all ask the same way: evidence first in plain language, exactly one question, the accepted answers named explicitly, and never proceeding on silence.</p>
+            </article>
+            <article class="doc-card">
+              <h3>issue-templates.md</h3>
+              <p>The design spec for <code>.github/ISSUE_TEMPLATE/</code>'s GitHub issue forms (<code>task.yml</code>, <code>initiative.yml</code>, <code>config.yml</code>), which mirror <code>/t-open</code>'s own body shape so a hand-opened issue arrives with the same structure — chosen as forms, not plain markdown templates, specifically so a missing Goal or Done-when is refused at submission time rather than silently omitted.</p>
+            </article>
+            <article class="doc-card">
+              <h3>local-slots.md</h3>
+              <p>Fixes the vocabulary for the two places a template-owned file is per-repo by design: <code>CONSTITUTION.md</code> §4 and <code>AGENTS.md</code> §Checks item 1, each wrapped in its own <code>&lt;!-- local --&gt;</code> … <code>&lt;!-- /local --&gt;</code> pair. Also documents the symlink-alias mechanism (<code>CLAUDE.md</code>, <code>GEMINI.md</code>, <code>.github/copilot-instructions.md</code> → <code>AGENTS.md</code>; <code>.agents/skills</code> → <code>.claude/skills/</code>).</p>
+            </article>
+            <article class="doc-card">
+              <h3>manifest.md</h3>
+              <p>The update-manifest format and the normalized-hashing rule that lets a consuming project's own local-slot edits pass a sync without ever registering as drift. Full detail on the <a href="migrations.html">Migrations page</a>.</p>
+            </article>
+            <article class="doc-card">
+              <h3>migrations.md</h3>
+              <p>The convention for a breaking template change: when a migration file is actually needed (a plain sync isn't enough), its exact shape, and how <code>/t-update</code> applies one. Full detail on the <a href="migrations.html">Migrations page</a>.</p>
+            </article>
+          </div>
+        </div>
+
+        <div class="doc-section">
+          <h2><code>docs/tasks/</code> — the record shape</h2>
+          <p class="doc-dek">One markdown file per task, created on its branch and merged atomically with the change it describes.</p>
+          <p><code>TEMPLATE.md</code> fixes the shape every record follows: <code>Asked</code>, <code>Done when</code>, <code>Explicitly not</code>, <code>Decisions made along the way</code>, and <code>Deviations / notes</code> — read by <code>scripts/check-record.sh</code> directly from the template file itself, never hardcoded, so the check can't silently drift from the shape it's supposed to verify. <code>README.md</code> states the bucketing convention: a record lives at <code>docs/tasks/&lt;bucket&gt;/&lt;id&gt;-&lt;slug&gt;.md</code>, where <code>&lt;bucket&gt;</code> is the task's tracker-issue id rounded down to the nearest 100 and zero-padded to six digits — task 142 lands in <code>docs/tasks/000100/</code>. Both files are protected; the individual records they shape are not.</p>
+          <p>A record is what lets a much later reader understand <em>why</em> a change happened, not only what it did — and, being part of the diff, it's reviewed too: does it honestly describe this change, decisions and deviations included?</p>
+        </div>
+
+        <div class="doc-footer-nav">
+          <a href="migrations.html">← Migrations</a>
+          <a href="index.html">Back to Overview →</a>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-wrap">
+        <a class="brand" href="../index.html" aria-label="Back to t-workflow home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><circle cx="7" cy="16" r="3"/><circle cx="16" cy="7" r="3"/><circle cx="25" cy="16" r="3"/><circle cx="16" cy="25" r="3"/><path d="M9.5 14.5 13.5 9.5M18.5 9.5l4 5M22.5 18l-4 4.5M13.5 22.5l-4-4.5"/></svg>
+          </span>
+          <span>t-workflow</span>
+        </a>
+        <p>A practical delivery workflow for agent-driven software projects.</p>
+        <nav aria-label="Footer navigation">
+          <a href="https://github.com/haninaguib-devtools/t-workflow">GitHub</a>
+          <a href="https://github.com/haninaguib-devtools/t-workflow/blob/main/README.md">Documentation</a>
+          <a href="https://github.com/haninaguib-devtools/t-workflow/blob/main/LICENSE">MIT License</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

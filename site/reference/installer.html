@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="How installer/install.sh and installer/bootstrap.sh turn the template into a new, running project.">
+    <meta name="theme-color" content="#ffffff">
+    <title>Installer — t-workflow Reference</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../styles.css">
+    <script src="../script.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header" data-header>
+      <div class="nav-wrap">
+        <a class="brand" href="../index.html" aria-label="t-workflow home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><circle cx="7" cy="16" r="3"/><circle cx="16" cy="7" r="3"/><circle cx="25" cy="16" r="3"/><circle cx="16" cy="25" r="3"/><path d="M9.5 14.5 13.5 9.5M18.5 9.5l4 5M22.5 18l-4 4.5M13.5 22.5l-4-4.5"/></svg>
+          </span>
+          <span>t-workflow</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a href="../index.html">Home</a>
+          <a href="index.html">Reference</a>
+        </nav>
+        <a class="github-link" href="https://github.com/haninaguib-devtools/t-workflow" aria-label="View t-workflow on GitHub">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.69c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.35 1.09 2.92.83.09-.65.35-1.09.64-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.6 9.6 0 0 1 12 6.7a9.6 9.6 0 0 1 2.5.34c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.86V21c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>
+          <span>GitHub</span>
+        </a>
+      </div>
+    </header>
+
+    <nav class="doc-subnav" aria-label="Reference section pages">
+      <a href="index.html">Overview</a>
+      <a href="skills.html">Skills</a>
+      <a href="structure.html">Project structure</a>
+      <a href="installer.html" aria-current="page">Installer</a>
+      <a href="scripts.html">Scripts</a>
+      <a href="workflows.html">GitHub Actions</a>
+      <a href="migrations.html">Migrations</a>
+      <a href="docs.html">docs/ tour</a>
+    </nav>
+
+    <main id="main">
+      <section class="doc-hero">
+        <p class="section-label">Reference · Installer</p>
+        <h1>One command, one wholesale copy, one commit.</h1>
+        <p>A project is created <strong>once</strong>. There is no separate "update an existing project" feature in the installer — a project generated today and a project generated a year from now both go through exactly this mechanism, and staying current afterward is a completely different command, <code>/t-update</code> (see the <a href="migrations.html">Migrations page</a>). Do not confuse the two: this page is only about how a project first comes to exist.</p>
+      </section>
+
+      <div class="doc-main">
+        <div class="doc-section">
+          <h2>Two files, split for a reason</h2>
+          <p class="doc-dek"><code>installer/install.sh</code> and <code>installer/bootstrap.sh</code>.</p>
+          <p><code>install.sh</code> is the file people actually fetch — its path is a long-lived public contract:</p>
+          <div class="doc-table-wrap">
+            <table class="doc-table">
+              <tbody>
+                <tr><td colspan="1"><code>curl -fsSL https://raw.githubusercontent.com/haninaguib-devtools/t-workflow/main/installer/install.sh | bash</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Because that command pipes into <code>bash</code>, everything interactive has to live in the one file being fetched — so <code>install.sh</code> owns all of the argument parsing, <code>--help</code>, and every prompt. It reads answers from <code>/dev/tty</code> directly rather than stdin, since piping the script into <code>bash</code> already gave <code>bash</code> the stdin — a plain <code>read</code> there would consume the rest of the script, not the person's answer. Once every question has an answer (by flag or by prompt), it clones the template and hands off to <code>bootstrap.sh</code>, passing every resolved answer through environment variables (<code>TWORKFLOW_SRC</code>, <code>TWORKFLOW_NAME</code>, <code>TWORKFLOW_TARGET</code>, <code>TWORKFLOW_REMOTE</code>, <code>TWORKFLOW_VISIBILITY</code>, <code>TWORKFLOW_SOURCE_URL</code>). <code>bootstrap.sh</code> is never invoked directly by a person and never prompts — by the time it runs, every question already has an answer. Both scripts are bash-3.2 compatible, since macOS still ships that version.</p>
+        </div>
+
+        <div class="doc-section">
+          <h2>What <code>install.sh</code> asks and does</h2>
+          <ol>
+            <li>Parses flags: <code>--name</code>, <code>--dir</code>, <code>--source</code>, <code>--ref</code> (a branch or tag — never a raw commit id, since <code>git clone</code> can't fetch one and silently falling back to the default branch would record a version nobody asked for), <code>--remote</code>/<code>--no-remote</code>, <code>--private</code>/<code>--public</code>.</li>
+            <li>Prompts for anything not given by flag — project name (validated against both filesystem and repository naming rules), and, if <code>gh</code> is installed and logged in, whether to create a GitHub repository now and at what visibility. With no terminal available, missing flags are a hard refusal rather than a hang.</li>
+            <li>Clones the template at <code>--ref</code> into a throwaway temp directory (<code>git clone --depth 1 --branch &lt;ref&gt;</code>), refusing outright — no fallback to the default branch — if that exact ref can't be fetched.</li>
+            <li>Confirms the clone actually looks like a t-workflow template (<code>installer/bootstrap.sh</code> exists in it), then hands off to it with every answer in the environment.</li>
+          </ol>
+        </div>
+
+        <div class="doc-section">
+          <h2>What <code>bootstrap.sh</code> does — the actual project creation</h2>
+          <ol>
+            <li><strong>Reads provenance before anything is deleted:</strong> the clone's short commit hash (<code>git rev-parse --short HEAD</code>) — needed for the README's "Generated from t-workflow @ &lt;ref&gt;" line, and unrecoverable once <code>.git</code> is gone.</li>
+            <li><strong>One wholesale copy:</strong> <code>cp -R</code> of the entire cloned tree into the target directory — not a file-by-file reconstruction, and not a templating engine. <code>cp -R</code> preserves a symlink as a symlink on both GNU and BSD, which is exactly what keeps <code>CLAUDE.md</code>, <code>GEMINI.md</code>, <code>.github/copilot-instructions.md</code>, and <code>.agents/skills</code> as aliases instead of separate, driftable copies.</li>
+            <li><strong>Strips what the template doesn't hand down:</strong> <code>.git</code> (a new project gets its own history), <code>LICENSE</code>, <code>installer/</code>, <code>site/</code>, <code>.github/workflows/installer.yml</code>, <code>.github/workflows/pages.yml</code>, and every subdirectory under <code>docs/tasks/</code> except <code>TEMPLATE.md</code> and <code>README.md</code> (the template's own task history describes the template, not the new project).</li>
+            <li><strong>Writes a fresh <code>README.md</code></strong> from <code>installer/templates/README.md</code>, substituting the project name, the template's commit ref, and — only when the source was an actual URL, not a local path used for testing — a browsable URL.</li>
+            <li><strong>Makes exactly one commit</strong>: <code>git init</code> with <code>main</code> as the default branch (via <code>symbolic-ref</code>, since <code>git init -b main</code> needs a newer git than every target has to support), then one commit whose message states the genesis exception explicitly — this commit happens outside the pipeline because there is no tracker and no <code>main</code> yet to open a PR against, and the exception ends the moment it's pushed. If git has no author identity configured, the script stops here rather than deleting the half-built tree — everything is built and only the commit is missing, so the person finishes it by hand with the exact commands the script prints.</li>
+            <li><strong>Optionally creates the GitHub repository</strong> (<code>gh repo create ... --push</code>) and, only on success, runs <code>./scripts/github-bootstrap.sh</code> from inside the new project to apply labels, squash-only merge settings, and branch protection. A failure here is never fatal — a local project with printed instructions for finishing by hand is a good outcome; a half-created remote is not.</li>
+            <li><strong>Prints what it could not do for you:</strong> the two fills no installer can know — <code>CONSTITUTION.md</code> §4 (stack constraints) and <code>AGENTS.md</code> §Checks item 1 (the build/test command) — plus, depending on whether a remote was actually pushed, either the exact by-hand commands to fold both fills into the still-open genesis commit, or the reminder that the genesis exception has already closed and both fills are now ordinary tasks through <code>/t-open</code>.</li>
+          </ol>
+        </div>
+
+        <div class="doc-section">
+          <h2>By hand, without the installer</h2>
+          <p>Nothing above is mandatory machinery — <code>README.md</code> §Bootstrapping spells out the same seven steps done manually: copy the repo (or use it as a GitHub template) and <code>git init</code>; replace <code>README.md</code> from <code>installer/templates/README.md</code> before deleting it; delete <code>LICENSE</code>, <code>installer/</code>, <code>site/</code>, and the two template-only workflow files, then empty <code>docs/tasks/</code> down to its template and README; make the two fills (plus <code>CONSTITUTION.md</code> §3 if application surfaces are already known); create the repository, commit, and push; run <code>scripts/github-bootstrap.sh</code>. The installer is a convenience over exactly this sequence, not a different mechanism.</p>
+        </div>
+
+        <div class="doc-callout"><strong>Not an update mechanism.</strong> Nothing above ever runs again against an existing project. Staying current with later template improvements is <code>/t-update</code>'s job entirely — a separate command, run inside the generated project, that compares a pinned template version against a newer one and syncs only what changed. See the <a href="migrations.html">Migrations page</a>.</div>
+
+        <div class="doc-footer-nav">
+          <a href="structure.html">← Project structure</a>
+          <a href="scripts.html">Scripts →</a>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-wrap">
+        <a class="brand" href="../index.html" aria-label="Back to t-workflow home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><circle cx="7" cy="16" r="3"/><circle cx="16" cy="7" r="3"/><circle cx="25" cy="16" r="3"/><circle cx="16" cy="25" r="3"/><path d="M9.5 14.5 13.5 9.5M18.5 9.5l4 5M22.5 18l-4 4.5M13.5 22.5l-4-4.5"/></svg>
+          </span>
+          <span>t-workflow</span>
+        </a>
+        <p>A practical delivery workflow for agent-driven software projects.</p>
+        <nav aria-label="Footer navigation">
+          <a href="https://github.com/haninaguib-devtools/t-workflow">GitHub</a>
+          <a href="https://github.com/haninaguib-devtools/t-workflow/blob/main/README.md">Documentation</a>
+          <a href="https://github.com/haninaguib-devtools/t-workflow/blob/main/LICENSE">MIT License</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A complete reference for t-workflow's delivery system: every file it installs, what each /t-* skill does, every script and GitHub Actions workflow, how migrations work, and how a project is created from the template.">
+    <meta name="theme-color" content="#ffffff">
+    <title>Reference — t-workflow</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../styles.css">
+    <script src="../script.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header" data-header>
+      <div class="nav-wrap">
+        <a class="brand" href="../index.html" aria-label="t-workflow home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><circle cx="7" cy="16" r="3"/><circle cx="16" cy="7" r="3"/><circle cx="25" cy="16" r="3"/><circle cx="16" cy="25" r="3"/><path d="M9.5 14.5 13.5 9.5M18.5 9.5l4 5M22.5 18l-4 4.5M13.5 22.5l-4-4.5"/></svg>
+          </span>
+          <span>t-workflow</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a href="../index.html">Home</a>
+          <a href="index.html">Reference</a>
+        </nav>
+        <a class="github-link" href="https://github.com/haninaguib-devtools/t-workflow" aria-label="View t-workflow on GitHub">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.69c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.35 1.09 2.92.83.09-.65.35-1.09.64-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.6 9.6 0 0 1 12 6.7a9.6 9.6 0 0 1 2.5.34c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.86V21c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>
+          <span>GitHub</span>
+        </a>
+      </div>
+    </header>
+
+    <nav class="doc-subnav" aria-label="Reference section pages">
+      <a href="index.html" aria-current="page">Overview</a>
+      <a href="skills.html">Skills</a>
+      <a href="structure.html">Project structure</a>
+      <a href="installer.html">Installer</a>
+      <a href="scripts.html">Scripts</a>
+      <a href="workflows.html">GitHub Actions</a>
+      <a href="migrations.html">Migrations</a>
+      <a href="docs.html">docs/ tour</a>
+    </nav>
+
+    <main id="main">
+      <section class="doc-hero">
+        <p class="section-label">Reference</p>
+        <h1>Everything t-workflow installs, and how it fits together.</h1>
+        <p>This section goes deep on mechanics: every file the template places in a new project, what each command does under the hood, and how a project is actually created and kept current. If the home page told you <em>what</em> t-workflow is, this is <em>how</em> it works.</p>
+      </section>
+
+      <div class="doc-main">
+        <div class="doc-section">
+          <h2>Contents</h2>
+          <p class="doc-dek">Seven pages, each self-contained. Start anywhere — the sub-navigation above stays on every page.</p>
+          <div class="doc-toc">
+            <p class="section-label">Jump to a page</p>
+            <ol>
+              <li><a href="skills.html">Skills<small>What each <code>/t-*</code> command does, and the tracker/forge operations and scripts it calls</small></a></li>
+              <li><a href="structure.html">Project structure<small>Every file and directory a generated project starts with, and what each is for</small></a></li>
+              <li><a href="installer.html">Installer<small>How <code>install.sh</code> and <code>bootstrap.sh</code> turn the template into a running project</small></a></li>
+              <li><a href="scripts.html">Scripts<small>Every script under <code>scripts/</code> — what it checks, and who calls it</small></a></li>
+              <li><a href="workflows.html">GitHub Actions<small>Every workflow under <code>.github/workflows/</code> — triggers and enforcement</small></a></li>
+              <li><a href="migrations.html">Migrations<small>How a generated project stays in sync with the template over time</small></a></li>
+              <li><a href="docs.html">docs/ tour<small>What lives in <code>docs/adr/</code>, <code>docs/adapters/</code>, <code>docs/architecture/</code>, and <code>docs/tasks/</code></small></a></li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="doc-section">
+          <h2>Introduction</h2>
+          <p class="doc-dek">In plain terms, before any internal vocabulary.</p>
+          <p>t-workflow is a set of instructions, checks, and file conventions that a coding agent (and a human) follow together so that changes to a codebase happen in a predictable, reviewable way. It is not an application framework — it has no opinion on your language, stack, or architecture. What it standardizes is the <strong>path a change takes</strong>: from a written-down request, through implementation, to a merge that a person explicitly approved.</p>
+          <p>Concretely, it is a folder of plain-language instructions (<code>.claude/skills/</code>), a short constitution of hard rules (<code>CONSTITUTION.md</code>), a handful of scripts that enforce the rules mechanically instead of relying on anyone remembering them, and a GitHub Actions setup that runs those scripts on every pull request. A tool called <code>install.sh</code> copies all of this into a brand-new repository in one command, and a later command, <code>/t-update</code>, keeps that copy current as the template itself improves.</p>
+          <p>The rest of this page gives the shape of the whole system. Each topic page listed above goes one level deeper into one part of it.</p>
+        </div>
+
+        <div class="doc-section">
+          <h2>Overview</h2>
+          <p class="doc-dek">How a change moves from an idea to <code>main</code>, and the machinery that makes that safe to leave alone.</p>
+
+          <h3>The pipeline, one command per stage</h3>
+          <p>Every change — code, configuration, or documentation — starts the same way: a conversation converges into a written issue via <code>/t-open</code>. From there, a task moves through a small set of named stages, each a slash command: <code>/t-plan</code> pins down exactly which files may change and how the result will be checked; <code>/t-work</code> creates the branch, writes an implementation record, does the work, runs the checks, and opens a draft pull request; <code>/t-review</code> reads the finished diff with fresh eyes and posts findings; <code>/t-ship</code> is the only command that can merge, and it always stops to ask a human to confirm first. <code>/t-cancel</code> is the only way out that isn't a merge — it records why the work is being abandoned before anything is torn down. Two more commands round out the set: <code>/t-drive</code>, which chains planning, implementation, and review across every child of a larger initiative on one shared branch, stopping only once for a human's final confirmation; and <code>/t-update</code>, which brings a generated project's copy of the template current. <code>/t-status</code> gives a read-only snapshot of everything in flight. The full detail for each is on the <a href="skills.html">Skills page</a>.</p>
+          <p>Nothing chains on its own. Each command reports what it did and names the next command — a human decides whether and when to run it. The one deliberate exception is <code>/t-drive</code>, which is explicitly invoked to chain stages across many child tasks, but even it stops once, at the end, for a human to confirm the final merge.</p>
+
+          <h3>Two rules that are never optional</h3>
+          <p>Everything above is chosen per task except two things: work always starts from a tracker issue (never a silent edit to the tree), and <code>main</code> only ever moves by a pull request that a human explicitly confirmed. Those two rules carry almost all of the system's safety — every change has a durable, written statement of intent before any code exists, and nothing reaches the trunk unseen.</p>
+
+          <h3>Protected surfaces get the full treatment</h3>
+          <p>Some paths in the repository are considered load-bearing for the whole delivery system itself — the constitution, the skills, the CI configuration, the scripts, the architecture docs, and a handful of others. A change touching any of them always requires a plan before the work and an independent review before shipping, regardless of how small it looks. A script, <code>scripts/protected-paths.sh</code>, is the executable, single source of truth for exactly which paths those are — the same list a human reads in prose in <code>CONSTITUTION.md</code> §3.</p>
+
+          <h3>The tracker and the forge are pluggable</h3>
+          <p>The instructions never say "GitHub" directly. Instead they call named operations like <em>view an issue</em> or <em>open a pull request</em>, and two small adapter documents — <code>docs/adapters/TRACKER.md</code> and <code>docs/adapters/FORGE.md</code> — map each one to a concrete command for whichever tool is actually in use (GitHub Issues and GitHub Pull Requests today). Adopting a different issue tracker or code host later means editing those two files, not rewriting every instruction.</p>
+
+          <h3>A record travels with every change</h3>
+          <p>Every task carries a short markdown file under <code>docs/tasks/</code>, created when work starts and merged in the same pull request as the change it describes. It captures what plain code cannot: what was asked, what was deliberately excluded, and any decisions or deviations made along the way. This is what lets a much later reader — human or agent — understand <em>why</em> a change happened, not just what it did.</p>
+
+          <h3>How a project actually comes to exist</h3>
+          <p>A new project is created once, by running the installer (<code>installer/install.sh</code>, handing off to <code>installer/bootstrap.sh</code>): it clones this template repository, copies the whole tree into a new directory, strips out everything that only makes sense for the template itself (the installer, this website, the license), writes a fresh <code>README.md</code>, and makes one commit. There is no per-file templating step beyond that — it is a plain, wholesale copy. See the <a href="installer.html">Installer page</a> for the full mechanism.</p>
+          <p>That is not the end of the relationship, though: a generated project can later pull in improvements made to the template itself, via <code>/t-update</code>, which compares the project's currently-pinned template version against a newer one, applies any file changes and any necessary migrations, and lands the whole thing as one ordinary reviewed task. See the <a href="migrations.html">Migrations page</a> for exactly how that works.</p>
+
+          <h3>Where to go next</h3>
+          <p>Each topic page below stands on its own. If you only read one more, make it <a href="skills.html">Skills</a> — the nine commands are the part of the system you actually type.</p>
+          <div class="doc-crosslinks">
+            <a href="skills.html">Skills →</a>
+            <a href="structure.html">Project structure →</a>
+            <a href="installer.html">Installer →</a>
+            <a href="scripts.html">Scripts →</a>
+            <a href="workflows.html">GitHub Actions →</a>
+            <a href="migrations.html">Migrations →</a>
+            <a href="docs.html">docs/ tour →</a>
+          </div>
+        </div>
+
+        <div class="doc-footer-nav">
+          <span></span>
+          <a href="skills.html">Skills →</a>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-wrap">
+        <a class="brand" href="../index.html" aria-label="Back to t-workflow home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><circle cx="7" cy="16" r="3"/><circle cx="16" cy="7" r="3"/><circle cx="25" cy="16" r="3"/><circle cx="16" cy="25" r="3"/><path d="M9.5 14.5 13.5 9.5M18.5 9.5l4 5M22.5 18l-4 4.5M13.5 22.5l-4-4.5"/></svg>
+          </span>
+          <span>t-workflow</span>
+        </a>
+        <p>A practical delivery workflow for agent-driven software projects.</p>
+        <nav aria-label="Footer navigation">
+          <a href="https://github.com/haninaguib-devtools/t-workflow">GitHub</a>
+          <a href="https://github.com/haninaguib-devtools/t-workflow/blob/main/README.md">Documentation</a>
+          <a href="https://github.com/haninaguib-devtools/t-workflow/blob/main/LICENSE">MIT License</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>
