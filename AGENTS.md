@@ -32,6 +32,7 @@ only). Plain `git` is never abstracted.
 | `/t-ship` | Human-confirmed squash merge. Every path to `main` is a human-confirmed PR. |
 | `/t-cancel` | Terminal exit: the reason recorded on the issue, every neighbour decided, then the PR closed and its branch deleted. |
 | `/t-clean` | Optional, lazy. Removes a shipped or cancelled task's stale local worktree/branch, on confirmation. |
+| `/t-update` | For a repo generated from this template. Syncs its template-owned files to a pinned release, preserving local slots and applying pending migrations, as one ordinary task. |
 | `/t-status` | Read-only pipeline overview. |
 
 ## Conventions

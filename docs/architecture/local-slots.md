@@ -6,8 +6,9 @@ Two places in the governance docs are per-repo **by design**, not template-owned
 `CONSTITUTION.md` §4 (stack & architecture) and `AGENTS.md` §Checks item 1 (the
 build/test check command). Everything else in these files is template content, meant
 to move the same way for every consumer. This document fixes the vocabulary and
-boundary a future sync tool (`t-update`, tracked separately) must honor when it
-replaces template content without touching what a consumer wrote for itself.
+boundary `/t-update` (`.claude/skills/t-update/SKILL.md`,
+`docs/architecture/manifest.md`) honors when it replaces template content without
+touching what a consumer wrote for itself.
 
 ## The marker
 

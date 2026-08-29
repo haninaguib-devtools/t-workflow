@@ -22,7 +22,10 @@ Knowledge lives in the repository, in every clone: `CONSTITUTION.md`, `AGENTS.md
 the tracker and the forge — issues, PRs, reviews, CI runs — which is reconstructable, not
 load-bearing. The skills reach both only through named operations that
 `docs/adapters/TRACKER.md` and `docs/adapters/FORGE.md` map to the active backend
-(GitHub for both today; a future backend adopts by editing those two files).
+(GitHub for both today; a future backend adopts by editing those two files). How that
+knowledge reaches a repo generated from this one is its own convention
+(`docs/architecture/manifest.md`): a pinned release tag, and `/t-update` to move it
+forward.
 
 ## 3. Task identity
 
