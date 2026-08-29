@@ -210,5 +210,60 @@ expect_rc "unprotected diff: passes without needing a review" \
   0 bash -c 'printf "README2.txt\n" | scripts/check-review-gate.sh "$1" "$2"' _ "$head_time" "$work/rev-none.json"
 echo
 
+# --- 8. scripts/check-manifest.sh (issue #20) ---------------------------------
+echo "check-manifest.sh"
+
+# Normalization: a real <!-- local --> ... <!-- /local --> region never affects the
+# hash; a line that only *mentions* a marker in prose (this repo's own manifest.md and
+# local-slots.md do) must not be mistaken for one and must still affect the hash — the
+# bug the manual rehearsal in docs/tasks/000000/20-*.md caught before this fixture
+# existed.
+printf 'a\n<!-- local -->\nsecret\n<!-- /local -->\nb\n' > "$work/slot-a.md"
+printf 'a\n<!-- local -->\nDIFFERENT\n<!-- /local -->\nb\n' > "$work/slot-a-editedinside.md"
+printf 'a\n<!-- local -->\nsecret\n<!-- /local -->\nb-changed\n' > "$work/slot-a-editedoutside.md"
+printf 'x\nThis doc mentions `<!-- local -->` and `<!-- /local -->` in prose.\ny\n' > "$work/prose-a.md"
+printf 'x\nThis doc mentions `<!-- local -->` and `<!-- /local -->` in prose.\nCHANGED\n' > "$work/prose-a-edited.md"
+
+h_slot=$(scripts/check-manifest.sh --hash-file "$work/slot-a.md")
+h_slot_inside=$(scripts/check-manifest.sh --hash-file "$work/slot-a-editedinside.md")
+h_slot_outside=$(scripts/check-manifest.sh --hash-file "$work/slot-a-editedoutside.md")
+h_prose=$(scripts/check-manifest.sh --hash-file "$work/prose-a.md")
+h_prose_edited=$(scripts/check-manifest.sh --hash-file "$work/prose-a-edited.md")
+
+if [ "$h_slot" = "$h_slot_inside" ]; then ok "an edit inside a real slot does not change the hash"
+else bad "an edit inside a real slot does not change the hash"; fi
+if [ "$h_slot" != "$h_slot_outside" ]; then ok "an edit outside a real slot changes the hash"
+else bad "an edit outside a real slot changes the hash"; fi
+if [ "$h_prose" != "$h_prose_edited" ]; then ok "an edit after a prose mention of the markers still changes the hash"
+else bad "an edit after a prose mention of the markers still changes the hash"; fi
+
+expect_rc "--hash-file on a symlink-to-directory does not error" \
+  0 bash -c 'ln -sfn ../x "$1/link-to-dir" && scripts/check-manifest.sh --hash-file "$1/link-to-dir"' _ "$work"
+h_link1=$(scripts/check-manifest.sh --hash-file "$work/link-to-dir")
+ln -sfn ../y "$work/link-to-dir"
+h_link2=$(scripts/check-manifest.sh --hash-file "$work/link-to-dir")
+if [ "$h_link1" != "$h_link2" ]; then ok "a symlink's hash changes when its target changes"
+else bad "a symlink's hash changes when its target changes"; fi
+
+expect_rc "--hash-file on a missing file fails" 2 scripts/check-manifest.sh --hash-file "$work/does-not-exist.md"
+expect_rc "no arguments and no manifest at CWD fails (nothing checked)" \
+  2 bash -c 'cd "$1" && "$2/scripts/check-manifest.sh"' _ "$work" "$root"
+
+# Verify mode against a small fixture manifest.
+mkdir -p "$work/mrepo"
+printf 'a\n<!-- local -->\nsecret\n<!-- /local -->\nb\n' > "$work/mrepo/f.md"
+h_f=$("$root/scripts/check-manifest.sh" --hash-file "$work/mrepo/f.md")
+printf '{"template":"x/y","tag":"v1","migrations_applied":0,"files":{"f.md":"%s"}}' "$h_f" \
+  > "$work/mrepo/.template-manifest.json"
+expect_rc "verify mode: clean tree matches its manifest" \
+  0 bash -c 'cd "$1" && "$2/scripts/check-manifest.sh"' _ "$work/mrepo" "$root"
+printf 'a\n<!-- local -->\nsecret\n<!-- /local -->\nb-drifted\n' > "$work/mrepo/f.md"
+expect_rc "verify mode: an edit outside the slot is reported as drift" \
+  1 bash -c 'cd "$1" && "$2/scripts/check-manifest.sh"' _ "$work/mrepo" "$root"
+rm "$work/mrepo/f.md"
+expect_rc "verify mode: a file the manifest lists but the tree lacks fails" \
+  1 bash -c 'cd "$1" && "$2/scripts/check-manifest.sh"' _ "$work/mrepo" "$root"
+echo
+
 echo "$pass passed, $fail failed"
 [ "$fail" -eq 0 ]
