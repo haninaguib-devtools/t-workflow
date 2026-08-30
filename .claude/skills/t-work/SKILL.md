@@ -14,10 +14,13 @@ implementation before editing files.
 
 ## Phase 1 — gates, before touching any file
 
-1. Read `AGENTS.md`, `CONSTITUTION.md`, the issue (`tracker:view <id>`, including any
-   `## Plan` section), the tracking issue if there is one, and any merged design doc the
-   issue names. Resolve every `tracker:*` / `forge:*` operation named in this skill via
-   `docs/adapters/TRACKER.md` and `docs/adapters/FORGE.md` (GitHub by default).
+1. Read the issue (`tracker:view <id>`, including any `## Plan` section), the tracking
+   issue if there is one, and any merged design doc the issue names. Read `AGENTS.md` and
+   `CONSTITUTION.md` too — unless this work is `/t-drive` chaining this stage in the same
+   session whose Phase 0 already read them for the whole run, in which case that read
+   already covers this one. A standalone invocation, with no driving session, always
+   reads both itself. Resolve every `tracker:*` / `forge:*` operation named in this skill
+   via `docs/adapters/TRACKER.md` and `docs/adapters/FORGE.md` (GitHub by default).
 2. **Blockers.** `tracker:list-blockers <id>`, written to a file, then
    `.t-workflow/scripts/check-blocker-gate.sh <file>`. Exit 0 → continue. Exit 1 → stop
    and say so: a blocker **cancelled** rather than completed was abandoned, not

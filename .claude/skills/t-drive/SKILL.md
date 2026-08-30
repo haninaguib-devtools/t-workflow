@@ -22,7 +22,10 @@ where this skill and those ADRs differ, the ADR wins — flag it, do not improvi
 
 ## Phase 0 — eligibility, and which mode
 
-1. Read `AGENTS.md`, `CONSTITUTION.md`, and the issue (`tracker:view <id>`). **Refuse**
+1. Read `AGENTS.md`, `CONSTITUTION.md`, and the issue (`tracker:view <id>`). **This read
+   covers the whole driven run, in both the initiative mode and solo mode** — every
+   chained stage's own read step below names the condition under which it may treat this
+   one as already done, and this is the read that satisfies it. **Refuse**
    a closed issue — nothing to drive; say so. Then fork on the `initiative` label:
    labeled → the initiative mode, steps 2–3 below and Phases 1–3, exactly as ADR-004
    defines them; a plain task → **skip steps 2–3 and go to §Solo mode** (ADR-006 D1).
