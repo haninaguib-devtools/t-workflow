@@ -42,7 +42,14 @@ holding only the id, so this matters more here than anywhere else.
    fresh session — reviewing here anyway produces a verdict `/t-ship` will reject.
    Otherwise continue and record `isolation: same session (<why the change was small
    enough>)`.
-2. Read `AGENTS.md` and `CONSTITUTION.md`, then fetch everything else in one call:
+2. Read `AGENTS.md` and `CONSTITUTION.md` — unless this review's `isolation:` (step 1
+   above) is `same session` on a `/t-drive` run whose Phase 0 already read them for the
+   whole run, in which case that read already covers this one. **`isolation: fresh
+   session` and `isolation: subagent` always read both themselves** — a cold session or a
+   spawned subagent is a separate context that has read nothing this run, driven or not
+   (Isolation above); this condition is deliberately narrower than the other chained
+   stages'. A standalone invocation with no driving session always reads both itself.
+   Then fetch everything else in one call:
    `.t-workflow/scripts/review-snapshot.sh <id> <pr>` — it returns the issue (body,
    labels, parent), the complete PR diff, the PR's view (head sha, changed files),
    and local git state (`git status`, `git rev-parse HEAD`) in a single JSON blob,
