@@ -101,10 +101,16 @@ implementation before editing files.
 
 1. Run the checks tagged `implementation` or `either` in the plan, or the set in
    `AGENTS.md` §Checks when there is no plan. Report what actually happened in plain
-   prose per AGENTS.md §Communication — never soften a failure into "should work".
+   prose per AGENTS.md §Communication — never soften a failure into "should work". Note
+   each check's exact command and result — step 5 records the ones tagged `either` (or,
+   with no plan, this whole set) as this commit's provenance for `/t-review` to reuse,
+   sparing it from running the same command again on an unchanged tree.
 2. **Read your own diff** (`git diff main...HEAD`) for scope drift, unintended
-   deletions, and leftover scratch; remove what does not belong. Then re-check
-   protection against what the diff *actually* touches — Phase 1 step 3 could only
+   deletions, and leftover scratch; remove what does not belong. **An edit here
+   invalidates step 1's result for whatever it touched** — re-run any affected check
+   before step 5 records anything as this commit's provenance; a check nothing here
+   touched needs no re-run. Then re-check protection against what the diff *actually*
+   touches — Phase 1 step 3 could only
    judge what the work was expected to touch: `git -c core.quotePath=false diff
    --name-only main...HEAD | bash .t-workflow/scripts/protected-paths.sh --stdin`
    (`core.quotePath=false` matters — by default git quotes and octal-escapes a
@@ -134,7 +140,12 @@ implementation before editing files.
    (`forge:pr-create-draft`) — title: `[<id>] <issue title>`; body: the tracker's
    auto-close phrase for `<id>` when it has one (`tracker:auto-close-on-merge`),
    followed by what changed, what was verified with actual results, and what remains
-   open.
+   open. **Include a `## Checks run` section**, one line per check that is a candidate
+   for `/t-review` to reuse — tagged `either` in the plan, or (no plan) named in
+   `AGENTS.md` §Checks — each exactly `- \`<command>\` — <PASS/FAIL> — commit \`<sha>\``,
+   `<sha>` being `git rev-parse HEAD` for the commit step 4 just made. A check tagged
+   `implementation`-only is never listed here — `/t-review` was never going to run it
+   itself, so there is nothing for it to reuse.
 6. **Stop and report.** Nothing chains from here (ADR-001). Say what the change does in
    ordinary language, what the checks actually returned, and name the next command:
    `/t-review <id>` — **required** when the diff touches a protected surface
@@ -149,6 +160,10 @@ not acted on: describe it as a further finding, or as an issue you recommend the
 open — never open one yourself (AGENTS.md §Conventions). Medium/low findings are fixed
 only when the human asks by number. Append what each change answers to the record's
 Deviations / notes, re-run the checks the findings falsify, and push to the same branch
-and PR. Stop and report, naming `/t-review <id>` for a scoped re-review; if the same
-findings survive repeated passes, say so and recommend re-planning rather than trying
-again.
+and PR. **Rewrite the PR body's `## Checks run` section wholesale** (never append — the
+same replace-not-append rule `/t-plan` uses for `## Plan`), listing only the checks this
+pass re-ran, at the new head commit: a check this pass did not touch is simply absent
+from the rewritten section, which correctly means `/t-review` runs it itself rather than
+trusting a provenance line that now names a superseded commit. Stop and report, naming
+`/t-review <id>` for a scoped re-review; if the same findings survive repeated passes,
+say so and recommend re-planning rather than trying again.

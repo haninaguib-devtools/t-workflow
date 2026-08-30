@@ -76,8 +76,20 @@ holding only the id, so this matters more here than anywhere else.
    judge whether the design is *right* — that is the human's approval.
 6. Run the checks tagged `review` or `either` in the plan, or the set in `AGENTS.md`
    §Checks when there is no plan (for a document, also `.t-workflow/scripts/consistency-check.sh`;
-   its failures are findings, semantic consistency stays this skill's judgment). A
-   failing check is a finding at the severity its consequence deserves. Four things are
+   its failures are findings, semantic consistency stays this skill's judgment).
+
+   **A check tagged `either` (or, with no plan, one named in `AGENTS.md` §Checks) may be
+   reported as already passing, without running it again, only when the PR's
+   `## Checks run` section (`/t-work` Phase 3 step 5) names that exact command at a
+   commit sha equal to `.pr.headRefOid`** — the head this review is reading, already in
+   the snapshot from step 2. Anything short of an exact match — no such section, a
+   differently-worded command, or a sha that is not the current head (a push landed
+   after the note was written, including a fix-mode push that rewrote the section for a
+   newer commit) — leaves the reuse condition unproven: **run the check yourself**,
+   exactly as if no plan named it reusable at all. A check tagged `review`-only is never
+   a candidate — `/t-work` was never going to run it, so there is nothing to reuse.
+
+   A failing check is a finding at the severity its consequence deserves. Four things are
    **blocker or high by construction**, never medium or low: a check that failed,
    behavior or content removed without the issue authorizing it, a changed path outside
    the task's declared scope, and a changed path on a protected surface whose issue
@@ -97,6 +109,11 @@ holding only the id, so this matters more here than anywhere else.
    since a cold reviewer's comment and a warm one's are byte-identical otherwise;
    `same session` on a protected surface is a contradiction (see Isolation above) —
    writing it down makes the violation visible instead of invisible.
+   **List every check from step 6, each line naming which it was:** a reused one as
+   `reused — ran by /t-work at commit \`<sha>\`: \`<command>\` — <PASS/FAIL>`, one this
+   review ran itself as `ran by this review: \`<command>\` — <PASS/FAIL>`. The two
+   phrasings are never interchangeable — nobody reading the review may mistake a reused
+   result for one this pass actually verified.
    Findings ordered blocker / high / medium / low, each with evidence and a location.
    End with an explicit verdict line: `readiness: ready` — no blocker or high findings
    and no unexplained removals; `readiness: not-ready` otherwise, naming the next step
