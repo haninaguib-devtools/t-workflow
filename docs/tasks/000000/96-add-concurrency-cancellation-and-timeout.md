@@ -39,6 +39,9 @@ and a reasonable `timeout-minutes:` on every job.
   seconds of real work each); no `build` job exists yet. Per the plan (issue #96).
 
 ## Deviations / notes
-- Live cancellation check (done-when #3) verified on PR #104 by pushing two commits in
-  quick succession after the draft PR opened and checking `gh run list` for a
-  `cancelled` conclusion on the superseded run.
+- Live cancellation check (done-when #3) verified on PR #104: pushed commit `eb07edc`,
+  then commit `7f08616` seconds later. `gh run list` shows both the `CI` and
+  `review-gate` runs for `eb07edc` (run ids 33351423436, 33351423577) with conclusion
+  `cancelled`, superseded by the runs for `7f08616`. Confirms `cancel-in-progress`
+  works for both workflows, on both the `pull_request` and `pull_request_review`
+  triggers.
