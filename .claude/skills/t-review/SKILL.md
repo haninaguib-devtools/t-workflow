@@ -89,6 +89,22 @@ holding only the id, so this matters more here than anywhere else.
    exactly as if no plan named it reusable at all. A check tagged `review`-only is never
    a candidate — `/t-work` was never going to run it, so there is nothing to reuse.
 
+   **A second, independent path can satisfy the same check: CI already ran the
+   equivalent job and it passed at this exact head.** Read `forge:pr-checks <pr>`
+   alongside `.pr.headRefOid` from the same snapshot. GitHub's check data carries no
+   per-check commit sha to compare — it is inherently scoped to the PR's *current* head
+   commit, never an older one — so reading the two together, in the same pass, is what
+   stands in for the sha match the PR-body path makes explicit. Look for a CI job whose
+   `name` matches the check's own identifying name (e.g. `./.t-workflow/scripts/consistency-check.sh`
+   ↔ the `consistency` job in `.github/workflows/ci.yml`); a check with no such stated
+   correspondence is not a candidate for this path at all, same as one with no plan
+   entry. Anything short of a clean match — no job by that name, or one whose `bucket`
+   is not `pass` (`pending`, `skipping`, `cancel`, or missing entirely) — leaves this
+   path unproven too: **run the check yourself**, exactly as above. The two reuse paths
+   are independent; either satisfying the check is enough, and when both do, report the
+   PR-body one — it names the exact command `/t-work` ran, where the CI job name is an
+   inference from convention rather than a literal match.
+
    A failing check is a finding at the severity its consequence deserves. Four things are
    **blocker or high by construction**, never medium or low: a check that failed,
    behavior or content removed without the issue authorizing it, a changed path outside
@@ -109,11 +125,13 @@ holding only the id, so this matters more here than anywhere else.
    since a cold reviewer's comment and a warm one's are byte-identical otherwise;
    `same session` on a protected surface is a contradiction (see Isolation above) —
    writing it down makes the violation visible instead of invisible.
-   **List every check from step 6, each line naming which it was:** a reused one as
-   `reused — ran by /t-work at commit \`<sha>\`: \`<command>\` — <PASS/FAIL>`, one this
-   review ran itself as `ran by this review: \`<command>\` — <PASS/FAIL>`. The two
-   phrasings are never interchangeable — nobody reading the review may mistake a reused
-   result for one this pass actually verified.
+   **List every check from step 6, each line naming which it was:** one reused from the
+   PR body as `reused — ran by /t-work at commit \`<sha>\`: \`<command>\` — <PASS/FAIL>`,
+   one reused from CI as `reused — CI job \`<job-name>\` green at commit \`<sha>\`:
+   \`<command>\` — PASS (<run link from forge:pr-checks>)`, one this review ran itself
+   as `ran by this review: \`<command>\` — <PASS/FAIL>`. The three phrasings are never
+   interchangeable — nobody reading the review may mistake a reused result, from either
+   source, for one this pass actually verified.
    Findings ordered blocker / high / medium / low, each with evidence and a location.
    End with an explicit verdict line: `readiness: ready` — no blocker or high findings
    and no unexplained removals; `readiness: not-ready` otherwise, naming the next step
