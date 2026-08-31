@@ -237,6 +237,22 @@ else bad "an edit outside a real slot changes the hash"; fi
 if [ "$h_prose" != "$h_prose_edited" ]; then ok "an edit after a prose mention of the markers still changes the hash"
 else bad "an edit after a prose mention of the markers still changes the hash"; fi
 
+# A comment-syntax file (ci.yml's YAML) writes its markers as indented line-comments,
+# never a bare marker line — a bare one is not valid YAML (issue #118). The regex must
+# strip a comment-prefixed, indented region the same way it strips a bare one.
+printf 'a: 1\n    # <!-- local -->\n    secret: 1\n    # <!-- /local -->\nb: 2\n' > "$work/slot-yaml.yml"
+printf 'a: 1\n    # <!-- local -->\n    secret: 2\n    # <!-- /local -->\nb: 2\n' > "$work/slot-yaml-editedinside.yml"
+printf 'a: 1\n    # <!-- local -->\n    secret: 1\n    # <!-- /local -->\nb: 3\n' > "$work/slot-yaml-editedoutside.yml"
+
+h_yaml=$(.t-workflow/scripts/check-manifest.sh --hash-file "$work/slot-yaml.yml")
+h_yaml_inside=$(.t-workflow/scripts/check-manifest.sh --hash-file "$work/slot-yaml-editedinside.yml")
+h_yaml_outside=$(.t-workflow/scripts/check-manifest.sh --hash-file "$work/slot-yaml-editedoutside.yml")
+
+if [ "$h_yaml" = "$h_yaml_inside" ]; then ok "an edit inside a comment-prefixed YAML slot does not change the hash"
+else bad "an edit inside a comment-prefixed YAML slot does not change the hash"; fi
+if [ "$h_yaml" != "$h_yaml_outside" ]; then ok "an edit outside a comment-prefixed YAML slot changes the hash"
+else bad "an edit outside a comment-prefixed YAML slot changes the hash"; fi
+
 expect_rc "--hash-file on a symlink-to-directory does not error" \
   0 bash -c 'ln -sfn ../x "$1/link-to-dir" && .t-workflow/scripts/check-manifest.sh --hash-file "$1/link-to-dir"' _ "$work"
 h_link1=$(.t-workflow/scripts/check-manifest.sh --hash-file "$work/link-to-dir")
