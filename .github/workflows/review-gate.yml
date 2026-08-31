@@ -6,11 +6,19 @@
 # `pull_request` payload shape, so the one job below handles either uniformly. The job
 # name `cold-review` is the status-check context `.t-workflow/scripts/github-bootstrap.sh` marks
 # required — renaming it means updating that script in the same change.
+#
+# `opened`/`reopened` are deliberately excluded from `pull_request:` (#97): triggering
+# there runs the check before any review can possibly exist, so it always fails with
+# "no review on this PR" for a required check a human reads as "something is wrong".
+# Leaving no run for those events lets GitHub show `cold-review` as pending/expected
+# instead — still required by branch protection, just not misreported as failing.
+# `synchronize` stays: a push after an existing review must still invalidate it via the
+# staleness check.
 name: review-gate
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [synchronize]
   pull_request_review:
     types: [submitted]
 
