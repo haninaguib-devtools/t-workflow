@@ -85,11 +85,27 @@ Supersedes #93 (cancelled) and its cancelled children #95–#99, #101, #102; re-
   no longer calls it after item 7 — no other skill is known to need it, but removing a
   documented operation speculatively is a different kind of change than correcting one
   that was already wrong (agent, 2026-08-31).
-- Item 9's branch-protection flip became a new, conditional `/t-ship` Procedure step 5
+- Item 9's branch-protection flip became a new, conditional `/t-ship` Procedure step
   (fires only when a shipped diff changes `github-bootstrap.sh`'s required-contexts
   list) rather than a one-off manual action for this task's own ship — this generalizes
   the #94/#109/#111 sequencing fix so any *future* task that renames a required check
   gets the same guardrail, not just this one (agent, 2026-08-31).
+- **Self-correction before opening this task's own PR (2026-08-31): the flip must
+  happen *before* the merge attempt, not after.** First draft of the new `/t-ship` step
+  placed the flip after the squash-merge (mirroring the issue's own prose, which reads
+  as "ship, then flip"). Caught by checking this task's own PR against it before
+  pushing: a PR that renames required-status-check contexts cannot merge under the
+  *old* protection in the first place — this PR's own CI never again produces the old
+  six job names, so those required checks sit at "expected" forever and block the merge
+  button, self-inflicting the exact #94/#109 failure on this PR. Moved the check to a
+  new step between the CI-watch and the merge-confirmation gate: it confirms the new
+  context names already have a real run (this PR's own head sha, not `main` — the merge
+  hasn't happened yet) and folds into the *same* gate as evidence, executing only after
+  the human's merge confirmation and before the actual `forge:pr-merge` call. Verified
+  against this repo's live branch protection (`gh api
+  .../branches/main/protection/required_status_checks`, read before pushing): it
+  currently requires the old six names plus `cold-review`, confirming the old ordering
+  would have blocked this exact PR (agent, 2026-08-31).
 - `/t-review`'s CI-based check-reuse source (item 8) is scoped to checks with a real
   corresponding CI job — in this repo, only `consistency-check.sh`, since it is the one
   check both `AGENTS.md` §Checks names and `ci.yml`'s `checks` job actually runs; a

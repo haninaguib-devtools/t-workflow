@@ -106,7 +106,25 @@ has already left the pipeline, say which and stop.
      failed, mirroring step 3's own `abort` handling below — report which check failed
      and where to read why, and name `/t-work <id>` (fix mode) as the next command. Never
      reach the merge-confirmation gate on a red or unconcluded check.
-3. **Stop and ask the human to confirm the merge**, showing the PR URL
+3. **Branch-protection contexts, only if this PR renames them** (#113). Check whether
+   this PR's diff changes the required-status-check `contexts`
+   `.t-workflow/scripts/github-bootstrap.sh` asserts. **Not applicable** (the common
+   case) → continue to step 4. **Applicable** → this PR cannot merge under the *current*
+   live protection, self-referentially: whatever the old contexts named, this PR's own
+   CI no longer produces them (that is the diff), so the old required checks would sit
+   at "expected" forever and block the merge button — the exact #94/#109 failure,
+   self-inflicted on this PR unless the live setting moves before the merge is
+   attempted, not after. Confirm the new context name(s) already have a real run to
+   point at — **this PR's own head sha**, not `main` (the merge hasn't happened yet):
+   `gh api repos/<owner>/<repo>/commits/<head-sha>/check-runs`, expecting `checks`
+   (from step 1–2 above) and `cold-review` (from precondition 2's review, which must
+   already exist on a protected surface) to both appear. Missing either → stop, name
+   what's missing; do not flip protection against a context nobody has produced.
+   **Do not execute the flip yet** — it happens only after the human's confirmation
+   below, folded into the same gate rather than a second one
+   (`docs/architecture/confirmation-gates.md`: one gate per turn), since the flip is
+   what makes the merge this gate authorizes actually possible.
+4. **Stop and ask the human to confirm the merge**, showing the PR URL
    (`forge:pr-view <pr>`) and a one-paragraph what-and-why in plain prose per AGENTS.md
    §Communication, then **the pending human checks from precondition 6** — the last
    moment they can be raised. If approval rules are configured on the repo, they must
@@ -118,18 +136,28 @@ has already left the pipeline, say which and stop.
 
    - evidence: review `<verdict, or 'no review ran'>` · CI `<state, and which checks — or
      'no CI configured'>` · diff `<files/size summary>` · human checks `<the pending
-     checks, or none>`
+     checks, or none>` · branch protection `<'no change needed', or 'will update
+     required checks from <old list> to <new list> — required for this merge to
+     succeed', from step 3>`
    - question: "Merge PR #<pr> into main?"
    - options: `confirm` (human checks judged) / `abort` (do not merge)
 
    **On `abort`, put the PR back into draft** (`forge:pr-draft <pr>`) before reporting —
    step 1 marked it ready in expectation of a merge that did not happen; nothing else is
-   touched. **Outstanding checks are acknowledged, not blocking** — confirming *is* the
+   touched, including branch protection — step 3 only checked, it never executed.
+   **Outstanding checks are acknowledged, not blocking** — confirming *is* the
    acknowledgement; a human who wants a check settled first answers `abort`.
-4. On confirmation, squash-merge with a **self-contained commit** written from the
-   record, via `forge:pr-merge <pr>` — **re-read `docs/adapters/FORGE.md`'s
-   `forge:pr-merge` row first and check the exact command against it.** The subject
-   overrides the forge's default entirely, so append the PR reference explicitly.
+5. **On confirmation:** if step 3 found the flip applicable, execute it *now*, before
+   attempting the merge — this is what the confirmation just given authorizes, alongside
+   the merge itself. Run `.t-workflow/scripts/github-bootstrap.sh` (idempotent) to set
+   live required status checks to exactly the new list, then confirm directly: `gh api
+   repos/<owner>/<repo>/branches/main/protection/required_status_checks` reads exactly
+   the script's list. Not applicable → nothing to do here, continue.
+
+   Then squash-merge with a **self-contained commit** written from the record, via
+   `forge:pr-merge <pr>` — **re-read `docs/adapters/FORGE.md`'s `forge:pr-merge` row
+   first and check the exact command against it.** The subject overrides the forge's
+   default entirely, so append the PR reference explicitly.
 
    **Ordinary task (the common case, unchanged):**
 
@@ -172,28 +200,6 @@ has already left the pipeline, say which and stop.
    never carries this phrase — merging into a non-default branch does not trigger the
    forge's auto-close, and a child is not done until its work reaches `main` through
    this PR.
-5. **If this PR's diff renamed or otherwise changed the required-status-check
-   `contexts` list `.t-workflow/scripts/github-bootstrap.sh` asserts**, true up live
-   branch protection now, before reporting — never leave that gap open even until the
-   next command. This is the specific failure #113 exists to close: #94/#109 renamed
-   these contexts without flipping live protection in the same window, leaving open
-   sibling PRs evaluated against stale required checks (forced revert, #111). **Confirm
-   the exact new contexts list with the human before executing** — a forge-settings
-   change with real consequences for every PR in flight; `CONSTITUTION.md` §3's
-   genesis-style exception makes it legitimate without its own task (a forge setting, no
-   diff), but the sequencing below is a judgment call, not something to run on autopilot:
-   - Wait for a CI run to land on `main` at this merge commit (`push: branches: [main]`
-     fires one) producing the new context name(s) — poll
-     `gh api repos/<owner>/<repo>/commits/main/check-runs`, the same watch shape as step
-     2 above, until they appear. Required checks cannot legally name a context GitHub
-     has never seen.
-   - Run `.t-workflow/scripts/github-bootstrap.sh` (idempotent) to set live required
-     status checks to exactly the new list.
-   - Confirm directly: `gh api
-     repos/<owner>/<repo>/branches/main/protection/required_status_checks` reads exactly
-     the script's list, and re-running the script reports no further change.
-   Not applicable → say so plainly and continue; this step exists for the rare PR that
-   touches `github-bootstrap.sh`'s `contexts`, not every ship.
 6. `git fetch --prune` (deleted `wip/` branches otherwise linger as stale
    `origin/wip/*` refs), then **at most, fast-forward a `main` this checkout happens to
    be sitting on** (ADR-002) — merging leaves the task's worktree, local branch, and
@@ -203,7 +209,8 @@ has already left the pipeline, say which and stop.
    where it is — the normal outcome now that shipping runs from anywhere.
 7. A `tracker:view <id>` `parent` field names a tracking issue whose `subIssuesSummary`
    the task's close above already updated — nothing to write here.
-8. Report the merge commit hash, whether a cold review ran, and whether this checkout's
+8. Report the merge commit hash, whether a cold review ran, whether branch protection
+   was updated (step 3/5), and whether this checkout's
    `main` was fast-forwarded. **If `subIssuesSummary` (`tracker:view <parent-id>`) now
    shows every child closed**, ask whether to close the initiative too — never
    automatic. For a driven run that just shipped, `<parent-id>` is `<id>` itself (the
