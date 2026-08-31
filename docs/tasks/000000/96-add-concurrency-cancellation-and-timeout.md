@@ -39,4 +39,6 @@ and a reasonable `timeout-minutes:` on every job.
   seconds of real work each); no `build` job exists yet. Per the plan (issue #96).
 
 ## Deviations / notes
-- none
+- Live cancellation check (done-when #3) verified on PR #104 by pushing two commits in
+  quick succession after the draft PR opened and checking `gh run list` for a
+  `cancelled` conclusion on the superseded run.
