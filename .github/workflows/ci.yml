@@ -23,9 +23,18 @@ permissions:
   # plan-gate, title-gate, and blockers all read issue state (body, title, blockedBy).
   issues: read
 
+# A superseded run (a new push, or /t-drive's base-retarget landing right after PR
+# creation) is cancelled instead of running to completion for a result nobody will read
+# (#96). `github.event.pull_request.number` covers `pull_request`; `push: main` has no
+# pull_request context, so it falls back to `github.ref` (always refs/heads/main here).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   consistency:
     name: consistency
+    timeout-minutes: 15
     # No code an 'edited' event (a PR title/body change) can affect — running this on
     # an edit-only event is pure waste (#81). `github.event.action` is unset on `push`,
     # and an unset property compared with `!=` evaluates true, so the guard leaves the
@@ -43,6 +52,7 @@ jobs:
     name: record
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -109,6 +119,7 @@ jobs:
     name: plan-gate
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -143,6 +154,7 @@ jobs:
     name: title-gate
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: The PR title starts with [<id>], matching the branch
@@ -166,6 +178,7 @@ jobs:
     name: blockers
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Every blocker of this task's issue is closed as completed
@@ -205,6 +218,7 @@ jobs:
     # Same reasoning as `consistency` above — nothing an 'edited' event can affect (#81).
     if: github.event.action != 'edited'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Gate scripts behave correctly against fixtures
