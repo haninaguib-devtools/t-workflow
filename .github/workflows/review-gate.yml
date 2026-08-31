@@ -18,11 +18,11 @@ permissions:
   contents: read
   pull-requests: read
 
-# A superseded run (a new push, or a second review submitted while the first run is
-# still evaluating) is cancelled instead of running to completion for a result nobody
-# will read (#96). `pull_request_review` carries no `github.head_ref`, but both
-# `pull_request` and `pull_request_review` payloads carry `.pull_request.number`, so
-# that is the group key.
+# A superseded run (a new push, or a second review submitted while an earlier run for
+# the same PR is still evaluating) is cancelled instead of running to completion for a
+# result nobody will read (#96). `pull_request_review` carries no `github.head_ref`, but
+# both `pull_request` and `pull_request_review` payloads carry `.pull_request.number`,
+# so that is the group key.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
