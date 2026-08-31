@@ -20,14 +20,18 @@ see `docs/adapters/TRACKER.md`.
 
 ## Operations
 
-### `forge:pr-create-draft <title> <body>` — open a draft PR from the pushed branch
+### `forge:pr-create-draft <title> <body> [base]` — open a draft PR from the pushed branch
 
 Include the tracker's auto-close phrase in the body when the tracker supports it
-(`tracker:auto-close-on-merge`).
+(`tracker:auto-close-on-merge`). `<base>` is optional: omitted, the PR lands against the
+repository's default branch, exactly as before — a PR opened with no `--base` targets
+the default branch regardless of the pushed branch's actual git parent (confirmed
+empirically, `/t-drive`'s own task record, #41), which is why a caller that needs a
+different base (`/t-drive`, issue #99) must pass one at creation rather than after.
 
 | Backend | Command |
 |---|---|
-| GitHub | `gh pr create --draft --title "<title>" --body "<body>"` |
+| GitHub | `gh pr create --draft --title "<title>" --body "<body>" [--base <base>]` |
 
 ### `forge:pr-create <title> <body>` — open a non-draft PR directly
 
@@ -37,12 +41,13 @@ Include the tracker's auto-close phrase in the body when the tracker supports it
 
 ### `forge:pr-set-base <pr> <base>` — retarget an existing PR's base branch
 
-Contract: `forge:pr-create-draft` has no way to name a non-default base, so it always
-lands against the repository's default branch — confirmed empirically (`/t-drive`'s own
-task record, #41): a PR opened from a branch with no `--base` targets the default branch
-regardless of that branch's actual git parent. `/t-drive` uses this operation
-(ADR-004 Decision 1) to move a child's freshly-opened draft PR from that default onto the
-initiative's integration branch.
+Contract: moves an *already-open* PR onto a different base — never needed for a PR that
+named its base at creation via `forge:pr-create-draft`'s own `[base]` argument (issue
+#99 moved `/t-drive`'s child-PR flow onto that instead, since a retarget fires
+`pull_request: edited`, which `review-gate.yml` does not listen for, and the freshly-
+opened PR was already visible to review and CI against the wrong base for the moment
+before the retarget landed). This operation remains for the case that does need to move
+an existing PR's base after the fact.
 
 | Backend | Command |
 |---|---|

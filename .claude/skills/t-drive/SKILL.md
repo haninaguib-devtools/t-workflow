@@ -94,9 +94,10 @@ topological order, one after another.
    reuses it; its contract is untouched (issue #39's Non-goals) — `/t-drive` only makes
    sure the branch already exists in the right place before asking `/t-work` to use it.
 4. **Work.** Run `/t-work <child-id>` (Normal mode — branch, record, implement, check,
-   draft PR). `forge:pr-create-draft` has no way to name a non-default base, so the draft
-   PR lands against `main` by default — immediately retarget it:
-   `forge:pr-set-base <pr> wip/<initiative-id>-integration`.
+   draft PR), naming `wip/<initiative-id>-integration` as the draft PR's base. `/t-work`
+   Phase 3 step 5 opens `forge:pr-create-draft` with that base from the very first call
+   (issue #99) — the child's PR never lands against `main` even transiently, so no
+   retarget step follows it.
 5. **Review.** Run `/t-review <child-id>` exactly as it already runs standalone — same
    isolation rule, same verdict line, reviewed against the integration branch as its
    base.
@@ -183,9 +184,8 @@ merge, every gate exactly where the manual pipeline fires it:
    (ADR-006 D6). If `/t-plan` stops with a question only a human can answer, **stop
    immediately**, spending no retry, and report why. Not protected → no plan; continue.
 3. **Work.** Run `/t-work <id>` (Normal mode) exactly as it runs standalone: ordinary
-   branch from `main`, record, implement, checks, draft PR against `main`. No
-   retargeting — the Phase 2 base-retargeting step is initiative-mode machinery with no
-   counterpart here.
+   branch from `main`, record, implement, checks, draft PR against `main` — the Phase 2
+   step naming a non-default base is initiative-mode machinery with no counterpart here.
 4. **Review, if the actual diff needs one.** Run the diff's real paths —
    `git -c core.quotePath=false diff --name-only main...HEAD` — through
    `.t-workflow/scripts/protected-paths.sh --stdin`. Protected → run `/t-review <id>`
