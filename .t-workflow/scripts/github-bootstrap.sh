@@ -39,23 +39,22 @@ echo "Merge mechanics set: squash-only, delete branch on merge."
 # `enforce_admins` stays true: it is what stops a direct push to main, which is the
 # invariant the whole workflow rests on.
 #
-# The jobs from .github/workflows/ci.yml become required checks once CI has run at least
-# once on the default branch; a context GitHub has never seen can be rejected here, so
-# this script sets them only after seeing `consistency` land on main. (`record`,
-# `plan-gate`, `title-gate`, `blockers`, and `cold-review` are pull-request-only by
-# design — record/plan-gate need a base branch to diff against, title-gate and blockers
-# read PR/issue state that only exists on a PR, and cold-review also needs the
-# pull_request_review trigger (review-gate.yml) — so they are required alongside
-# `consistency` rather than detected on their own.)
+# The job from .github/workflows/ci.yml becomes a required check once CI has run at
+# least once on the default branch; a context GitHub has never seen can be rejected
+# here, so this script sets it only after seeing `checks` land on main. (#94 folded what
+# were six separate jobs — consistency, record, plan-gate, title-gate, blockers,
+# plumbing-test — into sequential steps of that one `checks` job, so there is only one
+# ci.yml context to require now. `cold-review` stays a separate required context: it is
+# a different job, in review-gate.yml, gated on the pull_request_review trigger that
+# job needs and this one doesn't.)
 #
 # NOTE: on a PRIVATE repo, branch protection (and rulesets, and CODEOWNERS enforcement)
 # requires a paid plan — GitHub Pro (personal) or Team (org). On free plans it works
 # only on PUBLIC repos. The call below degrades to a warning instead of failing.
 if gh api "repos/$repo/commits/main/check-runs" -q '.check_runs[].name' 2>/dev/null \
-   | grep -qx consistency; then
-  checks='{"strict": false, "contexts": ["consistency", "record", "plan-gate", "title-gate", "blockers", "cold-review", "plumbing-test"]}'
-  echo "CI has run on main: marking consistency, record, plan-gate, title-gate,"
-  echo "  blockers, cold-review, and plumbing-test required checks."
+   | grep -qx checks; then
+  checks='{"strict": false, "contexts": ["checks", "cold-review"]}'
+  echo "CI has run on main: marking checks and cold-review required checks."
 else
   checks='null'
   echo "CI has not run on main yet: leaving required checks unset."
