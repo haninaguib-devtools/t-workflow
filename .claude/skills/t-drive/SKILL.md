@@ -17,10 +17,14 @@ merge-confirmation gate, whose pause is the same single stop (§Solo mode). Opti
 `tracker:*`/`forge:*` operation via `docs/adapters/TRACKER.md` and
 `docs/adapters/FORGE.md` (GitHub by default). The rules are
 [ADR-004](../../../docs/adr/004-autonomous-initiative-driving.md) for the initiative
-mode and [ADR-006](../../../docs/adr/006-single-task-driving.md) for the solo mode
-(amended by [ADR-007](../../../docs/adr/007-solo-drive-defers-on-pending-ci.md) for the
-one case where CI has not yet settled); where this skill and those ADRs differ, the ADR
-wins — flag it, do not improvise.
+mode and [ADR-006](../../../docs/adr/006-single-task-driving.md) for the solo mode;
+where this skill and those ADRs differ, the ADR wins — flag it, do not improvise.
+[ADR-007](../../../docs/adr/007-solo-drive-defers-on-pending-ci.md) gave the solo mode a
+CI pre-check before invoking `/t-ship`, since narrowed to nothing by
+[ADR-008](../../../docs/adr/008-attended-ci-wait-at-the-ship-gate.md) — CI now starts
+only once a PR is marked ready, so there is nothing that pre-check could still catch;
+the solo mode invokes `/t-ship` directly (§Solo mode step 6), and `/t-ship`'s own
+Procedure watches CI to conclusion before its confirmation gate.
 
 ## Phase 0 — eligibility, and which mode
 
@@ -205,24 +209,17 @@ merge, every gate exactly where the manual pipeline fires it:
      leave branch, PR, and issue exactly as they are — open, unmerged, untouched — for
      an ordinary human pickup (`/t-work` fix pass, `/t-cancel`, or a re-plan). The
      solo analog of exclusion: never auto-merged, never auto-cancelled.
-6. **CI must be settled before spending the run's one stop on the gate** (ADR-007).
-   Resolve the task's PR (`forge:pr-find-by-task <id>`) and read its checks
-   (`forge:pr-checks <pr>` — `gh pr checks <pr> --json name,bucket`; exit code 8 means
-   at least one is still pending). **Any check still queued or in progress
-   (`bucket: pending`) → stop here, without invoking `/t-ship`.** Name the pending
-   check(s) plainly, say this is not a failure — CI has not finished yet — and name
-   `/t-ship <id>` as what to run once it has; this is a single, one-time look, never a
-   poll-and-wait loop with a timeout to calibrate. No CI configured, or every check has
-   already concluded (green or red) → continue to step 7 unchanged: a concluded
-   failure is decisive information, not a wait, and `/t-ship`'s own precondition 3
-   reports it immediately, exactly as it always has.
-7. **Ship — pause at the gate.** Run `/t-ship <id>` and stop at its
-   merge-confirmation gate: that pause **is** the run's single stop (ADR-006 D3, as
-   amended by ADR-007 for step 6's one exception above), not a stop *before* `/t-ship`
-   naming it in the ordinary case — that is the initiative mode's ending, and the
-   asymmetry is deliberate. The gate itself is unchanged — same wording, same
-   refusals; the human's confirmation there is what makes the merge and the
-   issue-close asked-for (ADR-006 D6). If the session ends at the gate, a standalone
+6. **Ship — pause at the gate.** Run `/t-ship <id>` directly, with no CI pre-check of
+   this skill's own (ADR-008 retired the one ADR-007 gave this step: CI cannot have
+   settled before `/t-ship` marks the PR ready, no matter how long this run's own work
+   took, so a pre-check here would find it pending every time rather than sometimes —
+   nothing left worth checking before handing off). `/t-ship`'s own Procedure marks the
+   PR ready, watches CI to a concluded result, and only then reaches its
+   merge-confirmation gate — that pause **is** the run's single stop (ADR-006 D3), not a
+   stop *before* `/t-ship` naming it in the ordinary case — that is the initiative
+   mode's ending, and the asymmetry is deliberate. The gate itself is unchanged — same
+   wording, same refusals; the human's confirmation there is what makes the merge and
+   the issue-close asked-for (ADR-006 D6). If the session ends at the gate, a standalone
    `/t-ship <id>` finishes the job; nothing is lost.
 
 ## Rules

@@ -49,8 +49,15 @@ has already left the pipeline, say which and stop.
    the `isolation:` line and staleness by hand. Exit 1 → stop, send it back to
    `/t-review <id>`, quoting the script's own reason (a missing or `same session`
    isolation line, or a review older than the head commit).
-3. CI, if configured, is green: `forge:pr-checks <pr>`. No CI configured is acceptable,
-   said out loud.
+3. **Whether CI is configured is decided now; whether it is green is not.**
+   `.github/workflows/ci.yml`'s jobs do not start until the PR leaves draft — reading
+   their status here, while the PR is still draft, would report whatever a *skipped* run
+   left behind, which means "nothing has run yet," never "green" (`CONSTITUTION.md`
+   §1.5: a gate must never be treated as satisfied when it never ran). So check only
+   whether CI is configured at all (`forge:pr-checks <pr>`, or the absence of any
+   workflow gating this PR): no CI configured is acceptable, said out loud, and
+   Procedure step 2 below skips its watch entirely. CI configured → continue; its actual
+   result is Procedure step 2's job, not this one's.
 4. The branch merges cleanly against current `origin/main` (`forge:pr-view <pr>`). A
    conflict means another task landed first; resolving it goes back through `/t-work`.
    Mergeability is computed asynchronously and often returns **unknown** at first: wait
@@ -77,8 +84,26 @@ has already left the pipeline, say which and stop.
 
 ## Procedure
 
-1. `forge:pr-ready <pr>` — the draft becomes ready.
-2. **Stop and ask the human to confirm the merge**, showing the PR URL
+1. `forge:pr-ready <pr>` — the draft becomes ready. When precondition 3 found CI
+   configured, this is also what starts it.
+2. **When CI is configured, watch it to a concluded result now — this, not
+   precondition 3, is where "is CI green" gets answered.** The human running `/t-ship`
+   is present for the whole invocation, unlike `/t-drive`'s unattended Solo mode
+   (`docs/adr/007-solo-drive-defers-on-pending-ci.md`, narrowed by
+   `docs/adr/008-attended-ci-wait-at-the-ship-gate.md`) — there is no timeout to pick or
+   defend: watch (`gh pr checks <pr> --watch`, or equivalent polling to conclusion) until
+   every check has concluded, green or red.
+   - **Concluded red** → stop: put the PR back into draft (`forge:pr-draft <pr>`),
+     report which check(s) failed, and do not reach the confirmation gate below — the
+     same refusal precondition 3 would have produced directly, had CI's result been
+     readable before step 1 marked the PR ready.
+   - **Concluded green, or precondition 3 found no CI configured** → continue to step 3,
+     carrying that result as the gate's CI evidence.
+
+   An interrupted watch leaves the PR ready with CI still running and nothing else
+   touched — a later `/t-ship <id>` re-entry resumes from precondition 3 and finds CI's
+   result either settled or still running; nothing is lost.
+3. **Stop and ask the human to confirm the merge**, showing the PR URL
    (`forge:pr-view <pr>`) and a one-paragraph what-and-why in plain prose per AGENTS.md
    §Communication, then **the pending human checks from precondition 7** — the last
    moment they can be raised. If approval rules are configured on the repo, they must
@@ -88,8 +113,9 @@ has already left the pipeline, say which and stop.
    question (or the environment's native question mechanism), last thing in the
    message —
 
-   - evidence: review `<verdict, or 'no review ran'>` · CI `<state>` · diff `<files/size
-     summary>` · human checks `<the pending checks, or none>`
+   - evidence: review `<verdict, or 'no review ran'>` · CI `<green, or 'no CI
+     configured' — step 2 never lets a pending or red result reach here>` · diff
+     `<files/size summary>` · human checks `<the pending checks, or none>`
    - question: "Merge PR #<pr> into main?"
    - options: `confirm` (human checks judged) / `abort` (do not merge)
 
@@ -97,7 +123,7 @@ has already left the pipeline, say which and stop.
    step 1 marked it ready in expectation of a merge that did not happen; nothing else is
    touched. **Outstanding checks are acknowledged, not blocking** — confirming *is* the
    acknowledgement; a human who wants a check settled first answers `abort`.
-3. On confirmation, squash-merge with a **self-contained commit** written from the
+4. On confirmation, squash-merge with a **self-contained commit** written from the
    record, via `forge:pr-merge <pr>` — **re-read `docs/adapters/FORGE.md`'s
    `forge:pr-merge` row first and check the exact command against it.** The subject
    overrides the forge's default entirely, so append the PR reference explicitly.
@@ -143,16 +169,16 @@ has already left the pipeline, say which and stop.
    never carries this phrase — merging into a non-default branch does not trigger the
    forge's auto-close, and a child is not done until its work reaches `main` through
    this PR.
-4. `git fetch --prune` (deleted `wip/` branches otherwise linger as stale
+5. `git fetch --prune` (deleted `wip/` branches otherwise linger as stale
    `origin/wip/*` refs), then **at most, fast-forward a `main` this checkout happens to
    be sitting on** (ADR-002) — merging leaves the task's worktree, local branch, and
    this checkout untouched, left alone permanently (ADR-005), never a side effect of
    shipping: `git rev-parse --abbrev-ref HEAD`, then **on `main`**: `git merge --ff-only
    origin/main`; **on any other branch**, including the task branch: leave it exactly
    where it is — the normal outcome now that shipping runs from anywhere.
-5. A `tracker:view <id>` `parent` field names a tracking issue whose `subIssuesSummary`
+6. A `tracker:view <id>` `parent` field names a tracking issue whose `subIssuesSummary`
    the task's close above already updated — nothing to write here.
-6. Report the merge commit hash, whether a cold review ran, and whether this checkout's
+7. Report the merge commit hash, whether a cold review ran, and whether this checkout's
    `main` was fast-forwarded. **If `subIssuesSummary` (`tracker:view <parent-id>`) now
    shows every child closed**, ask whether to close the initiative too — never
    automatic. For a driven run that just shipped, `<parent-id>` is `<id>` itself (the
