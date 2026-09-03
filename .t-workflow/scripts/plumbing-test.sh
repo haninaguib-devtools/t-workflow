@@ -392,5 +392,39 @@ case "$out_withmanifest" in
 esac
 echo
 
+# --- 13. .t-workflow/scripts/trunk-ref.sh (issue #124) --------------------------
+# Resolves the checkout's actual trunk instead of hardcoding `main`. A bare "remote"
+# whose default branch is not `main`, cloned normally, sets `origin/HEAD` the same way
+# a real consumer clone would — the resolver must follow it rather than falling back.
+# A fresh repo with no remote at all has no `origin/HEAD` to read — the resolver's one
+# permitted fallback.
+echo "trunk-ref.sh"
+
+trunk_bare="$work/trunk-bare"
+git init -q --bare -b trunk-test "$trunk_bare"
+trunk_src="$work/trunk-src"
+git init -q -b trunk-test "$trunk_src"
+git -C "$trunk_src" -c user.email=test@example.com -c user.name=test \
+  commit -q --allow-empty -m "init"
+git -C "$trunk_src" remote add origin "$trunk_bare"
+git -C "$trunk_src" push -q origin trunk-test
+trunk_clone="$work/trunk-clone"
+git clone -q "$trunk_bare" "$trunk_clone"
+
+out_nonmain=$(cd "$trunk_clone" && "$root/.t-workflow/scripts/trunk-ref.sh")
+case "$out_nonmain" in
+  "trunk-test") ok "a checkout whose default branch is not main resolves to it (got: $out_nonmain)" ;;
+  *) bad "a checkout whose default branch is not main resolves to it (got: $out_nonmain)" ;;
+esac
+
+no_remote_repo="$work/no-remote-repo"
+git init -q "$no_remote_repo"
+out_noremote=$(cd "$no_remote_repo" && "$root/.t-workflow/scripts/trunk-ref.sh")
+case "$out_noremote" in
+  "main") ok "no origin/HEAD to read falls back to main (got: $out_noremote)" ;;
+  *) bad "no origin/HEAD to read falls back to main (got: $out_noremote)" ;;
+esac
+echo
+
 echo "$pass passed, $fail failed"
 [ "$fail" -eq 0 ]
