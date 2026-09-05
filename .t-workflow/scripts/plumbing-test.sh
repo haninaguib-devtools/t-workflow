@@ -426,5 +426,50 @@ case "$out_noremote" in
 esac
 echo
 
+# --- 14. .t-workflow/scripts/required-checks.sh (issue #126) --------------------
+# The one implementation of the required-status-check list github-bootstrap.sh
+# asserts and /t-ship flips to. Pure fixtures: the consumer file and the observed
+# trunk check-run names are both inputs, so no forge call is needed.
+echo "required-checks.sh"
+rc="$root/.t-workflow/scripts/required-checks.sh"
+rc_none="$work/required-checks-none.local"   # deliberately never created
+rc_file="$work/required-checks.local"
+printf '# consumer additions\nmac-lifecycle  # real macOS run\n\n  lint\nchecks\nlint\n' > "$rc_file"
+
+out=$("$rc" --list --local-file "$rc_none")
+if [ "$out" = $'checks\ncold-review' ]; then ok "--list with no consumer file is exactly checks, cold-review"
+else bad "--list with no consumer file is exactly checks, cold-review (got: $(printf '%s' "$out" | paste -sd, -))"; fi
+
+out=$("$rc" --list --local-file "$rc_file")
+if [ "$out" = $'checks\ncold-review\nmac-lifecycle\nlint' ]; then
+  ok "--list with a consumer file is the union, file order, comments/blanks/duplicates dropped"
+else bad "--list with a consumer file is the union (got: $(printf '%s' "$out" | paste -sd, -))"; fi
+
+out=$(printf 'checks\ncold-review\nmac-lifecycle\n' | "$rc" --asserted - --local-file "$rc_file" 2>/dev/null)
+if [ "$out" = $'checks\ncold-review\nmac-lifecycle' ]; then
+  ok "--asserted keeps a consumer context that has a trunk run and drops one that has none"
+else bad "--asserted keeps a consumer context that has a trunk run and drops one that has none (got: $(printf '%s' "$out" | paste -sd, -))"; fi
+
+err=$(printf 'checks\n' | "$rc" --asserted - --local-file "$rc_file" 2>&1 >/dev/null)
+case "$err" in
+  *"'lint'"*"no run on the trunk yet"*) ok "--asserted names each consumer context it leaves out" ;;
+  *) bad "--asserted names each consumer context it leaves out (stderr: $err)" ;;
+esac
+
+out=$(printf '' | "$rc" --asserted - --local-file "$rc_none")
+if [ "$out" = $'checks\ncold-review' ]; then
+  ok "--asserted with no consumer file asserts the template pair regardless of observed names"
+else bad "--asserted with no consumer file asserts the template pair (got: $(printf '%s' "$out" | paste -sd, -))"; fi
+
+printf 'checks\nmac-lifecycle\n' > "$work/observed.txt"
+out=$("$rc" --asserted "$work/observed.txt" --local-file "$rc_file" 2>/dev/null)
+if [ "$out" = $'checks\ncold-review\nmac-lifecycle' ]; then ok "--asserted reads observed names from a file as well as stdin"
+else bad "--asserted reads observed names from a file as well as stdin (got: $(printf '%s' "$out" | paste -sd, -))"; fi
+
+expect_rc "no mode is a usage error"                       2 "$rc"
+expect_rc "--asserted with an unreadable observed file fails" 2 "$rc" --asserted "$work/does-not-exist.txt"
+expect_rc "the consumer file is not a protected path"      1 .t-workflow/scripts/protected-paths.sh .t-workflow/required-checks.local
+echo
+
 echo "$pass passed, $fail failed"
 [ "$fail" -eq 0 ]
