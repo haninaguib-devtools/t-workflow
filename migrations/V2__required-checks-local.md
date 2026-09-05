@@ -51,5 +51,8 @@ to the per-file copy/splice does not otherwise matter).
   the forge — the live list is a subset of the computed union, so the next
   `github-bootstrap.sh` run re-asserts rather than removes each hand-set context.
 - `.t-workflow/scripts/template-owned-paths.sh --list | grep -c required-checks.local`
-  prints `0` and `.t-workflow/scripts/check-manifest.sh` exits 0 — the file is the
-  consumer's own and registers as no drift.
+  prints `0` — the file is the consumer's own: never template-owned, so never hashed
+  into the manifest `t-update` step 8 writes next, and never reported as drift by
+  `check-manifest.sh` afterwards. (Do not run `check-manifest.sh` itself here: a
+  migration's Done-when is checked in step 7, before step 8 rewrites the manifest, so
+  at that moment every synced file legitimately reads as drift.)

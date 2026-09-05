@@ -69,6 +69,15 @@ left locklane unable to make its real-macOS lifecycle job a required check.
   `126-let-a-consumer-add-its-own-required-stat.md`, and the record follows the rule.
   A filename derivation inside the same allowed directory, not a scope change (agent,
   2026-09-04, in the same driven session that wrote the plan).
+- **Fix pass after the cold review (H1, 2026-09-05):** the migration's Done-when
+  required `check-manifest.sh` to exit 0, but `t-update` checks a migration's Done-when
+  in its step 7, before step 8 rewrites the manifest — at that moment every synced file
+  reads as drift, so the check would have halted every consumer's sync. The clause is
+  replaced by the `template-owned-paths.sh` test alone, which proves the same property
+  and is true at that point. Review findings M1 and M2 (`/t-ship` step 3 has no rule
+  for a trunk without `required-checks.sh` yet; step 5's command reads the current
+  checkout rather than the PR head) are medium and left for the human to fold in or
+  accept.
 - `migrations/README.md` still says "No migration files exist yet" although V1 shipped
   with #118. Out of scope here (`migrations/README.md` is not an allowed path) —
   reported for a separate fix.
