@@ -32,6 +32,7 @@ only). Plain `git` is never abstracted.
 | `/t-ship` | Human-confirmed squash merge. Every path to `main` is a human-confirmed PR. |
 | `/t-cancel` | Terminal exit: the reason recorded on the issue, every neighbour decided, then the PR closed and its branch deleted. |
 | `/t-update` | For a repo generated from this template. Syncs its template-owned files to a pinned release, preserving local slots and applying pending migrations, as one ordinary task. |
+| `/t-config` | Guided editor for `AGENTS.md`'s §Reviewer model slot — asks which model `/t-review`'s subagent reviewer should default to, or to clear the override, and writes only that. |
 | `/t-status` | Read-only pipeline overview. |
 
 Skills outside the `t-*` namespace are the consumer's own; each gets a row in its own
