@@ -1,3 +1,31 @@
+const root = document.documentElement;
+const themeToggle = document.getElementById("theme-toggle");
+const themeLabel = themeToggle?.querySelector(".theme-toggle-label");
+const themeMeta = document.querySelector('meta[name="theme-color"]');
+
+function applyTheme(theme) {
+  const next = theme === "dark" ? "dark" : "light";
+  root.dataset.theme = next;
+  if (themeLabel) themeLabel.textContent = next === "dark" ? "Light" : "Dark";
+  if (themeToggle) {
+    const destination = next === "dark" ? "light" : "dark";
+    themeToggle.setAttribute("aria-label", `Switch to ${destination} theme`);
+  }
+  if (themeMeta) themeMeta.content = next === "dark" ? "#0d1117" : "#f8fafc";
+}
+
+applyTheme(root.dataset.theme);
+
+themeToggle?.addEventListener("click", () => {
+  const next = root.dataset.theme === "dark" ? "light" : "dark";
+  applyTheme(next);
+  try {
+    localStorage.setItem("t-workflow-theme", next);
+  } catch {
+    // The preference is optional; the switch still works for this page load.
+  }
+});
+
 const copyButtons = document.querySelectorAll("[data-copy]");
 
 copyButtons.forEach((button) => {

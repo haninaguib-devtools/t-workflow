@@ -4,8 +4,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="t-workflow is a reusable delivery system for agent-built software: structured issues, bounded work, independent review, and human-confirmed merges.">
-  <meta name="theme-color" content="#0a0d10">
-  <title>t-workflow — Build quickly. Merge deliberately.</title>
+  <meta name="theme-color" content="#f8fafc">
+  <title>t-workflow — A practical delivery system for agent-built software</title>
+  <script>
+    (() => {
+      document.documentElement.classList.add("js");
+      try {
+        const saved = localStorage.getItem("t-workflow-theme");
+        document.documentElement.dataset.theme = saved === "dark" ? "dark" : "light";
+      } catch {
+        document.documentElement.dataset.theme = "light";
+      }
+    })();
+  </script>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
   <script src="script.js" defer></script>
@@ -25,43 +36,51 @@
       <a href="#machinery">Machinery</a>
       <a href="#adopt">Adopt</a>
     </nav>
-    <a class="header-github" href="https://github.com/haninaguib-devtools/t-workflow">GitHub <span aria-hidden="true">↗</span></a>
+    <div class="header-tools">
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to dark theme">
+        <span class="theme-toggle-icon" aria-hidden="true">◐</span>
+        <span class="theme-toggle-label">Dark</span>
+      </button>
+      <a class="header-github" href="https://github.com/haninaguib-devtools/t-workflow">GitHub <span aria-hidden="true">↗</span></a>
+    </div>
   </header>
 
   <main id="main">
     <section class="hero" id="top">
       <div class="hero-copy">
-        <p class="eyebrow"><span>Delivery system</span><span>for agent-built software</span></p>
-        <h1>Build quickly.<br><em>Merge deliberately.</em></h1>
-        <p class="hero-lede">t-workflow gives coding agents a clear path from an agreed change to a reviewed pull request. It preserves the reasoning, tests the claims, and leaves the final merge with a person.</p>
-        <div class="hero-actions">
-          <a class="button button-primary" href="#install">Install t-workflow</a>
-          <a class="button button-quiet" href="#workflow">See how it works <span aria-hidden="true">↓</span></a>
+        <p class="eyebrow"><span>Developer field guide</span><span>t-workflow</span></p>
+        <h1>A practical delivery system for agent-built software.</h1>
+        <p class="hero-lede">Coding agents have made implementation much faster. They have not made judgment, review or project memory any less important. t-workflow gives that work a clear route from an agreed idea to a reviewed change, while leaving the final decision with the person responsible for the project.</p>
+        <p class="hero-note">This page explains the workflow from the outside in: first what a developer experiences, then the machinery that keeps it honest.</p>
+        <div class="hero-links">
+          <a href="#why">Read from the beginning <span aria-hidden="true">↓</span></a>
+          <a href="https://github.com/haninaguib-devtools/t-workflow">Browse the repository <span aria-hidden="true">↗</span></a>
         </div>
       </div>
 
       <aside class="install-terminal" id="install" aria-labelledby="install-title">
         <div class="terminal-bar">
-          <span id="install-title">Start a new project</span>
-          <span class="terminal-status">local first</span>
+          <span id="install-title">Install in an empty directory</span>
+          <span class="terminal-status">interactive</span>
         </div>
         <div class="command-row">
           <code id="install-command">curl -fsSL https://raw.githubusercontent.com/haninaguib-devtools/t-workflow/main/installer/install.sh | bash</code>
           <button class="copy-button" type="button" data-copy="install-command"><span>Copy</span></button>
         </div>
         <p>The installer creates a local repository and its first commit. It does not create a remote, choose a licence, or invent your stack.</p>
-        <div class="terminal-notes">
-          <span><b>01</b> Fill project rules</span>
-          <span><b>02</b> Create the remote</span>
-          <span><b>03</b> Apply protection</span>
-        </div>
+        <ol class="terminal-notes">
+          <li><b>1.</b> Fill the project-specific rules</li>
+          <li><b>2.</b> Create and push the remote</li>
+          <li><b>3.</b> Apply repository protection</li>
+        </ol>
       </aside>
 
-      <div class="hero-signals" aria-label="Core guarantees">
-        <div><span>01</span><b>Issue before work</b></div>
-        <div><span>02</span><b>Record beside code</b></div>
-        <div><span>03</span><b>Independent review</b></div>
-        <div><span>04</span><b>Human merge gate</b></div>
+      <div class="hero-signals" aria-label="What remains true throughout the workflow">
+        <p>Throughout the workflow</p>
+        <div><span>01</span><b>Work has an issue before it has a branch.</b></div>
+        <div><span>02</span><b>The record travels beside the code.</b></div>
+        <div><span>03</span><b>Review comes from a fresh context.</b></div>
+        <div><span>04</span><b>A person confirms every merge.</b></div>
       </div>
     </section>
 
