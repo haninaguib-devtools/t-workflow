@@ -26,9 +26,15 @@ eligible for `/t-ship`.
 - Replacing independent agent review.
 - Defining how a project deploys a preview — sibling #146's job.
 
+## Origin
+none
+
 ## Verification
 none — this task defines the schema itself; it declares no `verification:` entry of
 its own.
+
+## Feedback
+none — no feedback pass has run against this task itself.
 
 ## Decisions made along the way
 - **No new ADR** (haninaguib, via the driving session, 2026-09-06): the issue's own

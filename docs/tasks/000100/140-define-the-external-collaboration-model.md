@@ -31,6 +31,16 @@ proposal is an origin of work, not a third workflow level.
   t-drive stopping point, t-status states) — each is its own sibling task under #139
   (#141–#147), which this ADR's own "child tasks" section names and sequences.
 
+## Origin
+none
+
+## Verification
+none — this task predates the convention; retrofitted per `docs/tasks/README.md`'s "or
+none" rule as part of assembling the initiative's aggregate PR.
+
+## Feedback
+none — no feedback pass has run against this task itself.
+
 ## Decisions made along the way
 - Placed the ADR's one required operative pointer (`CONSTITUTION.md` §2.3) in
   `CONSTITUTION.md` §1 Delivery rather than `AGENTS.md`'s Conventions section: the rule

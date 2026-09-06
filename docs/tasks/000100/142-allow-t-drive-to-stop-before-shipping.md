@@ -26,11 +26,16 @@ later without replaying completed stages unnecessarily.
 - Replacing `/t-ship`.
 
 ## Origin
-Inherited from initiative #139 — see its own Origin.
+none — initiative #139 carries no `## Origin` section of its own to inherit
+(corrected during aggregate-PR assembly; the original record incorrectly claimed
+inheritance).
 
 ## Verification
 none — this task builds the general mechanism; it declares no `verification:` entry
 of its own.
+
+## Feedback
+none — no feedback pass has run against this task itself.
 
 ## Decisions made along the way
 - **No new ADR** (haninaguib, via the driving session, 2026-09-06): ADR-010 §D6

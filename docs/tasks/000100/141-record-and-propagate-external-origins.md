@@ -28,6 +28,13 @@ the external source authoritative for scope or acceptance.
 ## Origin
 none
 
+## Verification
+none — this task predates the convention; retrofitted per `docs/tasks/README.md`'s "or
+none" rule as part of assembling the initiative's aggregate PR.
+
+## Feedback
+none — no feedback pass has run against this task itself.
+
 ## Decisions made along the way
 - The origin shape lives in a new `docs/architecture/external-origin.md` rather than in
   `CONSTITUTION.md`: ADR-010 already added the one operative CONSTITUTION.md §1 pointer
