@@ -167,7 +167,7 @@ if [ "$task_pr_count" -gt 0 ]; then
       .verification = [range(0; (.verification | length)) as $i | .verification[$i] + {stale: $stale[$i]}]
     ')
 
-    jq -c --argjson tid "$tid" --argjson parsed "$parsed" --argjson headCommitTime "$headCommitTime" \
+    jq -cn --argjson tid "$tid" --argjson parsed "$parsed" --argjson headCommitTime "$headCommitTime" \
       '{number: $tid, headCommitTime: $headCommitTime} + $parsed' \
       >> "$work/task-extra.jsonl"
   done < <(jq -c '.[]' "$work/task-prs.json")
