@@ -169,6 +169,29 @@ code {
 
 .site-nav a.is-active { border-color: var(--accent); }
 
+.header-install {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  min-height: 2.15rem;
+  padding: .25rem .8rem;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--surface);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: .79rem;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+:root[data-theme="dark"] .header-install { color: var(--page); }
+
+.header-install:hover {
+  border-color: var(--accent-ink);
+  background: var(--accent-ink);
+  color: var(--surface);
+}
+
 .header-tools {
   justify-self: end;
   display: flex;
@@ -197,11 +220,16 @@ code {
 .hero {
   max-width: var(--max);
   margin: 0 auto;
-  padding: clamp(4rem, 8vw, 7rem) var(--pad) 2.5rem;
+  padding: clamp(2rem, 4vw, 3.5rem) var(--pad) 2.5rem;
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(20rem, .85fr);
-  gap: 3.5rem clamp(2.5rem, 7vw, 6rem);
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.75rem;
   align-items: start;
+}
+
+.hero-copy,
+.install-terminal {
+  width: min(100%, 57rem);
 }
 
 .eyebrow,
@@ -237,7 +265,7 @@ h1 {
   max-width: 18ch;
   margin: 0;
   color: var(--text-strong);
-  font-size: clamp(2.65rem, 5.3vw, 5rem);
+  font-size: clamp(2.5rem, 4.8vw, 4.5rem);
   line-height: 1.04;
   letter-spacing: -.055em;
   font-weight: 735;
@@ -247,7 +275,7 @@ h1 em { color: inherit; font-style: normal; }
 
 .hero-lede {
   max-width: 43rem;
-  margin: 1.7rem 0 0;
+  margin: 1.25rem 0 0;
   color: var(--text);
   font-size: clamp(1.08rem, 1.7vw, 1.27rem);
   line-height: 1.72;
@@ -255,7 +283,7 @@ h1 em { color: inherit; font-style: normal; }
 
 .hero-note {
   max-width: 42rem;
-  margin: 1.15rem 0 0;
+  margin: .85rem 0 0;
   padding-left: 1rem;
   border-left: 2px solid var(--line-strong);
   color: var(--muted);
@@ -265,7 +293,7 @@ h1 em { color: inherit; font-style: normal; }
 .hero-links {
   display: flex;
   gap: 1.4rem;
-  margin-top: 1.6rem;
+  margin-top: 1.15rem;
   flex-wrap: wrap;
 }
 
@@ -277,7 +305,8 @@ h1 em { color: inherit; font-style: normal; }
 }
 
 .install-terminal {
-  margin-top: .15rem;
+  margin-top: 0;
+  scroll-margin-top: 5rem;
   border: 1px solid var(--line-strong);
   background: var(--surface);
   box-shadow: var(--shadow);
@@ -931,8 +960,6 @@ footer > a:last-child { justify-self: end; }
 @media (max-width: 920px) {
   .site-header { grid-template-columns: 1fr auto; }
   .site-nav { display: none; }
-  .hero { grid-template-columns: 1fr; }
-  .install-terminal { max-width: 42rem; }
   .hero-signals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hero-signals > p { grid-column: 1 / -1; border-bottom: 1px solid var(--line); }
   .hero-signals > div:nth-of-type(odd) { border-left: 0; }
@@ -945,8 +972,8 @@ footer > a:last-child { justify-self: end; }
 @media (max-width: 680px) {
   .site-header { min-height: 3.75rem; }
   .header-github { display: none; }
-  .hero { padding-top: 3.5rem; gap: 2.5rem; }
-  h1 { font-size: clamp(2.45rem, 12vw, 3.4rem); }
+  .hero { padding-top: 2rem; gap: 1.75rem; }
+  h1 { font-size: clamp(2.35rem, 11vw, 3.2rem); }
   .hero-signals,
   .prose-columns,
   .principle-grid,
