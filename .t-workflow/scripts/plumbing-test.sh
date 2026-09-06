@@ -710,5 +710,68 @@ case "$out" in
 esac
 echo
 
+# --- 18. .t-workflow/scripts/check-preview-evidence.sh (issue #146) ---------------------
+# Shape validation only, for docs/adapters/PREVIEW.md's preview-evidence contract. Pure
+# fixtures throughout — the script never touches git, the forge, or any deployment
+# target; it never gates anything (this repo calls it from nowhere else).
+echo "check-preview-evidence.sh"
+cpe="$root/.t-workflow/scripts/check-preview-evidence.sh"
+
+printf '[]' > "$work/preview-empty.json"
+printf '{"commit":"a1b2c3d4e5f60718293a4b5c6d7e8f9012345678","type":"web","status":"ready","review_url":"https://preview.example.com/x"}' \
+  > "$work/preview-web-ready.json"
+printf '{"commit":"a1b2c3d4e5f60718293a4b5c6d7e8f9012345678","type":"package","status":"failed","instructions":"install the tarball","failure_reason":"build broke"}' \
+  > "$work/preview-package-failed.json"
+printf '[{"commit":"abc123","type":"image","status":"pending"},{"commit":"def456","type":"environment","status":"expired","expiry":"2026-01-01T00:00:00Z"}]' \
+  > "$work/preview-array-ok.json"
+printf '{"type":"web","status":"ready"}' > "$work/preview-missing-commit.json"
+printf '{"commit":"","type":"web","status":"ready"}' > "$work/preview-empty-commit.json"
+printf '{"commit":"abc","status":"done"}' > "$work/preview-bad-status.json"
+printf '{"commit":"abc","status":"failed"}' > "$work/preview-failed-no-reason.json"
+printf '{"commit":"abc","status":"ready","failure_reason":"oops"}' > "$work/preview-reason-not-failed.json"
+printf '[{"commit":"abc","status":"ready"},{"commit":"","status":"pending"}]' \
+  > "$work/preview-array-one-bad.json"
+printf '{"commit":"abc","status":"ready","review_url":123}' > "$work/preview-nonstring-field.json"
+printf 'not json' > "$work/preview-malformed.json"
+printf '"just a string"' > "$work/preview-wrong-type.json"
+
+expect_rc "no entries at all: passes (nothing to check)" \
+  0 "$cpe" "$work/preview-empty.json"
+expect_rc "a valid single web-preview object: passes" \
+  0 "$cpe" "$work/preview-web-ready.json"
+expect_rc "a valid non-web (package) preview, failed with a reason: passes" \
+  0 "$cpe" "$work/preview-package-failed.json"
+expect_rc "an array of valid entries (image, environment): passes" \
+  0 "$cpe" "$work/preview-array-ok.json"
+expect_rc "missing commit: fails" \
+  1 "$cpe" "$work/preview-missing-commit.json"
+expect_rc "empty-string commit: fails" \
+  1 "$cpe" "$work/preview-empty-commit.json"
+expect_rc "unrecognized status: fails" \
+  1 "$cpe" "$work/preview-bad-status.json"
+expect_rc "status failed with no failure_reason: fails" \
+  1 "$cpe" "$work/preview-failed-no-reason.json"
+expect_rc "failure_reason present but status is not failed: fails" \
+  1 "$cpe" "$work/preview-reason-not-failed.json"
+expect_rc "one bad entry alongside one good entry in an array: fails" \
+  1 "$cpe" "$work/preview-array-one-bad.json"
+expect_rc "an optional field present but not a string: fails" \
+  1 "$cpe" "$work/preview-nonstring-field.json"
+expect_rc "malformed JSON is a usage error, not a clean pass" \
+  2 "$cpe" "$work/preview-malformed.json"
+expect_rc "valid JSON that is neither an object nor an array is a usage error" \
+  2 "$cpe" "$work/preview-wrong-type.json"
+expect_rc "a missing input file is a usage error" \
+  2 "$cpe" "$work/does-not-exist.json"
+expect_rc "no arguments is a usage error" \
+  2 "$cpe"
+
+# A non-web preview legitimately carries no review_url at all — confirm the schema
+# never requires one (docs/adapters/PREVIEW.md §Non-web previews).
+out=$(jq 'has("review_url")' "$work/preview-package-failed.json")
+[ "$out" = "false" ] && ok "the non-web fixture itself carries no review_url (sanity check on the fixture)" \
+  || bad "the non-web fixture itself carries no review_url (got has(review_url)=$out)"
+echo
+
 echo "$pass passed, $fail failed"
 [ "$fail" -eq 0 ]
