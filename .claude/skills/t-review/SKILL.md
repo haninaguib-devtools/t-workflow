@@ -23,8 +23,9 @@ costs more than the read — never for a protected surface. The reviewer is **re
 it posts findings, it fixes nothing.
 
 Which model a spawned subagent runs under is resolved in step 1, from AGENTS.md's
-§Reviewer model slot or a model named directly on the invocation — never hardcoded
-here.
+§Reviewer model slot or a model named directly on the invocation; how that string turns
+into an actual spawn is this harness's own resolution, documented for the active
+harness in `docs/adapters/MODEL.md` — never hardcoded here.
 
 ## Procedure
 
@@ -41,7 +42,10 @@ holding only the id, so this matters more here than anywhere else.
    describes whatever happened to happen. Resolve the model with this precedence, most
    specific first: a model the invocation names explicitly; otherwise the default named
    in AGENTS.md's §Reviewer model slot, when it names one; otherwise the invoking
-   session's own model — no override at all.
+   session's own model — no override at all. How that resolved string turns into an
+   actual subagent spawn is the active harness's own resolution — `docs/adapters/
+   MODEL.md`'s guidance for the current harness, never a model name or provider
+   hardcoded here.
 
    **An invocation naming a model explicitly always spawns a real subagent under that
    model** — record `isolation: subagent` and skip the three branches below entirely,

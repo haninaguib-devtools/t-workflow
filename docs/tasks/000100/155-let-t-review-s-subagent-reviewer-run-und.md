@@ -54,4 +54,16 @@ none
   section keeps every existing scoped check untouched (agent, 2026-09-06).
 
 ## Deviations / notes
-- none
+- Mid-flight re-plan: the issue's `## Plan` section was replaced (Goal/Done when/Scope/
+  Non-goals unchanged) to add `docs/adapters/MODEL.md` to Allowed paths.
+  Previous Allowed paths: `AGENTS.md`, `docs/architecture/local-slots.md`,
+  `.claude/skills/t-review/SKILL.md`.
+  New Allowed paths: those three, plus `docs/adapters/MODEL.md` (new).
+  Reason: a hardcoded/enumerated model-name list, of any shape or location, was
+  rejected as unable to generalize across harnesses — a harness like OMP (omp.sh) does
+  model-agnostic, role-based routing across 60+ providers with no fixed set to
+  enumerate. Replaced with an opaque string (unchanged: the slot and the inline
+  override already accepted any string) plus a new per-harness example/resolution
+  document, `docs/adapters/MODEL.md`, in the shape of the existing
+  `TRACKER.md`/`FORGE.md`/`OBSERVER.md`/`PREVIEW.md` adapter docs (human, via
+  re-plan, 2026-09-06).
