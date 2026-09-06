@@ -13,7 +13,35 @@
 # Usage: .t-workflow/scripts/status-snapshot.sh
 #   No arguments. Run from anywhere inside the repository, with `gh` authenticated.
 # Exit 0 = one JSON object printed on stdout. Exit 2 = bad usage (no live call made).
+#
+# Internal test hook, issue #147: `--test-stale-match <glob>...`, reading changed
+# paths one per line on stdin, prints "true" if any path matches any glob (bash's
+# `==` pattern operator, the same style protected-paths.sh uses) and "false"
+# otherwise. This is the exact matching rule the staleness computation below applies
+# per verification entry — pulled out here, and called by that computation via `"$0"
+# --test-stale-match` rather than duplicated inline, so plumbing-test.sh can
+# fixture-test the rule directly (no live git state needed for this part) instead of
+# only exercising it through a real `git diff`. A /t-review pass on this task's own
+# PR caught a real bug here — the match's two branches were once swapped, so a diff
+# that touched a declared scope glob was read as *not* stale — because nothing tested
+# this rule in isolation; this hook is the fix for that gap, not only for the bug.
+# Never documented as a public interface and never called by /t-status itself.
 set -euo pipefail
+
+if [ "${1:-}" = "--test-stale-match" ]; then
+  shift
+  matched="false"
+  while IFS= read -r p; do
+    [ -z "$p" ] && continue
+    for g in "$@"; do
+      case "$p" in
+        $g) matched="true" ;;
+      esac
+    done
+  done
+  printf '%s\n' "$matched"
+  exit 0
+fi
 
 if [ "$#" -gt 0 ]; then
   echo "usage: .t-workflow/scripts/status-snapshot.sh   (no arguments)" >&2
@@ -141,17 +169,17 @@ if [ "$task_pr_count" -gt 0 ]; then
             stale="true"
           elif git rev-parse -q --verify "${entry_revision}^{commit}" >/dev/null 2>&1 \
                && git rev-parse -q --verify "${headOid}^{commit}" >/dev/null 2>&1; then
-            stale="true"
+            # docs/architecture/verification.md's own formula: stale UNLESS the diff
+            # touches NONE of the declared scope globs. Delegated to this script's
+            # own `--test-stale-match` hook (top of file) rather than duplicated
+            # inline, so the exact matching rule is fixture-tested in isolation
+            # (fixed a /t-review high finding: an earlier version of this loop had
+            # its two branches swapped, reading a diff that touched a declared scope
+            # glob as *not* stale — a false "nothing to do here" reading that nothing
+            # here tested).
             changed=$(git diff --name-only "$entry_revision" "$headOid" 2>/dev/null || true)
-            while IFS= read -r g; do
-              [ -z "$g" ] && continue
-              while IFS= read -r p; do
-                [ -z "$p" ] && continue
-                case "$p" in
-                  $g) stale="false" ;;
-                esac
-              done <<< "$changed"
-            done < <(printf '%s' "$parsed" | jq -r ".verification[$i].scope[]")
+            mapfile -t globs < <(printf '%s' "$parsed" | jq -r ".verification[$i].scope[]")
+            stale=$(printf '%s\n' "$changed" | "$here/status-snapshot.sh" --test-stale-match "${globs[@]}")
           else
             stale="true"
           fi

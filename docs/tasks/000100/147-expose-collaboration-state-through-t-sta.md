@@ -77,4 +77,22 @@ none — no feedback pass has run against this task itself.
   many PRs the repository accumulates.
 
 ## Deviations / notes
-- none
+- **Fix-mode pass** (haninaguib, via the driving session, 2026-09-06), addressing
+  `/t-review`'s one high finding on PR #157: `status-snapshot.sh`'s per-verification-
+  entry staleness computation had the scope-glob match backwards — it started
+  `stale="true"` and flipped to `"false"` the moment a changed path matched a declared
+  `scope:` glob, when `docs/architecture/verification.md`'s own formula ("stale
+  *unless* the diff touches none of the declared globs") requires the opposite: start
+  `"false"`, flip to `"true"` only on a match. The bug meant a required verification
+  entry could read as current when a later commit actually touched its declared scope
+  — a false "nothing to do here" reading, exactly the kind of silent false pass
+  `docs/architecture/verification.md`'s fail-toward-absent posture exists to prevent.
+  The review also noted nothing exercised this exact matching rule (`derive-task-
+  state.sh`'s fixtures take a precomputed `stale`; `parse-task-record.sh`'s fixtures
+  only test scope-glob extraction, never the live-diff match itself). Fixed by
+  swapping the two branches, and by pulling the matching rule out into a small
+  internal `--test-stale-match` hook at the top of `status-snapshot.sh` (no git
+  dependency once given a list of changed paths) that the live staleness loop now
+  calls instead of duplicating inline — `plumbing-test.sh` fixture-tests that hook
+  directly (5 new assertions), closing the gap the review found without inventing a
+  new file. Only `status-snapshot.sh` and `plumbing-test.sh` changed in this pass.

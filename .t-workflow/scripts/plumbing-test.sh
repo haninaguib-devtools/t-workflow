@@ -982,5 +982,33 @@ expect_rc "an existing record with a non-existent issue-body file is a usage err
   2 "$ptr" "$work/record-none.md" "$work/does-not-exist.md"
 echo
 
+# --- 21. .t-workflow/scripts/status-snapshot.sh --test-stale-match (issue #147) ---------
+# The exact glob-matching rule status-snapshot.sh's own staleness computation delegates
+# to (docs/architecture/verification.md's formula: stale UNLESS the diff touches NONE
+# of the declared scope globs). Pure fixtures — no git diff, no live PR — this is what
+# a /t-review pass on this task's own PR found untested when it caught the rule's two
+# branches swapped (a diff touching a declared scope glob read as *not* stale).
+echo "status-snapshot.sh --test-stale-match"
+ssm="$root/.t-workflow/scripts/status-snapshot.sh"
+
+expect_match() {
+  local desc="$1" want="$2" changed="$3"; shift 3
+  local got
+  got=$(printf '%s\n' "$changed" | "$ssm" --test-stale-match "$@")
+  if [ "$got" = "$want" ]; then ok "$desc (got $got)"; else bad "$desc (want $want, got $got)"; fi
+}
+
+expect_match "a changed path matching a declared scope glob: stale (true)" \
+  "true" "docs/foo/bar.md" "docs/foo/*"
+expect_match "a changed path matching none of the declared scope globs: not stale (false)" \
+  "false" "src/unrelated.js" "docs/foo/*" "docs/bar.md"
+expect_match "one of several changed paths matches: stale (true)" \
+  "true" "$(printf '%s\n' "src/unrelated.js" "docs/foo/deep/file.md")" "docs/foo/*"
+expect_match "no changed paths at all: not stale (false — nothing could have affected it)" \
+  "false" "" "docs/foo/*"
+expect_match "called with zero glob arguments: matches nothing, reads not stale (false) -- status-snapshot.sh itself never calls this hook that way; its own separate \"no scope declared at all\" branch defaults to stale before ever reaching here" \
+  "false" "docs/foo/bar.md"
+echo
+
 echo "$pass passed, $fail failed"
 [ "$fail" -eq 0 ]
