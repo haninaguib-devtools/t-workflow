@@ -28,6 +28,17 @@ expect_rc() {
   "$@" >/dev/null 2>&1; got=$?
   if [ "$got" -eq "$want" ]; then ok "$desc (rc=$got)"; else bad "$desc (want rc=$want, got rc=$got)"; fi
 }
+# expect_field <description> <jq-filter> <expected-value> <command...> — runs the
+# command, pipes its stdout through the jq filter, compares the (raw) result. Used for
+# derive-task-state.sh/parse-task-record.sh, which report a classification or a parsed
+# shape in their JSON output rather than only through an exit code.
+expect_field() {
+  local desc="$1" filter="$2" want="$3"; shift 3
+  local out got
+  out=$("$@" 2>/dev/null)
+  got=$(printf '%s' "$out" | jq -r "$filter" 2>/dev/null)
+  if [ "$got" = "$want" ]; then ok "$desc (got $got)"; else bad "$desc (want $want, got $got)"; fi
+}
 
 # --- 1. .t-workflow/scripts/protected-paths.sh: exit codes and quoting ------------------
 echo "protected-paths.sh"
@@ -777,6 +788,226 @@ expect_rc "no arguments is a usage error" \
 out=$(jq 'has("review_url")' "$work/preview-package-failed.json")
 [ "$out" = "false" ] && ok "the non-web fixture itself carries no review_url (sanity check on the fixture)" \
   || bad "the non-web fixture itself carries no review_url (got has(review_url)=$out)"
+echo
+
+# --- 19. .t-workflow/scripts/derive-task-state.sh (issue #147) --------------------------
+# The precedence docs/architecture/collaboration-state.md documents. Pure fixtures
+# throughout — this script never touches git or the forge, only the small JSON shape
+# status-snapshot.sh's own preprocessing (plus /t-status's own procedure) assembles.
+echo "derive-task-state.sh"
+dts="$root/.t-workflow/scripts/derive-task-state.sh"
+
+mk_ts() { printf '%s' "$1" > "$work/$2"; }
+
+mk_ts '{"blocked":"none","ciState":"pass","review":{"readiness":"ready","current":true},"feedback":{"pendingScopeExpansion":false},"verification":[],"previewReady":null}' ts-awaiting-ship.json
+mk_ts '{"blocked":"open","ciState":"pass","review":{"readiness":"ready","current":true},"feedback":{"pendingScopeExpansion":false},"verification":[],"previewReady":null}' ts-blocked-open.json
+mk_ts '{"blocked":"cancelled","ciState":"pass","review":{"readiness":"ready","current":true},"feedback":{"pendingScopeExpansion":false},"verification":[],"previewReady":null}' ts-blocked-cancelled.json
+mk_ts '{"blocked":"none","ciState":"fail","review":{"readiness":"ready","current":true},"feedback":{"pendingScopeExpansion":false},"verification":[],"previewReady":null}' ts-checks-failing.json
+mk_ts '{"blocked":"none","ciState":"pass","review":null,"feedback":{"pendingScopeExpansion":false},"verification":[],"previewReady":null}' ts-awaiting-review.json
+mk_ts '{"blocked":"none","ciState":"pass","review":{"readiness":"ready","current":false},"feedback":{"pendingScopeExpansion":false},"verification":[],"previewReady":null}' ts-awaiting-renewed-review.json
+mk_ts '{"blocked":"none","ciState":"pass","review":{"readiness":"not-ready","current":true},"feedback":{"pendingScopeExpansion":false},"verification":[],"previewReady":null}' ts-changes-requested.json
+mk_ts '{"blocked":"none","ciState":"pass","review":{"readiness":"ready","current":true},"feedback":{"pendingScopeExpansion":true},"verification":[],"previewReady":null}' ts-processing-feedback.json
+mk_ts '{"blocked":"none","ciState":"pass","review":{"readiness":"ready","current":true},"feedback":{"pendingScopeExpansion":false},"verification":[{"role":"contributor","required":true,"state":"pending","stale":false}],"previewReady":false}' ts-awaiting-preview.json
+mk_ts '{"blocked":"none","ciState":"pass","review":{"readiness":"ready","current":true},"feedback":{"pendingScopeExpansion":false},"verification":[{"role":"contributor","required":true,"state":"pending","stale":false}],"previewReady":null}' ts-awaiting-ext-verif.json
+mk_ts '{"blocked":"none","ciState":"pass","review":{"readiness":"ready","current":true},"feedback":{"pendingScopeExpansion":false},"verification":[{"role":"contributor","required":true,"state":"verified","stale":true}],"previewReady":true}' ts-awaiting-ext-verif-stale.json
+mk_ts '{"blocked":"none","ciState":"pass","review":{"readiness":"ready","current":true},"feedback":{"pendingScopeExpansion":false},"verification":[{"role":"contributor","required":true,"state":"verified","stale":false}],"previewReady":true}' ts-verified-ready.json
+mk_ts '{"blocked":"none","ciState":"pass","review":{"readiness":"ready","current":true},"feedback":{"pendingScopeExpansion":false},"verification":[{"role":"maintainer","required":false,"state":"pending","stale":false}],"previewReady":null}' ts-not-required-never-blocks.json
+mk_ts 'not json' ts-malformed.json
+mk_ts '{"blocked":"maybe","ciState":"pass","review":null,"feedback":{"pendingScopeExpansion":false},"verification":[],"previewReady":null}' ts-bad-blocked.json
+
+expect_field "no blocker, ready review, no verification: awaiting-ship" \
+  .state "awaiting-ship" "$dts" "$work/ts-awaiting-ship.json"
+expect_field "an open blocker: blocked" \
+  .state "blocked" "$dts" "$work/ts-blocked-open.json"
+expect_field "a cancelled blocker: blocked (abandoned, not satisfied)" \
+  .state "blocked" "$dts" "$work/ts-blocked-cancelled.json"
+expect_field "CI failing: checks-failing" \
+  .state "checks-failing" "$dts" "$work/ts-checks-failing.json"
+expect_field "no review yet: awaiting-review" \
+  .state "awaiting-review" "$dts" "$work/ts-awaiting-review.json"
+expect_field "a review that predates the head commit: awaiting-renewed-review" \
+  .state "awaiting-renewed-review" "$dts" "$work/ts-awaiting-renewed-review.json"
+expect_field "current review reads not-ready: changes-requested" \
+  .state "changes-requested" "$dts" "$work/ts-changes-requested.json"
+expect_field "a feedback entry proposed scope expansion: processing-feedback" \
+  .state "processing-feedback" "$dts" "$work/ts-processing-feedback.json"
+expect_field "a pending required entry with preview evidence not ready: awaiting-preview" \
+  .state "awaiting-preview" "$dts" "$work/ts-awaiting-preview.json"
+expect_field "a pending required entry with no preview evidence at all: awaiting-external-verification" \
+  .state "awaiting-external-verification" "$dts" "$work/ts-awaiting-ext-verif.json"
+expect_field "a stale verified entry: still awaiting-external-verification (preview not the reason)" \
+  .state "awaiting-external-verification" "$dts" "$work/ts-awaiting-ext-verif-stale.json"
+expect_field "a stale verified entry names staleness in its detail" \
+  .detail "a later commit could affect a previously verified/risk-accepted entry — it must be re-verified or re-accepted at the new revision" \
+  "$dts" "$work/ts-awaiting-ext-verif-stale.json"
+expect_field "every required verification entry resolved and current: verified-ready-for-ship" \
+  .state "verified-ready-for-ship" "$dts" "$work/ts-verified-ready.json"
+expect_field "a not-required pending entry never blocks: still reaches verified-ready-for-ship" \
+  .state "verified-ready-for-ship" "$dts" "$work/ts-not-required-never-blocks.json"
+expect_rc "malformed JSON is a usage error, not a clean classification" \
+  2 "$dts" "$work/ts-malformed.json"
+expect_rc "an unrecognized \`blocked\` value is a usage error" \
+  2 "$dts" "$work/ts-bad-blocked.json"
+expect_rc "a missing input file is a usage error" \
+  2 "$dts" "$work/does-not-exist.json"
+expect_rc "no arguments is a usage error" \
+  2 "$dts"
+
+# Precedence: two conditions that would each independently classify differently — the
+# earlier one in docs/architecture/collaboration-state.md's own table must win.
+mk_ts '{"blocked":"open","ciState":"fail","review":null,"feedback":{"pendingScopeExpansion":true},"verification":[{"role":"contributor","required":true,"state":"pending","stale":false}],"previewReady":false}' ts-precedence-blocked-wins.json
+expect_field "blocked outranks failing CI, no review, feedback, and verification all at once" \
+  .state "blocked" "$dts" "$work/ts-precedence-blocked-wins.json"
+mk_ts '{"blocked":"none","ciState":"fail","review":null,"feedback":{"pendingScopeExpansion":true},"verification":[{"role":"contributor","required":true,"state":"pending","stale":false}],"previewReady":false}' ts-precedence-ci-wins.json
+expect_field "failing CI outranks no review, feedback, and verification" \
+  .state "checks-failing" "$dts" "$work/ts-precedence-ci-wins.json"
+mk_ts '{"blocked":"none","ciState":"pass","review":{"readiness":"not-ready","current":false},"feedback":{"pendingScopeExpansion":true},"verification":[{"role":"contributor","required":true,"state":"pending","stale":false}],"previewReady":false}' ts-precedence-renewed-wins.json
+expect_field "a stale not-ready review reads as awaiting-renewed-review, not changes-requested" \
+  .state "awaiting-renewed-review" "$dts" "$work/ts-precedence-renewed-wins.json"
+mk_ts '{"blocked":"none","ciState":"pass","review":{"readiness":"not-ready","current":true},"feedback":{"pendingScopeExpansion":true},"verification":[{"role":"contributor","required":true,"state":"pending","stale":false}],"previewReady":false}' ts-precedence-changes-wins.json
+expect_field "changes-requested outranks a pending feedback item and unresolved verification" \
+  .state "changes-requested" "$dts" "$work/ts-precedence-changes-wins.json"
+mk_ts '{"blocked":"none","ciState":"pass","review":{"readiness":"ready","current":true},"feedback":{"pendingScopeExpansion":true},"verification":[{"role":"contributor","required":true,"state":"pending","stale":false}],"previewReady":false}' ts-precedence-feedback-wins.json
+expect_field "processing-feedback outranks unresolved verification once review is clean" \
+  .state "processing-feedback" "$dts" "$work/ts-precedence-feedback-wins.json"
+echo
+
+# --- 20. .t-workflow/scripts/parse-task-record.sh (issue #147) ---------------------------
+# Turns a task record's ## Verification/## Feedback markdown, plus an issue body's ##
+# Plan -> verification: scope list, into JSON. Pure fixtures — text files in, JSON out,
+# no git or forge call of its own.
+echo "parse-task-record.sh"
+ptr="$root/.t-workflow/scripts/parse-task-record.sh"
+
+cat > "$work/record-none.md" <<'EOF'
+# 999 — Test record
+Issue: #999
+
+## Verification
+none — this task declares no `verification:` entry of its own.
+
+## Feedback
+none — no feedback pass has run against this task itself.
+EOF
+
+cat > "$work/record-no-feedback-heading.md" <<'EOF'
+# 999 — Test record
+Issue: #999
+
+## Verification
+none — this task declares no `verification:` entry of its own.
+
+## Decisions made along the way
+- none
+EOF
+
+cat > "$work/record-populated.md" <<'EOF'
+# 999 — Test record
+Issue: #999
+
+## Verification
+- role: contributor — required: true
+  what: exercised the preview and confirmed the login flow works
+  state: verified
+  evidence: clicked through the preview — revision: `a1b2c3d4e5f60718293a4b5c6d7e8f9012345678`
+  by: Jane — date: 2026-09-10
+- role: maintainer — required: false
+  what: sanity-checked the copy
+  state: pending
+  evidence: awaiting — revision: `none yet`
+  by: — date: —
+
+## Feedback
+- reference: https://preview.example.com/comment/1
+  source: a contributor
+  classification: defect
+  response: fixed the off-by-one in the pagination
+  by: someone — date: 2026-09-10
+- reference: https://preview.example.com/comment/2
+  source: a maintainer
+  classification: proposed scope expansion
+  response: stopped; awaiting human authorization and /t-plan
+  by: someone — date: 2026-09-11
+EOF
+
+cat > "$work/issue-with-scope.md" <<'EOF'
+## Plan
+### Allowed paths
+- `some/path.md`
+
+### Validation
+agent_checks:
+  - `echo ok` — stage: implementation — proves: nothing
+verification:
+  - role: contributor
+    required: true
+    scope: docs/foo/*, docs/bar.md
+  - role: maintainer
+    required: false
+EOF
+
+expect_field "a 'none'/'none' record: empty verification array" \
+  '.verification | length' "0" "$ptr" "$work/record-none.md"
+expect_field "a 'none'/'none' record: null feedback classification" \
+  .feedbackLastClassification "null" "$ptr" "$work/record-none.md"
+expect_field "a record predating the ## Feedback convention: null classification, not an error" \
+  .feedbackLastClassification "null" "$ptr" "$work/record-no-feedback-heading.md"
+expect_field "a populated record: two verification entries" \
+  '.verification | length' "2" "$ptr" "$work/record-populated.md"
+expect_field "the first entry's role" \
+  '.verification[0].role' "contributor" "$ptr" "$work/record-populated.md"
+expect_field "the first entry's state" \
+  '.verification[0].state' "verified" "$ptr" "$work/record-populated.md"
+expect_field "the first entry's revision" \
+  '.verification[0].revision' "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678" "$ptr" "$work/record-populated.md"
+expect_field "a 'none yet' revision reads as null, never a literal string" \
+  '.verification[1].revision' "null" "$ptr" "$work/record-populated.md"
+expect_field "the not-required second entry's required flag" \
+  '.verification[1].required' "false" "$ptr" "$work/record-populated.md"
+expect_field "only the LAST feedback entry's classification is reported" \
+  .feedbackLastClassification "proposed scope expansion" "$ptr" "$work/record-populated.md"
+expect_field "with no issue-body file, every entry's scope is empty (no scope known yet)" \
+  '.verification[0].scope | length' "0" "$ptr" "$work/record-populated.md"
+
+expect_field "given the issue body, scope globs are matched in by role" \
+  '.verification[0].scope | join(",")' "docs/foo/*,docs/bar.md" "$ptr" "$work/record-populated.md" "$work/issue-with-scope.md"
+expect_field "a role with no scope: in the plan reads as an empty scope list" \
+  '.verification[1].scope | length' "0" "$ptr" "$work/record-populated.md" "$work/issue-with-scope.md"
+
+expect_rc "a missing record file is a usage error" \
+  2 "$ptr" "$work/does-not-exist.md"
+expect_rc "no arguments is a usage error" \
+  2 "$ptr"
+expect_rc "an existing record with a non-existent issue-body file is a usage error" \
+  2 "$ptr" "$work/record-none.md" "$work/does-not-exist.md"
+echo
+
+# --- 21. .t-workflow/scripts/status-snapshot.sh --test-stale-match (issue #147) ---------
+# The exact glob-matching rule status-snapshot.sh's own staleness computation delegates
+# to (docs/architecture/verification.md's formula: stale UNLESS the diff touches NONE
+# of the declared scope globs). Pure fixtures — no git diff, no live PR — this is what
+# a /t-review pass on this task's own PR found untested when it caught the rule's two
+# branches swapped (a diff touching a declared scope glob read as *not* stale).
+echo "status-snapshot.sh --test-stale-match"
+ssm="$root/.t-workflow/scripts/status-snapshot.sh"
+
+expect_match() {
+  local desc="$1" want="$2" changed="$3"; shift 3
+  local got
+  got=$(printf '%s\n' "$changed" | "$ssm" --test-stale-match "$@")
+  if [ "$got" = "$want" ]; then ok "$desc (got $got)"; else bad "$desc (want $want, got $got)"; fi
+}
+
+expect_match "a changed path matching a declared scope glob: stale (true)" \
+  "true" "docs/foo/bar.md" "docs/foo/*"
+expect_match "a changed path matching none of the declared scope globs: not stale (false)" \
+  "false" "src/unrelated.js" "docs/foo/*" "docs/bar.md"
+expect_match "one of several changed paths matches: stale (true)" \
+  "true" "$(printf '%s\n' "src/unrelated.js" "docs/foo/deep/file.md")" "docs/foo/*"
+expect_match "no changed paths at all: not stale (false — nothing could have affected it)" \
+  "false" "" "docs/foo/*"
+expect_match "called with zero glob arguments: matches nothing, reads not stale (false) -- status-snapshot.sh itself never calls this hook that way; its own separate \"no scope declared at all\" branch defaults to stale before ever reaching here" \
+  "false" "docs/foo/bar.md"
 echo
 
 echo "$pass passed, $fail failed"
