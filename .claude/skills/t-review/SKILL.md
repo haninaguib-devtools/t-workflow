@@ -69,6 +69,18 @@ holding only the id, so this matters more here than anywhere else.
    (behavior, content, or tests gone without the issue authorizing it); **promotion**
    (anything durable settled in the PR thread is in the record, an ADR, or the docs —
    threads are not storage).
+
+   **Verification honesty** (`docs/architecture/verification.md`), when the record
+   carries any `## Verification` entry: a `verified`/`risk-accepted` entry names its
+   evidence and tested revision — one claiming an outcome with neither is a finding, at
+   blocker or high depending on whether it is `required`. A `risk-accepted` entry
+   worded, anywhere in the record or the diff, as if it were `verified` or a passing
+   check is a blocker finding by construction — this is the exact conflation
+   `CONSTITUTION.md` §1.5 and ADR-010 §D4 forbid. A commit since an entry's recorded
+   revision that plainly could affect what it checked, left `verified`/`risk-accepted`
+   with no Deviations note explaining why it wasn't invalidated (`/t-work` Phase 3 step
+   2), is a finding too — the honest outcome may still be "unaffected," but it must be
+   said, not merely assumed.
 5. For a **document deliverable** (design doc, ADR, or any other document-shaped
    protected surface `CONSTITUTION.md` §3 names), additionally review for
    **consistency** (no contradiction with the constitution, accepted ADRs, or other
@@ -142,16 +154,19 @@ holding only the id, so this matters more here than anywhere else.
    deserves its own issue — including anything noticed outside this diff — is named in
    the review body as a *recommendation* for the human to open or ask for; opening it
    here would let a reviewer file work around `/t-open`.
-   **A pending human check does not make a review `not-ready`.** A plan's
-   `human_checks` are judgments deliberately assigned to a person because no command
-   settles them, so a reviewer can never discharge one. Instead **restate them in a
-   section headed `## Pending human checks`, immediately above the verdict line**, each
-   naming what the human must judge and where to look — heading followed by `none` when
-   the plan has none (always present: an omitted section cannot be told apart from a
-   forgotten one). Restate on every pass; a check stays listed until the human says it
-   is settled. This is **the source `/t-ship` reads** before the merge gate, so state
-   checks plainly enough to act on without re-reading the diff — `/t-ship` treats a
-   missing section as unknown, never as `none`.
+   **A pending human check does not make a review `not-ready`, and neither does an
+   unresolved `## Verification` entry.** A plan's `human_checks` are judgments
+   deliberately assigned to a person because no command settles them, so a reviewer can
+   never discharge one; a required verification entry waits on a named role's real
+   evidence, which this review cannot supply either — `/t-ship`'s own gate is what
+   blocks on it (`check-verification-gate.sh`), never this verdict. Instead **restate
+   them in a section headed `## Pending human checks`, immediately above the verdict
+   line**, each naming what the human must judge and where to look — heading followed
+   by `none` when the plan has none (always present: an omitted section cannot be told
+   apart from a forgotten one). Restate on every pass; a check stays listed until the
+   human says it is settled. This is **the source `/t-ship` reads** before the merge
+   gate, so state checks plainly enough to act on without re-reading the diff —
+   `/t-ship` treats a missing section as unknown, never as `none`.
    **Do not hunt.** When the change does what the issue asked, stays in scope, removes
    nothing unauthorized, and the checks pass, say `readiness: ready` plainly — a review
    that finds nothing blocking is normal, not evidence of a shallow one. Report
