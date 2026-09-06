@@ -36,6 +36,9 @@ none — this task declares no `verification:` entry of its own; it builds the
 mechanism a *future* task's plan can use, and reuses the existing invalidation
 machinery `## Verification` entries already have (`docs/architecture/verification.md`).
 
+## Feedback
+none — no feedback pass has run against this task itself.
+
 ## Decisions made along the way
 - **No new ADR** (haninaguib, via the driving session, 2026-09-06): ADR-010 §D6
   already decided the model a feedback pass implements — classify before editing,
@@ -89,3 +92,11 @@ machinery `## Verification` entries already have (`docs/architecture/verificatio
   (fixture data only — no new fixture section, no gate-script behavior change).
   Re-planned via a second `/t-plan 145` before touching that file, per `/t-work`
   Phase 1 step 3's "work that grows onto a protected path stops for a plan."
+- **Fix-mode pass** (haninaguib, 2026-09-06), addressing `/t-review`'s one high
+  finding on PR #152: this task's own record never actually carried the `## Feedback`
+  heading it was introducing for every other task's record — `check-record.sh`'s
+  substring check on the original commit passed only because the heading's own name
+  appeared, unheaded, inside this file's prose (in this section and in Decisions).
+  Added the real `## Feedback` heading (reads "none" — no feedback pass has run
+  against this task itself), immediately after `## Verification`, matching
+  `TEMPLATE.md`'s order. No other file changed in this pass.
