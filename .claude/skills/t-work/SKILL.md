@@ -107,6 +107,11 @@ implementation before editing files.
    own `url` — it is copied verbatim, never followed. A task with no origin anywhere in
    this chain gets `none`, exactly as before this section existed.
 
+   **`## Verification`** (`docs/architecture/verification.md`): copy the plan's own
+   `verification:` list, one entry per item, each starting `state: pending` with no
+   evidence/revision yet — or `none` when the plan declares no such list, which needs
+   no further attention from this or any later step.
+
    **Resuming after a re-plan, write the scope change into Deviations before touching a
    file:** what the previous plan allowed, what the new one allows, and why — the text
    `/t-plan` quoted in its report. A re-plan replaces the `## Plan` section, so the
@@ -130,6 +135,12 @@ implementation before editing files.
 - Update the record as you go: decisions taken along the way (with who and when),
   deviations (each needs the human's approval in the moment — record it), and dead
   ends worth remembering.
+- **Recording a verification outcome** is an ordinary record edit, not a new
+  invocation path: when a human supplies an entry's outcome — what the role checked,
+  what evidence they gave, and at what revision — write `state`, `evidence`,
+  `revision`, `by`, and `date` into that `## Verification` entry (a `risk-accepted`
+  entry additionally needs `risk:`, in the human's own words where possible — never
+  worded as a passing check, `docs/architecture/verification.md`).
 
 ## Phase 3 — checks, commit, draft PR
 
@@ -144,6 +155,17 @@ implementation before editing files.
    leftover scratch; remove what does not belong. **An edit here invalidates step 1's
    result for whatever it touched** — re-run any affected check before step 5 records
    anything as this commit's provenance; a check nothing here touched needs no re-run.
+
+   **Verification invalidation** (`docs/architecture/verification.md`): when the
+   record carries any `verified`/`risk-accepted` `## Verification` entry from an
+   earlier commit, judge whether this new diff could affect what it checked — no
+   `scope:` on the entry means the whole task can affect it (the safe default); a
+   `scope:` present means judge against the paths this diff actually touches. Affected
+   → flip that entry's `state` back to `pending`, clear `evidence`/`revision`, and add
+   a one-line Deviations note (which entry, why, at which commit). Clearly unaffected
+   → leave it, and say so in a one-line Deviations note as well, so a reader is not
+   left wondering why it wasn't reset.
+
    Then re-check protection against what the diff *actually* touches — Phase 1 step 3
    could only judge what the work was expected to touch: `git -c core.quotePath=false
    diff --name-only <trunk>...HEAD | bash .t-workflow/scripts/protected-paths.sh
@@ -200,7 +222,8 @@ Address **only** the named blocker and high findings. Anything else found is rep
 not acted on: describe it as a further finding, or as an issue you recommend the human
 open — never open one yourself (AGENTS.md §Conventions). Medium/low findings are fixed
 only when the human asks by number. Append what each change answers to the record's
-Deviations / notes, re-run the checks the findings falsify, and push to the same branch
+Deviations / notes, re-run the checks the findings falsify, apply Phase 3 step 2's
+verification-invalidation judgment to this pass's own diff, and push to the same branch
 and PR. **Rewrite the PR body's `## Checks run` section wholesale** (never append — the
 same replace-not-append rule `/t-plan` uses for `## Plan`), listing only the checks this
 pass re-ran, at the new head commit: a check this pass did not touch is simply absent

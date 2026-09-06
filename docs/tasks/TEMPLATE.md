@@ -15,6 +15,17 @@ Issue: #<id>[ · Part of: #<tracking>]
 "Inherited from initiative #<tracking> — see its own Origin." when this task's issue
 has no Origin of its own but its parent initiative does — or "none">
 
+## Verification
+<one entry per the plan's `verification:` list, in the same order — or "none". Each:
+- role: <role> — required: <true/false>
+  what: <what must be checked>
+  state: pending | verified | rejected | risk-accepted
+  evidence: <what was supplied, or "awaiting"> — revision: `<commit sha, or "none yet">`
+  by: <who> — date: <when, or "—">
+  risk: <only when state is risk-accepted — the residual risk being accepted, and why;
+    never worded as a passing check>
+>
+
 ## Decisions made along the way
 - <decision (who, date)> — or "none"
 

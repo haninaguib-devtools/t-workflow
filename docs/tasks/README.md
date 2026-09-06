@@ -14,3 +14,7 @@ decisions and deviations that shaped the work.
   carries an optional external origin forward from the issue, or names the parent
   initiative that carries one instead, per `docs/architecture/external-origin.md`
   (ADR-010).
+- `## Verification` (`docs/architecture/verification.md`) holds one entry per the
+  plan's `verification:` list, or `none`. A record with no such entries — every task
+  before this convention existed, and most after — needs no migration: the section
+  reads `none` and every gate that looks at it finds nothing to check.
