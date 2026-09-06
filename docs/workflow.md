@@ -83,6 +83,25 @@ whose resolution a later commit could have invalidated. Accepting a residual ris
 explicit and is never represented as a passing check. A task with none of these
 entries — every task before this convention existed — is unaffected.
 
+**An attended `/t-drive` run can stop cleanly after review and before shipping, to let
+verification happen asynchronously** (ADR-010 §D6, `.claude/skills/t-drive/SKILL.md`):
+once a task's implementation and independent review are done, a required verification
+entry that is still `pending`, `rejected`, or stale is reported — naming the role, what
+it checks, and the evidence awaited — and the run stops there rather than invoking
+`/t-ship` (a plain task) or merging the child into the initiative's integration branch
+(an initiative child). This is the **default** behavior, not a mode chosen by hand: a
+task that declares no verification entries never pauses here, and the pause can never
+turn into a merge on its own — it works by never taking the chained next step, so the
+human-confirmed merge gate stays exactly where it always was. A later `/t-drive`
+invocation resumes from wherever that pause left off: it re-derives status from the
+task's existing draft PR, its latest review, and its record — a stale or missing review
+(a new commit landed while waiting) is treated as not-yet-reviewed and re-reviewed
+fresh, a failing check or a `not-ready` verdict is handled by the same one-bounded-retry
+rule the pipeline already applies, and only once review is current and every required
+verification is resolved does the run proceed. Nothing about this replays a stage that
+already finished; nothing here weakens or substitutes for the merge-confirmation gate
+`/t-ship` itself owns.
+
 **Feedback that arrives after implementation begins returns through an explicit
 `/t-work` mode, never applied directly** (ADR-010 §D6, `docs/architecture/
 feedback-pass.md`): a maintainer supplies a durable evidence reference — a contributor's
