@@ -10,3 +10,7 @@ decisions and deviations that shaped the work.
   change.
 - After work starts, task intent changes here (in the diff), never in the issue body.
 - There is no post-merge closeout: the record merges when the code merges.
+- `## Verification` (`docs/architecture/verification.md`) holds one entry per the
+  plan's `verification:` list, or `none`. A record with no such entries — every task
+  before this convention existed, and most after — needs no migration: the section
+  reads `none` and every gate that looks at it finds nothing to check.

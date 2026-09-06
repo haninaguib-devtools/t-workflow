@@ -73,6 +73,9 @@ x
 ## Explicitly not
 x
 
+## Verification
+none
+
 ## Decisions made along the way
 - none
 
@@ -109,6 +112,9 @@ y
 
 ## Explicitly not
 y
+
+## Verification
+none
 
 ## Decisions made along the way
 - none
@@ -622,6 +628,80 @@ h_empty=$(.t-workflow/scripts/check-manifest.sh --hash-file .t-workflow/scripts/
 h_filled=$(.t-workflow/scripts/check-manifest.sh --hash-file "$filled_pp")
 if [ "$h_empty" = "$h_filled" ]; then ok "protected-paths.sh: a filled patterns slot hashes the same as the empty one"
 else bad "protected-paths.sh: a filled patterns slot hashes the same as the empty one (got $h_filled != $h_empty)"; fi
+echo
+
+# --- 17. .t-workflow/scripts/check-verification-gate.sh (issue #144) --------------------
+# The mechanical form of /t-ship's new verification precondition
+# (docs/architecture/verification.md). Pure fixtures throughout — the script never
+# touches git or the forge itself, only the small JSON shape /t-ship assembles.
+echo "check-verification-gate.sh"
+cvg="$root/.t-workflow/scripts/check-verification-gate.sh"
+
+printf '[]' > "$work/verif-none.json"
+printf '[{"role":"contributor","required":true,"state":"pending","stale":false}]' \
+  > "$work/verif-pending.json"
+printf '[{"role":"contributor","required":true,"state":"rejected","stale":false}]' \
+  > "$work/verif-rejected.json"
+printf '[{"role":"contributor","required":true,"state":"verified","stale":false}]' \
+  > "$work/verif-verified-current.json"
+printf '[{"role":"contributor","required":true,"state":"verified","stale":true}]' \
+  > "$work/verif-verified-stale.json"
+printf '[{"role":"maintainer","required":true,"state":"risk-accepted","stale":false}]' \
+  > "$work/verif-risk-accepted-current.json"
+printf '[{"role":"maintainer","required":true,"state":"risk-accepted","stale":true}]' \
+  > "$work/verif-risk-accepted-stale.json"
+printf '[{"role":"contributor","required":false,"state":"pending","stale":false}]' \
+  > "$work/verif-not-required-pending.json"
+printf '[{"role":"a","required":true,"state":"pending","stale":false},{"role":"b","required":true,"state":"verified","stale":false}]' \
+  > "$work/verif-mixed-one-bad.json"
+printf 'not json' > "$work/verif-malformed.json"
+printf '[{"role":"contributor","required":true,"state":"unknown-state","stale":false}]' \
+  > "$work/verif-bad-state.json"
+printf '[{"role":"contributor","state":"pending","stale":false}]' \
+  > "$work/verif-missing-required.json"
+
+expect_rc "no entries at all: passes (a plan/record with none needs no migration)" \
+  0 "$cvg" "$work/verif-none.json"
+expect_rc "a required entry still pending: fails" \
+  1 "$cvg" "$work/verif-pending.json"
+expect_rc "a required entry rejected: fails" \
+  1 "$cvg" "$work/verif-rejected.json"
+expect_rc "a required entry verified and current: passes" \
+  0 "$cvg" "$work/verif-verified-current.json"
+expect_rc "a required entry verified but stale: fails" \
+  1 "$cvg" "$work/verif-verified-stale.json"
+expect_rc "a required entry risk-accepted and current: passes" \
+  0 "$cvg" "$work/verif-risk-accepted-current.json"
+expect_rc "a required entry risk-accepted but stale: fails" \
+  1 "$cvg" "$work/verif-risk-accepted-stale.json"
+expect_rc "a not-required pending entry never blocks: passes" \
+  0 "$cvg" "$work/verif-not-required-pending.json"
+expect_rc "one resolved entry alongside one still-pending required entry: fails" \
+  1 "$cvg" "$work/verif-mixed-one-bad.json"
+expect_rc "malformed JSON is a usage error, not a clean pass" \
+  2 "$cvg" "$work/verif-malformed.json"
+expect_rc "an unrecognized state is a usage error" \
+  2 "$cvg" "$work/verif-bad-state.json"
+expect_rc "a missing required field is a usage error" \
+  2 "$cvg" "$work/verif-missing-required.json"
+expect_rc "a missing input file is a usage error" \
+  2 "$cvg" "$work/does-not-exist.json"
+expect_rc "no arguments is a usage error" \
+  2 "$cvg"
+
+# risk-accepted must never be printed or read as "verified" (ADR-010 §D4;
+# CONSTITUTION.md §1.5) — the OK message for a risk-accepted pass names it, never
+# borrows the word "verified" for it.
+out=$("$cvg" "$work/verif-risk-accepted-current.json")
+case "$out" in
+  *"verified or risk-accepted"*) ok "the passing message names risk-accepted distinctly, never as \"verified\" alone" ;;
+  *) bad "the passing message names risk-accepted distinctly (got: $out)" ;;
+esac
+out=$("$cvg" "$work/verif-verified-stale.json" 2>&1)
+case "$out" in
+  *"role contributor"*"verified is stale"*) ok "a stale finding names the entry's role and state" ;;
+  *) bad "a stale finding names the entry's role and state (got: $out)" ;;
+esac
 echo
 
 echo "$pass passed, $fail failed"

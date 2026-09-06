@@ -70,6 +70,16 @@ fix, defer, or accept, and judgments no command can settle travel to the merge q
 confirming acknowledges them. **Cancellation is a stage, not a cleanup:** its reason and every
 neighbour's disposition land on the issue before anything is destroyed (ADR-001 §D3).
 
+**Human verification is a separate, optional wait, distinct from cold review**
+(ADR-010 §D4/§D6, `docs/architecture/verification.md`): a plan may name a role —
+contributor, maintainer, domain expert, or a named person — who must exercise real
+evidence, possibly over several sessions or days, before a task is eligible for
+`/t-ship`. Four states — `pending`, `verified`, `rejected`, `risk-accepted` — track it
+in the task record; `/t-ship` blocks on a `required` entry that is not resolved, or
+whose resolution a later commit could have invalidated. Accepting a residual risk is
+explicit and is never represented as a passing check. A task with none of these
+entries — every task before this convention existed — is unaffected.
+
 ## 6. Work larger than one PR
 
 The unit is the **reviewable merge**; the answer to bigger work is never a bigger PR.

@@ -10,6 +10,17 @@ Issue: #<id>[ · Part of: #<tracking>]
 ## Explicitly not
 <exclusions; each deferred item names its issue: "… — split to #NNN">
 
+## Verification
+<one entry per the plan's `verification:` list, in the same order — or "none". Each:
+- role: <role> — required: <true/false>
+  what: <what must be checked>
+  state: pending | verified | rejected | risk-accepted
+  evidence: <what was supplied, or "awaiting"> — revision: `<commit sha, or "none yet">`
+  by: <who> — date: <when, or "—">
+  risk: <only when state is risk-accepted — the residual risk being accepted, and why;
+    never worded as a passing check>
+>
+
 ## Decisions made along the way
 - <decision (who, date)> — or "none"
 
