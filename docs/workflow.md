@@ -102,6 +102,18 @@ verification is resolved does the run proceed. Nothing about this replays a stag
 already finished; nothing here weakens or substitutes for the merge-confirmation gate
 `/t-ship` itself owns.
 
+**Feedback that arrives after implementation begins returns through an explicit
+`/t-work` mode, never applied directly** (ADR-010 §D6, `docs/architecture/
+feedback-pass.md`): a maintainer supplies a durable evidence reference — a contributor's
+preview comment, a manual QA finding, an observer-relayed note — and `/t-work`
+classifies it as a clarification, a defect, an in-scope adjustment, or a proposed scope
+expansion before touching any file. Only the first three proceed under the task's
+existing Allowed paths; a proposed scope expansion stops for the same explicit human
+authorization and `/t-plan` re-plan any other scope growth needs. The pass resumes the
+task's existing draft PR on its existing branch — never a second one — and inherits the
+existing review- and verification-staleness checks on whatever new commit it pushes,
+rather than a second invalidation mechanism of its own.
+
 ## 6. Work larger than one PR
 
 The unit is the **reviewable merge**; the answer to bigger work is never a bigger PR.
