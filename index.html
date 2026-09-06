@@ -164,8 +164,8 @@
               <div><p class="stage-overline">Draft diff → independent verdict</p><h3>Test the claims from cold context</h3></div>
               <dl>
                 <div><dt>Produces</dt><dd>Findings, check provenance, pending human judgments and an explicit readiness verdict.</dd></div>
+                <div><dt>Isolation</dt><dd>A fresh session or a read-only subagent. When a subagent is needed, its model can be chosen separately from the implementer's.</dd></div>
                 <div><dt>Cannot do</dt><dd>Fix code, widen scope, create follow-up issues, mark ready or merge.</dd></div>
-                <div><dt>Why</dt><dd>A reviewer who did not build the change is more likely to challenge its assumptions.</dd></div>
               </dl>
             </article>
             <article class="stage-panel" id="stage-ship" role="tabpanel" aria-labelledby="tab-ship" hidden>
@@ -178,6 +178,11 @@
             </article>
           </div>
         </div>
+
+        <aside class="callout callout-blue">
+          <span>Fresh context first; model choice second</span>
+          <p>A review is independent because the reviewer did not inherit the implementation conversation. When t-review needs a subagent, you may also name a model for that one review. If you do not, it uses the repository default set through t-config; with no default, it inherits the invoking session's model. A one-off choice always wins, and t-config changes only that default.</p>
+        </aside>
 
         <aside class="callout">
           <span>Always true</span>
@@ -219,7 +224,7 @@
             <p class="section-kicker">When you invoke t-drive</p>
             <h3>The agent may chain stages, but it still cannot cross the final gate.</h3>
             <p>For one task, t-drive plans and reviews where required, allows one narrow correction, and can pause cleanly for preview or human verification. It later resumes from current evidence.</p>
-            <p>For an initiative, each child keeps its own branch, record and review. Reviewed children merge into an integration branch. The combined result receives a final cold review before t-ship asks for the trunk merge.</p>
+            <p>For an initiative, each child keeps its own branch, record and review. A reviewed child normally enters the integration branch; when it still needs required human verification, it pauses before that merge and resumes from the evidence already present. The combined result receives a final cold review before t-ship asks for the trunk merge.</p>
           </div>
           <ol class="drive-flow">
             <li><span>01</span><div><b>Plan eligible work</b><p>Honor native dependencies and protected surfaces.</p></div></li>
@@ -249,13 +254,18 @@
         <div class="authority-boundary">
           <div>
             <p class="boundary-label">Observer may</p>
-            <ul><li>Correlate proposal, initiative, task, PR and commit</li><li>Read structured delivery events</li><li>Report stale or missing evidence</li><li>Preserve contributor continuity</li></ul>
+            <ul><li>Correlate proposal, initiative, task, PR and commit</li><li>Reconstruct status from GitHub events and current state</li><li>Report stale or missing evidence</li><li>Preserve contributor continuity</li></ul>
           </div>
           <div>
             <p class="boundary-label">Only the project and its maintainer may</p>
             <ul><li>Start implementation</li><li>Change binding scope</li><li>Complete independent review</li><li>Accept verification risk</li><li>Merge to the trunk</li></ul>
           </div>
         </div>
+
+        <aside class="callout callout-blue">
+          <span>A contract, not another service</span>
+          <p>t-workflow does not run a webhook relay or keep a second workflow database. It leaves a small correlation marker in the issue and defines how an observer may read GitHub's issues, pull requests, comments and commits. An event is only a prompt to fetch the current state again, so duplicates, late delivery and a temporary outage do not become a second source of truth.</p>
+        </aside>
       </div>
     </section>
 
@@ -266,7 +276,7 @@
         <h2>The repository remembers what the session cannot</h2>
         <div class="anatomy">
           <article><code>CONSTITUTION.md</code><p>Short, binding invariants: delivery rules, protected areas and ratified stack constraints.</p></article>
-          <article><code>AGENTS.md</code><p>The session-start contract: stages, conventions, communication and the project's real checks.</p></article>
+          <article><code>AGENTS.md</code><p>The session-start contract: stages, conventions, communication, the project's real checks and its optional default reviewer model.</p></article>
           <article><code>docs/adr/</code><p>Append-only decisions with context, rationale, alternatives and revisit triggers.</p></article>
           <article><code>docs/architecture/</code><p>Formats and contracts the workflow executes against: records, origins, previews, verification and template ownership.</p></article>
           <article><code>docs/tasks/</code><p>The historical record for each delivered task, merged atomically beside the code it explains.</p></article>
@@ -307,6 +317,15 @@
             </div>
           </details>
           <details>
+            <summary><span>Collaboration evidence</span><small>Can another system read the same story?</small></summary>
+            <div class="machine-list">
+              <article><code>check-observer-marker.sh</code><p>Checks the small issue marker that correlates a task or initiative with its parent and optional external origin. It validates the shape; it grants no authority.</p></article>
+              <article><code>check-preview-evidence.sh</code><p>Checks that preview evidence names the exact task, pull request and commit it claims to represent. A ready preview is still not a human approval.</p></article>
+              <article><code>parse-task-record.sh</code><p>Reads feedback and verification entries from a task record into a normalized form other scripts can use without interpreting prose.</p></article>
+              <article><code>derive-task-state.sh</code><p>Turns blockers, CI, review, feedback, preview and verification into one answer about what the task needs next. The answer is a status view, not a gate.</p></article>
+            </div>
+          </details>
+          <details>
             <summary><span>Integrity and adoption</span><small>Has the workflow itself drifted?</small></summary>
             <div class="machine-list">
               <article><code>consistency-check.sh</code><p>Finds broken references and contradictions across living workflow documents.</p></article>
@@ -328,13 +347,18 @@
     <section class="section reveal" id="operations">
       <div class="section-label"><span>07</span><p>Long-term use</p></div>
       <div class="section-content">
-        <p class="section-kicker">A workflow needs an honest exit, a status view and an upgrade path.</p>
+        <p class="section-kicker">A workflow needs an honest exit, a status view, a small amount of configuration and an upgrade path.</p>
         <h2>Nothing important is hidden in cleanup</h2>
         <div class="operations-grid">
           <article>
             <span class="operation-command">t-status</span>
             <h3>Derive, do not maintain</h3>
-            <p>Reads issues, dependencies, PRs, review, CI and local Git. It highlights ready work, stale evidence, collaboration waits and the most useful next action without writing a second status database.</p>
+            <p>Reads issues, dependencies, pull requests, review, CI, feedback, previews, human verification and local Git. When several facts are true at once, it gives the maintainer one ordered answer about what the task needs next—without writing a second status database.</p>
+          </article>
+          <article>
+            <span class="operation-command">t-config</span>
+            <h3>Choose the reviewer without editing the machinery</h3>
+            <p>Shows the current repository default and asks for a model name or for the override to be cleared. It edits one protected local slot in AGENTS.md and nothing else; an explicit model named on a t-review invocation still takes precedence.</p>
           </article>
           <article>
             <span class="operation-command">t-cancel</span>
@@ -374,7 +398,8 @@
           <article><span>1</span><div><h3>Fill what the template cannot know</h3><p>Add the project's stack constraints to the constitution and its real build command to the agent contract and CI.</p></div></article>
           <article><span>2</span><div><h3>Push the first commit</h3><p>This closes the tightly bounded genesis exception. Every later tree edit begins with t-open.</p></div></article>
           <article><span>3</span><div><h3>Apply repository settings</h3><p>Run <code>./.t-workflow/scripts/github-bootstrap.sh</code>, then run it again after CI has first completed on the trunk.</p></div></article>
-          <article><span>4</span><div><h3>Pin releases and update deliberately</h3><p>Consumer projects use the template manifest and t-update rather than drifting from an unversioned copy.</p></div></article>
+          <article><span>4</span><div><h3>Choose a review model if the project needs one</h3><p>Run <code>/t-config</code> to set a repository default. Leave it unset when reviews should use the invoking session's model, or name a different model only when invoking a particular review.</p></div></article>
+          <article><span>5</span><div><h3>Pin releases and update deliberately</h3><p>Consumer projects use the template manifest and t-update rather than drifting from an unversioned copy.</p></div></article>
         </div>
         <div class="closing-line">
           <p>The code may be generated quickly.<br>The evidence should still deserve trust.</p>
