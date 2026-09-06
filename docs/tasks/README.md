@@ -18,3 +18,7 @@ decisions and deviations that shaped the work.
   plan's `verification:` list, or `none`. A record with no such entries — every task
   before this convention existed, and most after — needs no migration: the section
   reads `none` and every gate that looks at it finds nothing to check.
+- `## Feedback` (`docs/architecture/feedback-pass.md`) holds one entry per feedback
+  pass — the evidence reference, its classification, and what changed in response —
+  or `none`. A record with no such entries — every task before this convention
+  existed, and any task nobody has sent feedback to since — needs no migration.

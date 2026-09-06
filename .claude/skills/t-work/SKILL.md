@@ -1,6 +1,6 @@
 ---
 name: t-work
-description: Implement a task — check its gates, get onto its branch, write the record, work within scope, run the checks, and open the draft PR. Also runs narrow fix passes. Use when asked to work, start, pick up, continue, or fix a task.
+description: Implement a task — check its gates, get onto its branch, write the record, work within scope, run the checks, and open the draft PR. Also runs narrow fix passes, and feedback passes that resume a task in response to contributor feedback, preview findings, or manual QA evidence. Use when asked to work, start, pick up, continue, fix, or respond to feedback on a task.
 ---
 
 # Implement a task
@@ -85,12 +85,22 @@ implementation before editing files.
    origin/<trunk>`), stop and report if ahead or diverged. Never commit on the trunk
    branch.
 
-5. **Normal or fix mode.** Resolve the task's PR, if it has one, from the branch:
-   `forge:pr-find-by-task <id>` — none on a fresh task, exactly one once Phase 3 step 5
-   has run, more than one is a stop-and-report. If that PR carries a review
-   (`forge:pr-reviews <pr>`) with unresolved `blocker`/`high` findings and the human has
-   asked for them to be addressed, read the existing record and go to **Fix mode**
-   below. Otherwise continue.
+5. **Normal, fix, or feedback mode.** Resolve the task's PR, if it has one, from the
+   branch: `forge:pr-find-by-task <id>` — none on a fresh task, exactly one once Phase 3
+   step 5 has run, more than one is a stop-and-report.
+
+   **Feedback mode** (`docs/architecture/feedback-pass.md`, ADR-010 §D6, issue #145)
+   triggers only on an **explicit** invocation naming it — `/t-work <id> feedback
+   <reference> [<description>]`, `<reference>` a durable evidence pointer (a URL, or a
+   permalink to a comment already on this task's own PR/issue) and `<description>` the
+   human's own account of what it says when `<reference>` is not itself something this
+   session can read. No `feedback` argument means this paragraph never applies —
+   ordinary Normal/Fix-mode detection below is completely unchanged. Read the existing
+   record, then go to **Feedback mode** below before continuing here.
+
+   Otherwise: if the PR carries a review (`forge:pr-reviews <pr>`) with unresolved
+   `blocker`/`high` findings and the human has asked for them to be addressed, read the
+   existing record and go to **Fix mode** below. Otherwise continue in Normal mode.
 6. **The record.** Create `docs/tasks/<bucket>/<id>-<slug>.md` from
    `docs/tasks/TEMPLATE.md`, where `<bucket>` is the task ID rounded down to the
    nearest 100, zero-padded to 6 digits (task 142 → `docs/tasks/000100/`; ADR-001 §D4),
@@ -231,3 +241,60 @@ from the rewritten section, which correctly means `/t-review` runs it itself rat
 trusting a provenance line that now names a superseded commit. Stop and report, naming
 `/t-review <id>` for a scoped re-review; if the same findings survive repeated passes,
 say so and recommend re-planning rather than trying again.
+
+## Feedback mode
+
+Resumes a task in response to evidence from *outside* `/t-review`'s own findings — a
+contributor's preview comment, a maintainer's manual QA finding, an observer-relayed
+note — through the task's existing draft PR, never a second branch or PR
+(`docs/architecture/feedback-pass.md`, ADR-010 §D6, issue #145). Triggered only by the
+explicit `feedback` invocation named in Phase 1 step 5; nothing here runs unless a
+human named it.
+
+If the task has no PR yet, there is nothing to resume: stop and say so rather than
+opening one under a different path than Phase 3 already does.
+
+1. **Record the evidence, unread if external.** Copy `<reference>` verbatim into a new
+   `## Feedback` entry (`docs/tasks/TEMPLATE.md`) — never fetch or execute it
+   (ADR-010 §D7, the same rule `docs/architecture/external-origin.md` already applies
+   to an origin's `url`). When `<reference>` names a comment already on this task's own
+   PR or issue, its text may be read directly (forge-native data, the same way
+   `forge:pr-reviews` already is elsewhere in this skill); otherwise `<description>`
+   — the human's own account of what the evidence says — is what gets classified next.
+2. **Classify before touching any file** (`docs/architecture/feedback-pass.md`'s table),
+   against the issue's Goal, Done when, Scope, and `## Plan` Allowed paths, as exactly
+   one of:
+   - **Clarification** — resolves an ambiguity, no behavior or content changes. Record
+     the entry with `response: none — clarification only` and stop; no commit is
+     required for a pass where every item classifies this way.
+   - **Defect** — something already in scope is wrong. Proceed to Phase 2, strictly
+     within the existing Allowed paths.
+   - **In-scope adjustment** — a legitimate change the existing Allowed paths and Done
+     when already cover. Proceed to Phase 2, strictly within the existing Allowed
+     paths.
+   - **Proposed scope expansion** — addressing it would touch a path outside the
+     Allowed paths, or change what Done when requires. **Stop before touching any
+     file.** Record the entry with `response: stopped; awaiting human authorization and
+     /t-plan`, report it exactly like any other out-of-scope discovery (Phase 2's
+     existing rule — propose and wait), and implement it only after the human
+     explicitly authorizes it and `/t-plan <id>` re-plans the task (Phase 1 step 6's
+     "resuming after a re-plan"). A pass may see several items at once; one classifying
+     as a proposed scope expansion never blocks the others from proceeding under their
+     own classification.
+3. **Proceed through Phase 2 and Phase 3 exactly as Fix mode already does** for every
+   `defect`/`in-scope adjustment` item this pass addresses: same branch, same draft PR,
+   re-run the checks the changes falsify, apply Phase 3 step 2's verification-
+   invalidation judgment to this pass's own diff (unchanged — any new commit already
+   trips it), and rely on `check-review-gate.sh`'s existing timestamp comparison to
+   invalidate a now-stale review (also unchanged — no new invalidation mechanism is
+   built for this mode). **Rewrite the PR body's `## Checks run` section wholesale**,
+   listing only the checks this pass re-ran, at the new head commit — the same
+   replace-not-append rule Fix mode uses.
+4. Append what each item answers to the record's `## Feedback` section (reference,
+   source, classification, response, who and when) and to Deviations / notes when it
+   changed a decision already recorded there.
+5. **Stop and report.** Say what each feedback item was, how it was classified, what
+   changed (or why nothing did), and what checks ran with what result. Name
+   `/t-review <id>` for a fresh cold review — required again whenever the diff touches
+   a protected surface, exactly as after any other pass. Do not mark the PR ready and
+   do not merge.

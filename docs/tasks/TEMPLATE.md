@@ -26,6 +26,16 @@ has no Origin of its own but its parent initiative does — or "none">
     never worded as a passing check>
 >
 
+## Feedback
+<one entry per feedback pass (`docs/architecture/feedback-pass.md`) — or "none". Each:
+- reference: <durable URL or comment permalink, verbatim — never fetched>
+  source: <who or what surfaced it>
+  classification: clarification | defect | in-scope adjustment | proposed scope
+    expansion
+  response: <what changed in response, or why nothing did>
+  by: <who ran the pass> — date: <when>
+>
+
 ## Decisions made along the way
 - <decision (who, date)> — or "none"
 
