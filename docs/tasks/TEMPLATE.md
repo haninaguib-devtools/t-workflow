@@ -10,6 +10,11 @@ Issue: #<id>[ · Part of: #<tracking>]
 ## Explicitly not
 <exclusions; each deferred item names its issue: "… — split to #NNN">
 
+## Origin
+<system: name / url: durable URL, from the issue's own `## Origin` section — or
+"Inherited from initiative #<tracking> — see its own Origin." when this task's issue
+has no Origin of its own but its parent initiative does — or "none">
+
 ## Verification
 <one entry per the plan's `verification:` list, in the same order — or "none". Each:
 - role: <role> — required: <true/false>

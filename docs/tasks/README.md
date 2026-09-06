@@ -10,6 +10,10 @@ decisions and deviations that shaped the work.
   change.
 - After work starts, task intent changes here (in the diff), never in the issue body.
 - There is no post-merge closeout: the record merges when the code merges.
+- A record's `## Origin` section is always present but usually reads "none" — it
+  carries an optional external origin forward from the issue, or names the parent
+  initiative that carries one instead, per `docs/architecture/external-origin.md`
+  (ADR-010).
 - `## Verification` (`docs/architecture/verification.md`) holds one entry per the
   plan's `verification:` list, or `none`. A record with no such entries — every task
   before this convention existed, and most after — needs no migration: the section

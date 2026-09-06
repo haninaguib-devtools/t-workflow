@@ -98,6 +98,15 @@ implementation before editing files.
    the existing record instead; the record is part of the diff and merges with the
    work.
 
+   **Origin (ADR-010 §D1/§D5, `docs/architecture/external-origin.md`).** Fill the
+   record's `## Origin` section from the issue read in step 1: the issue's own
+   `system:`/`url:` when it carries a `## Origin` section; otherwise, when the issue's
+   `parent` names a tracking issue, fetch that parent issue (`tracker:view
+   <tracking-id>`) and write `Inherited from initiative #<tracking-id> — see its own
+   Origin.` when *it* carries one; `none` when neither does. Never fetch the origin's
+   own `url` — it is copied verbatim, never followed. A task with no origin anywhere in
+   this chain gets `none`, exactly as before this section existed.
+
    **`## Verification`** (`docs/architecture/verification.md`): copy the plan's own
    `verification:` list, one entry per item, each starting `state: pending` with no
    evidence/revision yet — or `none` when the plan declares no such list, which needs
@@ -190,8 +199,11 @@ implementation before editing files.
    naming the initiative's integration branch for a driven child, ADR-004 Decision 1) —
    title: `[<id>] <issue title>`; body: the tracker's
    auto-close phrase for `<id>` when it has one (`tracker:auto-close-on-merge`),
-   followed by what changed, what was verified with actual results, and what remains
-   open. **Include a `## Checks run` section**, one line per check that is a candidate
+   followed by **one `Origin:` line naming what step 6 wrote into the record** (the
+   `system`/`url`, the inherited-from-initiative note, or `none` — ADR-010
+   §D1/§D5, `docs/architecture/external-origin.md`) so a reader never needs to open the
+   record to see where the work originated, then what changed, what was verified with
+   actual results, and what remains open. **Include a `## Checks run` section**, one line per check that is a candidate
    for `/t-review` to reuse — tagged `either` in the plan, or (no plan) named in
    `AGENTS.md` §Checks — each exactly `- \`<command>\` — <PASS/FAIL> — commit \`<sha>\``,
    `<sha>` being `git rev-parse HEAD` for the commit step 4 just made. A check tagged
