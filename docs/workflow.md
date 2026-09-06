@@ -48,7 +48,10 @@ Every task carries a record, created on the branch when work starts and **merged
 the change it describes** (`docs/tasks/TEMPLATE.md` is the shape). It holds what code cannot:
 what was asked, what was excluded, the decisions and deviations along the way. Being in the diff
 it is reviewed too — *does this record honestly describe this change?* Intent changes there
-rather than in the issue body once work starts.
+rather than in the issue body once work starts. A task or initiative opened from an external
+proposal may carry an optional origin — never authoritative for scope or acceptance
+(`docs/architecture/external-origin.md`, ADR-010) — that `/t-open` records once and `/t-work`
+carries into the record and draft PR unchanged.
 
 ## 5. The pipeline
 

@@ -54,6 +54,22 @@ decomposition deferred if unclear.
    not by itself say whether it means "runs in the browser" or "customer-facing" —
    skip it rather than guess.
 
+   **Origin (optional, ADR-010 §D1/§D3/§D5).** When the conversation names a durable
+   external source this work was proposed or discussed in (a Proposarium proposal, for
+   example — never a required source), capture it as a `## Origin` section: `system:
+   <short name>` and `url: <a durable URL>`. Write it only when **both** fields are
+   clear — an origin with a name but no URL, or the reverse, is incomplete and is
+   **omitted entirely** rather than written half-formed (ADR-010 §D7: an unsupported or
+   partial origin fails safe by never being recorded, not by being recorded broken).
+   Never fetch or check the URL's reachability — it is recorded as an unauthenticated
+   pointer and nothing more, and it is never part of Goal, Done when, Scope, or
+   Non-goals: an origin can never make the issue depend on the external system to be
+   self-sufficient (§D3). **Never on a task issue that gets `tracker:set-parent` to a
+   tracking issue in this same run** — a child refers to its initiative's own Origin
+   instead of duplicating one (§D5); capture an origin only on a standalone task or on
+   the initiative issue itself. See `docs/architecture/external-origin.md` for the full
+   shape.
+
    Body template (omit empty sections):
 
    ```markdown
@@ -70,6 +86,10 @@ decomposition deferred if unclear.
    ## Non-goals
    <explicit exclusions; each deferred item gets its own issue, opened now>
 
+   ## Origin
+   system: <short name of the external system>
+   url: <a durable URL>
+
    Split from: #<id>           (issues opened from another task's Non-goals)
    ```
 
@@ -85,9 +105,12 @@ decomposition deferred if unclear.
    step above.
 
    Tracking issues additionally get the `initiative` label; no Scope, and no
-   hand-written task list. Each child is linked to it with `tracker:set-parent` the
-   moment it is created — GitHub's own sub-issues panel and `subIssuesSummary` are the
-   list and its progress from then on, so nothing here needs to stay in sync by hand.
+   hand-written task list — but the same optional `## Origin` section above applies to
+   an initiative issue exactly as to a task, since an initiative's own origin is what
+   its children refer to instead of each duplicating one (ADR-010 §D5). Each child is
+   linked to it with `tracker:set-parent` the moment it is created — GitHub's own
+   sub-issues panel and `subIssuesSummary` are the list and its progress from then on,
+   so nothing here needs to stay in sync by hand.
 5. **Deferred** work named in Non-goals is opened as its own issue *now*, holding the
    exclusion rationale and carrying `Split from: #<id>` — the marker that lets
    `/t-cancel` find it if the excluding task is ever abandoned. Without it that sweep has
@@ -113,3 +136,7 @@ decomposition deferred if unclear.
 - One deliverable per issue. Three headings of scope = three issues.
 - Two working levels only (initiative → task). A child that needs children means the
   initiative should be split.
+- An origin is optional metadata captured once, at creation time, from what the
+  conversation already states — never fetched, never re-derived later, never
+  authoritative for scope or acceptance (ADR-010 §D1/§D3). A task issue with no origin
+  behaves exactly as before this section existed.
