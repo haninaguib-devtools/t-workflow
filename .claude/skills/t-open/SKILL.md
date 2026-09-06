@@ -70,6 +70,36 @@ decomposition deferred if unclear.
    the initiative issue itself. See `docs/architecture/external-origin.md` for the full
    shape.
 
+   **`--from <origin-url>` is a convenience form for this same field, never a second
+   one.** When the invocation names a URL this way (`/t-open --from
+   https://proposarium.example/p/42 <rest of the ask>`), treat `<origin-url>` as this
+   section's own `url:` value directly, sparing the human from restating it once it is
+   already in the command. `system:` still comes from what the conversation says about
+   that source, and every rule above governs the result exactly as it would a URL
+   surfaced in conversation instead — both fields or neither, never fetched, never on a
+   child issue. `--from` with no other origin information the conversation supplies
+   (no stated `system:`) leaves the origin incomplete, and it is omitted per the rule
+   above, not written with a guessed system name.
+
+   **Correlation marker (ADR-010 §D1, `docs/adapters/OBSERVER.md`).** Immediately after
+   `tracker:create` returns the new issue's id — the same follow-up timing the parent
+   link and blocker links below use — append one line to the body
+   (`tracker:edit-body`): an HTML comment carrying identifiers only, never scope,
+   acceptance criteria, or a review decision:
+
+   ```
+   <!-- t-workflow:v1 (task=<new-id>|initiative=<new-id>) [parent=<tracking-id>] [origin-system="<name>" origin-url=<url>] -->
+   ```
+
+   `task=` for a task issue, `initiative=` for a tracking issue (never both); `parent=`
+   only when this issue is being linked to a tracking issue in this same run (its id is
+   already known, having been created first); `origin-system=`/`origin-url=` echoed
+   verbatim, both or neither, only when this issue's own `## Origin` section above was
+   written (never on a child, which carries no `## Origin` of its own to echo). This
+   marker is invisible in GitHub's rendered view and is validated, never gated, by
+   `.t-workflow/scripts/check-observer-marker.sh` — read `docs/adapters/OBSERVER.md`
+   for the full grammar and why it exists.
+
    Body template (omit empty sections):
 
    ```markdown
@@ -140,3 +170,8 @@ decomposition deferred if unclear.
   conversation already states — never fetched, never re-derived later, never
   authoritative for scope or acceptance (ADR-010 §D1/§D3). A task issue with no origin
   behaves exactly as before this section existed.
+- The correlation marker is written once, immediately after creation, and never edited
+  afterward by any skill — the same "written once" rule the `## Origin` section above
+  follows. It carries identifiers and derived correlation only, per
+  `docs/adapters/OBSERVER.md`; it is read-only for every external party (ADR-010 §D2)
+  and is never a place scope, acceptance criteria, or a review decision may live.

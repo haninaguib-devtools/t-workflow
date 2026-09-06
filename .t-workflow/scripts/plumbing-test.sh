@@ -1010,5 +1010,89 @@ expect_match "called with zero glob arguments: matches nothing, reads not stale 
   "false" "docs/foo/bar.md"
 echo
 
+# --- 22. .t-workflow/scripts/check-observer-marker.sh (issue #143) ---------------------
+# Validates the single-line HTML-comment correlation marker /t-open appends to a new
+# issue's body (docs/adapters/OBSERVER.md). Pure fixtures — text files in, JSON out, no
+# git or forge call of its own.
+echo "check-observer-marker.sh"
+com="$root/.t-workflow/scripts/check-observer-marker.sh"
+
+mk_marker() { printf '%s\n' "$1" > "$work/$2"; }
+
+mk_marker 'Some issue body with no marker at all.' marker-none.md
+mk_marker 'body
+<!-- t-workflow:v1 task=143 -->' marker-task-only.md
+mk_marker 'body
+<!-- t-workflow:v1 task=143 parent=139 origin-system="Proposarium Labs" origin-url=https://proposarium.example/p/42 -->' marker-task-full.md
+mk_marker 'body
+<!-- t-workflow:v1 initiative=139 -->' marker-init-only.md
+mk_marker '<!-- t-workflow:v1 task=143 initiative=139 -->' marker-both.md
+mk_marker '<!-- t-workflow:v1 parent=1 -->' marker-neither.md
+mk_marker '<!-- t-workflow:v1 task=143 origin-system="X" -->' marker-unpaired-system.md
+mk_marker '<!-- t-workflow:v1 task=143 origin-url=https://x.example -->' marker-unpaired-url.md
+mk_marker '<!-- t-workflow:v1 initiative=139 parent=1 -->' marker-parent-on-init.md
+mk_marker '<!-- t-workflow:v1 task=abc -->' marker-nonnumeric.md
+mk_marker '<!-- t-workflow:v1 task=143 bogus=1 -->' marker-bogus-key.md
+mk_marker '<!-- t-workflow:v1 task=143 -->
+<!-- t-workflow:v1 task=144 -->' marker-multiple.md
+
+expect_field "no marker present: present=false" \
+  .present "false" "$com" "$work/marker-none.md"
+expect_field "no marker present: still reads valid (nothing to check)" \
+  .valid "true" "$com" "$work/marker-none.md"
+expect_rc "no marker present: exit 0" \
+  0 "$com" "$work/marker-none.md"
+
+expect_field "task-only marker: present, valid, task extracted" \
+  .task "143" "$com" "$work/marker-task-only.md"
+expect_rc "task-only marker: exit 0" \
+  0 "$com" "$work/marker-task-only.md"
+
+expect_field "task+parent+origin marker: task extracted" \
+  .task "143" "$com" "$work/marker-task-full.md"
+expect_field "task+parent+origin marker: parent extracted" \
+  .parent "139" "$com" "$work/marker-task-full.md"
+expect_field "task+parent+origin marker: origin system extracted (quoted value with spaces)" \
+  .origin.system "Proposarium Labs" "$com" "$work/marker-task-full.md"
+expect_field "task+parent+origin marker: origin url extracted (bare value)" \
+  .origin.url "https://proposarium.example/p/42" "$com" "$work/marker-task-full.md"
+expect_rc "task+parent+origin marker: exit 0" \
+  0 "$com" "$work/marker-task-full.md"
+
+expect_field "initiative-only marker: initiative extracted, task null" \
+  .initiative "139" "$com" "$work/marker-init-only.md"
+expect_rc "initiative-only marker: exit 0" \
+  0 "$com" "$work/marker-init-only.md"
+
+expect_rc "both task and initiative present: fails" \
+  1 "$com" "$work/marker-both.md"
+expect_rc "neither task nor initiative present: fails" \
+  1 "$com" "$work/marker-neither.md"
+expect_rc "origin-system without origin-url: fails" \
+  1 "$com" "$work/marker-unpaired-system.md"
+expect_rc "origin-url without origin-system: fails" \
+  1 "$com" "$work/marker-unpaired-url.md"
+expect_field "an invalid (unpaired) marker reports origin as null, never half-formed" \
+  .origin "null" "$com" "$work/marker-unpaired-system.md"
+expect_rc "parent alongside initiative: fails" \
+  1 "$com" "$work/marker-parent-on-init.md"
+expect_rc "a non-numeric task id: fails" \
+  1 "$com" "$work/marker-nonnumeric.md"
+expect_rc "an unrecognized key: fails" \
+  1 "$com" "$work/marker-bogus-key.md"
+expect_rc "more than one marker line: fails" \
+  1 "$com" "$work/marker-multiple.md"
+
+expect_field "an invalid marker still reports present=true (distinct from absent)" \
+  .present "true" "$com" "$work/marker-both.md"
+expect_field "an invalid marker's errors[] is non-empty" \
+  '.errors | length > 0' "true" "$com" "$work/marker-both.md"
+
+expect_rc "a missing input file is a usage error" \
+  2 "$com" "$work/does-not-exist.md"
+expect_rc "no arguments is a usage error" \
+  2 "$com"
+echo
+
 echo "$pass passed, $fail failed"
 [ "$fail" -eq 0 ]
