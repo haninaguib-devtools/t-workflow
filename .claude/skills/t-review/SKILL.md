@@ -22,26 +22,43 @@ inside the implementing session is acceptable only for a change so small that th
 costs more than the read — never for a protected surface. The reviewer is **read-only**:
 it posts findings, it fixes nothing.
 
+Which model a spawned subagent runs under is resolved in step 1, from AGENTS.md's
+§Reviewer model slot or a model named directly on the invocation — never hardcoded
+here.
+
 ## Procedure
 
-The argument is the task id (`/t-review 154`); the steps below name `<pr>`. **Resolve
-it first** with `forge:pr-find-by-task <id>`, matching head branch `wip/<id>-*` across
+The argument is the task id (`/t-review 154`); the steps below name `<pr>`. It may also
+name a reviewer model directly, after the id (e.g. `/t-review 154 use fable as the
+reviewer`) — step 1 below always honors that over any other source. **Resolve `<pr>`
+first** with `forge:pr-find-by-task <id>`, matching head branch `wip/<id>-*` across
 all states. Exactly one → that is `<pr>`. None → nothing to review, say so and name
 `/t-work <id>`. More than one → stop, report every candidate — a cold session starts
 holding only the id, so this matters more here than anywhere else.
 
-1. **Obtain isolation before reading anything** — deciding this first is what keeps the
-   isolation line honest; written at the end, it describes whatever happened to happen.
+1. **Resolve the reviewer's model, then obtain isolation, before reading anything** —
+   deciding both first is what keeps the isolation line honest; written at the end, it
+   describes whatever happened to happen. Resolve the model with this precedence, most
+   specific first: a model the invocation names explicitly; otherwise the default named
+   in AGENTS.md's §Reviewer model slot, when it names one; otherwise the invoking
+   session's own model — no override at all.
+
+   **An invocation naming a model explicitly always spawns a real subagent under that
+   model** — record `isolation: subagent` and skip the three branches below entirely,
+   even for a change small enough that isolation would otherwise be skipped: naming a
+   model is asking for it to actually review, not to be silently ignored on a path that
+   never spawns anything. Otherwise, isolation is exactly as before:
    **This session did not implement the task** (fresh session, or the human invoked
    `/t-review` cold) → already isolated, record `isolation: fresh session`. **This
-   session implemented the task** → spawn a read-only subagent to perform the whole
-   review and report its findings back; everything it needs is the task id, the
-   tracker, the forge, and the diff — record `isolation: subagent`. **A subagent is
-   unavailable** → determine protection first (`forge:pr-files` through `bash
-   .t-workflow/scripts/protected-paths.sh --stdin`); on a **protected surface, stop** and ask for a
-   fresh session — reviewing here anyway produces a verdict `/t-ship` will reject.
-   Otherwise continue and record `isolation: same session (<why the change was small
-   enough>)`.
+   session implemented the task** → spawn a read-only subagent — under AGENTS.md's
+   named default when one is set, otherwise under the invoking session's own model — to
+   perform the whole review and report its findings back; everything it needs is the
+   task id, the tracker, the forge, and the diff — record `isolation: subagent`. **A
+   subagent is unavailable** → determine protection first (`forge:pr-files` through
+   `bash .t-workflow/scripts/protected-paths.sh --stdin`); on a **protected surface,
+   stop** and ask for a fresh session — reviewing here anyway produces a verdict
+   `/t-ship` will reject. Otherwise continue and record `isolation: same session (<why
+   the change was small enough>)`.
 2. Read `AGENTS.md` and `CONSTITUTION.md` — unless this review's `isolation:` (step 1
    above) is `same session` on a `/t-drive` run whose Phase 0 already read them for the
    whole run, in which case that read already covers this one. **`isolation: fresh

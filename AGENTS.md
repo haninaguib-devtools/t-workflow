@@ -43,6 +43,18 @@ in a small table with its own header row, once a consumer adds one. Row shape mi
 the table above: `| \`/l-example\` | One-line stage description. |`.)*
 <!-- /local -->
 
+## Reviewer model
+
+`/t-review` spawns a read-only subagent to review a task independently whenever the
+invoking session implemented that task itself. Which model that subagent runs under is
+resolved with this precedence, most specific first: a model a human names explicitly on
+that invocation; otherwise this repo's own default below, if one is set; otherwise the
+invoking session's own model, exactly as before this section existed.
+
+<!-- local -->
+Default reviewer model: (none — reviews inherit the invoking session's model)
+<!-- /local -->
+
 ## Conventions
 
 - **All changes go through the pipeline.** A request to change anything — code, config,
