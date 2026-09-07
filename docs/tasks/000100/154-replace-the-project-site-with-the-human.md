@@ -55,9 +55,16 @@ none
   what: Visual/UX review of the *deployed* GitHub Pages site (not just the PR diff) —
     readability, flow, visual hierarchy, and that the tone reads as a developer field
     guide rather than a promotional page — on both desktop and mobile.
-  state: pending
-  evidence: awaiting — revision: `none yet`
-  by: — date: —
+  state: risk-accepted
+  evidence: Maintainer confirmed in conversation ("it is fine, ship it") without
+    describing a specific desktop/mobile pass against a live deployment — the actual
+    GitHub Pages deployment cannot exist until this PR merges to `main`, so a
+    pre-merge check against it was never possible. Accepted as-is rather than recorded
+    as `verified`. — revision: `72b1e649d805`
+  by: hani@seaspraylabs.com — date: 2026-09-07
+  risk: The live Pages build (fonts/assets rendering, real-device layout, actual
+    mobile viewport behavior) has not been checked post-deploy. If it looks wrong once
+    live, that is a follow-up fix, not something this merge already ruled out.
 
 ## Feedback
 none
@@ -66,4 +73,7 @@ none
 - none
 
 ## Deviations / notes
-- none
+- The required maintainer verification was recorded as `risk-accepted` rather than
+  `verified` at ship time — the plan's own check needed the live GitHub Pages
+  deployment, which cannot exist before this PR merges. See the `## Verification`
+  entry's `risk:` line (hani, 2026-09-07).
