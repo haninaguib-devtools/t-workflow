@@ -15,6 +15,9 @@
   --accent-ink: #17489a;
   --good: #23704b;
   --warn: #9a5b13;
+  --warn-bg: #fff3d1;
+  --warn-line: #d99a1e;
+  --warn-ink: #4a3204;
   --header: rgba(248, 250, 252, .94);
   --shadow: 0 12px 30px rgba(20, 35, 50, .06);
   --max: 1120px;
@@ -42,6 +45,9 @@
   --accent-ink: #a9c8ff;
   --good: #72c99b;
   --warn: #e6b46d;
+  --warn-bg: #2d2108;
+  --warn-line: #e6b46d;
+  --warn-ink: #f7e3b5;
   --header: rgba(13, 17, 23, .94);
   --shadow: 0 12px 30px rgba(0, 0, 0, .18);
 }
@@ -101,6 +107,37 @@ code {
   width: 0;
   height: 100%;
   background: var(--accent);
+}
+
+.dev-warning {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .35rem 1rem;
+  padding: .85rem var(--pad);
+  border-bottom: 3px solid var(--warn-line);
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+  font-size: .95rem;
+  line-height: 1.5;
+}
+
+.dev-warning p { margin: 0; }
+
+.dev-warning-label {
+  flex: none;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: .78rem;
+  font-weight: 750;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.dev-warning-icon { font-size: 1rem; }
+
+.dev-warning-text {
+  flex: 1 1 28rem;
+  font-weight: 500;
 }
 
 .site-header {
