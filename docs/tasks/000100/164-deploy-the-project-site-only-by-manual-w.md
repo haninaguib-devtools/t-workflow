@@ -35,13 +35,7 @@ the build and deploy jobs themselves unchanged.
 none
 
 ## Verification
-- role: maintainer — required: true
-  what: After the PR merges, confirm on the live repository that a push to `main` does
-    not start a new "Deploy website to Pages" run, and that a manual `workflow_dispatch`
-    does.
-  state: pending
-  evidence: awaiting — revision: `none yet`
-  by: — date: —
+none
 
 ## Feedback
 none
@@ -50,4 +44,12 @@ none
 - none
 
 ## Deviations / notes
-- none
+- The plan originally carried the post-merge live-behavior check ("a push to `main`
+  does not redeploy, a manual dispatch does") as a `required: true` `## Verification`
+  entry. Corrected via a re-plan: `/t-ship`'s gate blocks on any required entry that is
+  `pending`/`rejected`/stale, and this entry's evidence is only obtainable *after*
+  merge — it could never become `verified` before `/t-ship` runs, and there is no
+  actual risk to accept, so `risk-accepted` would have been the wrong state too. Moved
+  to a `human_checks` item on the issue's `## Plan` instead, per `/t-plan`'s own
+  guidance for a criterion "verification only possible post-merge." Does not gate
+  `/t-ship`; a maintainer performs it as a follow-up once the PR is merged.
