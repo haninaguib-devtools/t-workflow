@@ -1,42 +1,117 @@
-const header = document.querySelector("[data-header]");
+const root = document.documentElement;
+const themeToggle = document.getElementById("theme-toggle");
+const themeLabel = themeToggle?.querySelector(".theme-toggle-label");
+const themeMeta = document.querySelector('meta[name="theme-color"]');
 
-const updateHeader = () => {
-  header?.classList.toggle("is-scrolled", window.scrollY > 16);
-};
+function applyTheme(theme) {
+  const next = theme === "dark" ? "dark" : "light";
+  root.dataset.theme = next;
+  if (themeLabel) themeLabel.textContent = next === "dark" ? "Light" : "Dark";
+  if (themeToggle) {
+    const destination = next === "dark" ? "light" : "dark";
+    themeToggle.setAttribute("aria-label", `Switch to ${destination} theme`);
+  }
+  if (themeMeta) themeMeta.content = next === "dark" ? "#0d1117" : "#f8fafc";
+}
 
-updateHeader();
-window.addEventListener("scroll", updateHeader, { passive: true });
+applyTheme(root.dataset.theme);
 
-document.querySelectorAll("[data-copy]").forEach((button) => {
+themeToggle?.addEventListener("click", () => {
+  const next = root.dataset.theme === "dark" ? "light" : "dark";
+  applyTheme(next);
+  try {
+    localStorage.setItem("t-workflow-theme", next);
+  } catch {
+    // The preference is optional; the switch still works for this page load.
+  }
+});
+
+const copyButtons = document.querySelectorAll("[data-copy]");
+
+copyButtons.forEach((button) => {
   button.addEventListener("click", async () => {
-    const target = document.getElementById(button.dataset.copy);
-    const label = button.querySelector(".copy-label");
-    if (!target || !label) return;
-
-    const text = target.textContent.trim();
-
+    const source = document.getElementById(button.dataset.copy);
+    if (!source) return;
     try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(text);
-      } else {
-        const fallback = document.createElement("textarea");
-        fallback.value = text;
-        fallback.setAttribute("readonly", "");
-        fallback.style.position = "fixed";
-        fallback.style.opacity = "0";
-        document.body.append(fallback);
-        fallback.select();
-        const copied = document.execCommand("copy");
-        fallback.remove();
-        if (!copied) throw new Error("Copy command was unavailable");
-      }
-
+      await navigator.clipboard.writeText(source.textContent.trim());
+      const label = button.querySelector("span");
+      const previous = label.textContent;
       label.textContent = "Copied";
+      button.classList.add("is-copied");
       window.setTimeout(() => {
-        label.textContent = "Copy";
-      }, 1800);
+        label.textContent = previous;
+        button.classList.remove("is-copied");
+      }, 1600);
     } catch {
-      label.textContent = "Select text";
+      window.getSelection()?.selectAllChildren(source);
     }
   });
 });
+
+const tabs = [...document.querySelectorAll("[role='tab'][data-stage]")];
+const panels = [...document.querySelectorAll("[role='tabpanel']")];
+
+function activateStage(tab) {
+  tabs.forEach((item) => {
+    const active = item === tab;
+    item.setAttribute("aria-selected", String(active));
+    item.tabIndex = active ? 0 : -1;
+  });
+  panels.forEach((panel) => {
+    const active = panel.id === tab.getAttribute("aria-controls");
+    panel.hidden = !active;
+    panel.classList.toggle("is-active", active);
+  });
+}
+
+tabs.forEach((tab, index) => {
+  tab.addEventListener("click", () => activateStage(tab));
+  tab.addEventListener("keydown", (event) => {
+    if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
+    event.preventDefault();
+    const direction = ["ArrowRight", "ArrowDown"].includes(event.key) ? 1 : -1;
+    const next = tabs[(index + direction + tabs.length) % tabs.length];
+    activateStage(next);
+    next.focus();
+  });
+});
+
+const reveals = document.querySelectorAll(".reveal");
+if ("IntersectionObserver" in window && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  const revealObserver = new IntersectionObserver((entries, observer) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add("is-visible");
+      observer.unobserve(entry.target);
+    });
+  }, { threshold: 0.08 });
+  reveals.forEach((item) => revealObserver.observe(item));
+} else {
+  reveals.forEach((item) => item.classList.add("is-visible"));
+}
+
+const navLinks = [...document.querySelectorAll(".site-nav a")];
+const navSections = navLinks
+  .map((link) => document.querySelector(link.getAttribute("href")))
+  .filter(Boolean);
+
+const sectionObserver = new IntersectionObserver((entries) => {
+  const visible = entries
+    .filter((entry) => entry.isIntersecting)
+    .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+  if (!visible) return;
+  navLinks.forEach((link) => {
+    link.classList.toggle("is-active", link.getAttribute("href") === `#${visible.target.id}`);
+  });
+}, { rootMargin: "-18% 0px -65% 0px", threshold: [0, .2, .5] });
+
+navSections.forEach((section) => sectionObserver.observe(section));
+
+const progress = document.querySelector(".reading-progress span");
+function updateProgress() {
+  const max = document.documentElement.scrollHeight - window.innerHeight;
+  const value = max > 0 ? window.scrollY / max : 0;
+  progress.style.width = `${Math.min(1, Math.max(0, value)) * 100}%`;
+}
+window.addEventListener("scroll", updateProgress, { passive: true });
+updateProgress();

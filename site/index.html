@@ -1,250 +1,418 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="t-workflow is a practical delivery workflow for agent-driven software projects.">
-    <meta name="theme-color" content="#faf9f7">
-    <title>t-workflow — A delivery workflow for agent-driven projects</title>
-    <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="styles.css">
-    <script src="script.js" defer></script>
-  </head>
-  <body>
-    <a class="skip-link" href="#main">Skip to content</a>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="t-workflow is a reusable delivery system for agent-built software: structured issues, bounded work, independent review, and human-confirmed merges.">
+  <meta name="theme-color" content="#f8fafc">
+  <title>t-workflow — A practical delivery system for agent-built software</title>
+  <script>
+    (() => {
+      document.documentElement.classList.add("js");
+      try {
+        const saved = localStorage.getItem("t-workflow-theme");
+        document.documentElement.dataset.theme = saved === "dark" ? "dark" : "light";
+      } catch {
+        document.documentElement.dataset.theme = "light";
+      }
+    })();
+  </script>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="reading-progress" aria-hidden="true"><span></span></div>
 
-    <div class="wip-banner" role="note">
-      <p><strong>⚠️ Work in progress.</strong> t-workflow is under active internal use and expected to churn significantly before it stabilizes. Please wait for a released version before adopting it in your own projects.</p>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="t-workflow home">
+      <span class="brand-mark" aria-hidden="true">t/</span>
+      <span>t-workflow</span>
+    </a>
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="#workflow">Workflow</a>
+      <a href="#collaboration">Collaboration</a>
+      <a href="#machinery">Machinery</a>
+      <a href="#adopt">Adopt</a>
+    </nav>
+    <div class="header-tools">
+      <a class="header-install" href="#install">Install <span aria-hidden="true">↓</span></a>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to dark theme">
+        <span class="theme-toggle-icon" aria-hidden="true">◐</span>
+        <span class="theme-toggle-label">Dark</span>
+      </button>
+      <a class="header-github" href="https://github.com/haninaguib-devtools/t-workflow">GitHub <span aria-hidden="true">↗</span></a>
     </div>
+  </header>
 
-    <header class="site-header" data-header>
-      <div class="nav-wrap">
-        <a class="brand" href="#top" aria-label="t-workflow home">
-          <span class="brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 32 32"><circle cx="7" cy="16" r="3"/><circle cx="16" cy="7" r="3"/><circle cx="25" cy="16" r="3"/><circle cx="16" cy="25" r="3"/><path d="M9.5 14.5 13.5 9.5M18.5 9.5l4 5M22.5 18l-4 4.5M13.5 22.5l-4-4.5"/></svg>
-          </span>
-          <span>t-workflow</span>
-        </a>
-        <nav class="site-nav" aria-label="Primary navigation">
-          <a href="#overview">Overview</a>
-          <a href="#workflow">Workflow</a>
-          <a href="#skills">Skills</a>
-          <a href="#install">Install</a>
-          <a href="reference/index.html">Reference</a>
-        </nav>
-        <a class="github-link" href="https://github.com/haninaguib-devtools/t-workflow" aria-label="View t-workflow on GitHub">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.69c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.35 1.09 2.92.83.09-.65.35-1.09.64-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.6 9.6 0 0 1 12 6.7a9.6 9.6 0 0 1 2.5.34c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.86V21c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>
-          <span>GitHub</span>
-        </a>
+  <main id="main">
+    <section class="hero" id="top">
+      <div class="hero-copy">
+        <p class="eyebrow"><span>Developer field guide</span><span>t-workflow</span></p>
+        <h1>A practical delivery system for agent-built software.</h1>
+        <p class="hero-lede">Coding agents have made implementation much faster. They have not made judgment, review or project memory any less important. t-workflow gives that work a clear route from an agreed idea to a reviewed change, while leaving the final decision with the person responsible for the project.</p>
+        <p class="hero-note">This page explains the workflow from the outside in: first what a developer experiences, then the machinery that keeps it honest.</p>
+        <div class="hero-links">
+          <a href="#why">Read from the beginning <span aria-hidden="true">↓</span></a>
+          <a href="https://github.com/haninaguib-devtools/t-workflow">Browse the repository <span aria-hidden="true">↗</span></a>
+        </div>
       </div>
-    </header>
 
-    <main id="main">
-      <section class="hero" id="top" aria-labelledby="hero-title">
-        <div class="hero-copy">
-          <p class="eyebrow">Agent-driven delivery, with guardrails</p>
-          <h1 id="hero-title">A practical workflow for shipping software with coding agents.</h1>
-          <p class="hero-summary">t-workflow gives every change a clear path from request to pull request. It keeps scope, decisions, checks, and human approval visible without tying your project to a language or framework.</p>
-          <div class="hero-actions">
-            <a class="button button-primary" href="#install">Install t-workflow</a>
-            <a class="button button-secondary" href="https://github.com/haninaguib-devtools/t-workflow">View on GitHub</a>
+      <aside class="install-terminal" id="install" aria-labelledby="install-title">
+        <div class="terminal-bar">
+          <span id="install-title">Install in an empty directory</span>
+          <span class="terminal-status">interactive</span>
+        </div>
+        <div class="command-row">
+          <code id="install-command">curl -fsSL https://raw.githubusercontent.com/haninaguib-devtools/t-workflow/main/installer/install.sh | bash</code>
+          <button class="copy-button" type="button" data-copy="install-command"><span>Copy</span></button>
+        </div>
+        <p>The installer creates a local repository and its first commit. It does not create a remote, choose a licence, or invent your stack.</p>
+        <ol class="terminal-notes">
+          <li><b>1.</b> Fill the project-specific rules</li>
+          <li><b>2.</b> Create and push the remote</li>
+          <li><b>3.</b> Apply repository protection</li>
+        </ol>
+      </aside>
+
+      <div class="hero-signals" aria-label="What remains true throughout the workflow">
+        <p>Throughout the workflow</p>
+        <div><span>01</span><b>Work has an issue before it has a branch.</b></div>
+        <div><span>02</span><b>The record travels beside the code.</b></div>
+        <div><span>03</span><b>Review comes from a fresh context.</b></div>
+        <div><span>04</span><b>A person confirms every merge.</b></div>
+      </div>
+    </section>
+
+    <section class="section section-intro reveal" id="why">
+      <div class="section-label"><span>01</span><p>Why it exists</p></div>
+      <div class="section-content">
+        <p class="section-kicker">Implementation is becoming abundant.</p>
+        <h2>Trustworthy judgment is still scarce.</h2>
+        <div class="prose-columns">
+          <p>A capable agent can write a large change in one sitting. Without a delivery system, it can also begin from an informal chat, widen the scope while coding, verify its own assumptions, and leave the important reasoning in a conversation nobody will find later.</p>
+          <p>t-workflow makes that speed usable. It gives the work a durable identity, bounds what may change, records what actually happened, and asks a separate reviewer to test the result. Mechanical promises become checks; product judgment remains human.</p>
+        </div>
+        <div class="principle-grid">
+          <article>
+            <span class="principle-code">REVIEW</span>
+            <h3>Treat review as the scarce resource</h3>
+            <p>Fast code generation makes independent verification more valuable, not less.</p>
+          </article>
+          <article>
+            <span class="principle-code">MEMORY</span>
+            <h3>Keep outcomes in Git</h3>
+            <p>Issues host the process. The task record and squash commit preserve the result in every clone.</p>
+          </article>
+          <article>
+            <span class="principle-code">RULES</span>
+            <h3>Turn promises into gates</h3>
+            <p>A script answers precise questions the same way in every session.</p>
+          </article>
+          <article>
+            <span class="principle-code">AUTHORITY</span>
+            <h3>Stop where judgment begins</h3>
+            <p>Agents prepare evidence. A person confirms every merge to the trunk.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section reveal" id="workflow">
+      <div class="section-label"><span>02</span><p>The workflow</p></div>
+      <div class="section-content">
+        <p class="section-kicker">One route, with ceremony applied where it pays.</p>
+        <h2>From conversation to reviewed change</h2>
+        <p class="section-deck">Select a stage to see what it produces, what it refuses, and why it stops.</p>
+
+        <div class="stage-explorer">
+          <div class="stage-tabs" role="tablist" aria-label="t-workflow stages">
+            <button role="tab" aria-selected="false" aria-controls="stage-open" id="tab-open" data-stage="open"><span>01</span>t-open</button>
+            <button role="tab" aria-selected="false" aria-controls="stage-plan" id="tab-plan" data-stage="plan"><span>02</span>t-plan</button>
+            <button role="tab" aria-selected="true" aria-controls="stage-work" id="tab-work" data-stage="work"><span>03</span>t-work</button>
+            <button role="tab" aria-selected="false" aria-controls="stage-review" id="tab-review" data-stage="review"><span>04</span>t-review</button>
+            <button role="tab" aria-selected="false" aria-controls="stage-ship" id="tab-ship" data-stage="ship"><span>05</span>t-ship</button>
+          </div>
+
+          <div class="stage-panels">
+            <article class="stage-panel" id="stage-open" role="tabpanel" aria-labelledby="tab-open" hidden>
+              <div><p class="stage-overline">Conversation → issue</p><h3>Give the work a durable shape</h3></div>
+              <dl>
+                <div><dt>Produces</dt><dd>A self-sufficient task, or an initiative with the children already understood.</dd></div>
+                <div><dt>Refuses</dt><dd>Goals or completion criteria that are still guesses.</dd></div>
+                <div><dt>Why</dt><dd>An issue opened too early invents intent; one opened too late strands decisions in chat.</dd></div>
+              </dl>
+            </article>
+            <article class="stage-panel" id="stage-plan" role="tabpanel" aria-labelledby="tab-plan" hidden>
+              <div><p class="stage-overline">Issue → binding plan</p><h3>Pin the safe working bounds</h3></div>
+              <dl>
+                <div><dt>Produces</dt><dd>Allowed paths, risks, agent checks and human checks written onto the issue.</dd></div>
+                <div><dt>Required for</dt><dd>Any task whose declared scope reaches a constitutionally protected surface.</dd></div>
+                <div><dt>Why</dt><dd>Scope is cheapest to correct before implementation starts.</dd></div>
+              </dl>
+            </article>
+            <article class="stage-panel is-active" id="stage-work" role="tabpanel" aria-labelledby="tab-work">
+              <div><p class="stage-overline">Issue → draft pull request</p><h3>Implement within visible boundaries</h3></div>
+              <dl>
+                <div><dt>Produces</dt><dd>A <code>wip/&lt;id&gt;-&lt;slug&gt;</code> branch, task record, tested implementation and draft PR.</dd></div>
+                <div><dt>Refuses</dt><dd>Unsatisfied blockers, missing required planning, unrelated local changes or ambiguous branches.</dd></div>
+                <div><dt>Why</dt><dd>The draft is a real review surface while remaining clearly unfinished.</dd></div>
+              </dl>
+            </article>
+            <article class="stage-panel" id="stage-review" role="tabpanel" aria-labelledby="tab-review" hidden>
+              <div><p class="stage-overline">Draft diff → independent verdict</p><h3>Test the claims from cold context</h3></div>
+              <dl>
+                <div><dt>Produces</dt><dd>Findings, check provenance, pending human judgments and an explicit readiness verdict.</dd></div>
+                <div><dt>Isolation</dt><dd>A fresh session or a read-only subagent. When a subagent is needed, its model can be chosen separately from the implementer's.</dd></div>
+                <div><dt>Cannot do</dt><dd>Fix code, widen scope, create follow-up issues, mark ready or merge.</dd></div>
+              </dl>
+            </article>
+            <article class="stage-panel" id="stage-ship" role="tabpanel" aria-labelledby="tab-ship" hidden>
+              <div><p class="stage-overline">Reviewed PR → trunk</p><h3>Recheck, watch CI, ask once</h3></div>
+              <dl>
+                <div><dt>Produces</dt><dd>A human-confirmed squash merge with a self-contained commit and completed task.</dd></div>
+                <div><dt>Blocks on</dt><dd>Stale review, red CI, unresolved required verification, conflicts or missing records.</dd></div>
+                <div><dt>Why</dt><dd>The last irreversible choice belongs to the person accountable for the project.</dd></div>
+              </dl>
+            </article>
           </div>
         </div>
 
-        <div class="workflow-preview" aria-label="The core task path from request to main">
-          <div class="preview-header">
-            <span>Core task path</span>
-            <span>main</span>
+        <aside class="callout callout-blue">
+          <span>Fresh context first; model choice second</span>
+          <p>A review is independent because the reviewer did not inherit the implementation conversation. When t-review needs a subagent, you may also name a model for that one review. If you do not, it uses the repository default set through t-config; with no default, it inherits the invoking session's model. A one-off choice always wins, and t-config changes only that default.</p>
+        </aside>
+
+        <aside class="callout">
+          <span>Always true</span>
+          <p>Work starts from a tracker issue. The trunk moves only through a pull request a human explicitly confirmed. Planning and cold review become mandatory when the actual paths touch protected parts of the project.</p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section reveal" id="shapes">
+      <div class="section-label"><span>03</span><p>Work at scale</p></div>
+      <div class="section-content">
+        <p class="section-kicker">The unit is the reviewable merge.</p>
+        <h2>One task when possible. An initiative when necessary.</h2>
+        <div class="shape-grid">
+          <article class="shape-card">
+            <div class="shape-heading"><span>task</span><code>#142</code></div>
+            <h3>One coherent deliverable</h3>
+            <p>A task receives one issue identity, one working branch, one record and normally one pull request.</p>
+            <ul>
+              <li><code>wip/142-preview-evidence</code></li>
+              <li><code>docs/tasks/000100/142-…</code></li>
+              <li><code>[142] Add preview evidence</code></li>
+            </ul>
+          </article>
+          <article class="shape-card shape-card-accent">
+            <div class="shape-heading"><span>initiative</span><code>#139</code></div>
+            <h3>Several reviewable children</h3>
+            <p>An initiative coordinates intent, child tasks and dependencies. It does not become a giant implementation issue.</p>
+            <ul>
+              <li>Native parent and blocked-by links</li>
+              <li>Progress derived from child issues</li>
+              <li>Design child first when decomposition is unclear</li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="drive-layout">
+          <div>
+            <p class="section-kicker">When you invoke t-drive</p>
+            <h3>The agent may chain stages, but it still cannot cross the final gate.</h3>
+            <p>For one task, t-drive plans and reviews where required, allows one narrow correction, and can pause cleanly for preview or human verification. It later resumes from current evidence.</p>
+            <p>For an initiative, each child keeps its own branch, record and review. A reviewed child normally enters the integration branch; when it still needs required human verification, it pauses before that merge and resumes from the evidence already present. The combined result receives a final cold review before t-ship asks for the trunk merge.</p>
           </div>
-          <ol>
-            <li><span class="preview-node">1</span><div><strong>Open</strong><code>/t-open</code></div><small>Issue</small></li>
-            <li><span class="preview-node">2</span><div><strong>Plan</strong><code>/t-plan</code></div><small>Scope</small></li>
-            <li><span class="preview-node">3</span><div><strong>Work</strong><code>/t-work</code></div><small>Draft PR</small></li>
-            <li><span class="preview-node">4</span><div><strong>Review</strong><code>/t-review</code></div><small>Evidence</small></li>
-            <li><span class="preview-node preview-node-final">5</span><div><strong>Ship</strong><code>/t-ship</code></div><small>Merge</small></li>
+          <ol class="drive-flow">
+            <li><span>01</span><div><b>Plan eligible work</b><p>Honor native dependencies and protected surfaces.</p></div></li>
+            <li><span>02</span><div><b>Build and review each child</b><p>Independent children can run in separate worktrees.</p></div></li>
+            <li><span>03</span><div><b>Retry once</b><p>Persistent failures remain open and visibly excluded.</p></div></li>
+            <li><span>04</span><div><b>Review the combined diff</b><p>Child reviews do not replace the aggregate review.</p></div></li>
+            <li class="human-stop"><span>H</span><div><b>Human confirmation</b><p>Only t-ship may merge the result to the trunk.</p></div></li>
           </ol>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <section class="quick-install" id="install" aria-labelledby="install-title">
-        <div class="install-heading">
-          <p class="section-label">Install</p>
-          <h2 id="install-title">Start a new project with one command</h2>
-          <p>The installer asks for a project name, creates the repository, and can configure GitHub for you.</p>
+    <section class="section section-collaboration reveal" id="collaboration">
+      <div class="section-label"><span>04</span><p>Collaboration</p></div>
+      <div class="section-content">
+        <p class="section-kicker">Outside systems can stay connected without becoming authorities.</p>
+        <h2>Proposal, preview, feedback, verification</h2>
+        <p class="section-deck">An external proposal may originate work and observe its delivery. The t-workflow task remains the binding engineering definition.</p>
+
+        <div class="collaboration-track">
+          <article><span>Origin</span><h3>Remember where the work began</h3><p>An optional provider and durable URL travel through the issue, record and pull request. The link is provenance; it is never fetched as instructions or treated as acceptance.</p></article>
+          <article><span>Preview</span><h3>Publish something a person can try</h3><p>The project supplies an environment, package, binary or instructions tied to an exact task, pull request and commit. t-workflow defines the evidence, not the hosting platform.</p></article>
+          <article><span>Feedback</span><h3>Return findings to the same branch</h3><p>t-work classifies a clarification, defect, in-scope adjustment or proposed expansion before editing. Expansion requires human authorization and re-planning.</p></article>
+          <article><span>Verification</span><h3>Record human evidence by revision</h3><p>A named person or role verifies, rejects or explicitly accepts residual risk. A relevant new commit makes old evidence stale.</p></article>
         </div>
-        <div class="command-box">
-          <div class="command-topline"><span>Terminal</span><span>macOS · Linux</span></div>
-          <div class="command-row">
-            <span class="prompt" aria-hidden="true">$</span>
-            <code id="install-command">curl -fsSL https://raw.githubusercontent.com/haninaguib-devtools/t-workflow/main/installer/install.sh | bash</code>
-            <button class="copy-button" type="button" data-copy="install-command" aria-label="Copy installer command">
-              <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="7" y="3" width="9" height="11" rx="1"/><path d="M13 14v3H4V6h3"/></svg>
-              <span class="copy-label">Copy</span>
-            </button>
+
+        <div class="authority-boundary">
+          <div>
+            <p class="boundary-label">Observer may</p>
+            <ul><li>Correlate proposal, initiative, task, PR and commit</li><li>Reconstruct status from GitHub events and current state</li><li>Report stale or missing evidence</li><li>Preserve contributor continuity</li></ul>
+          </div>
+          <div>
+            <p class="boundary-label">Only the project and its maintainer may</p>
+            <ul><li>Start implementation</li><li>Change binding scope</li><li>Complete independent review</li><li>Accept verification risk</li><li>Merge to the trunk</li></ul>
           </div>
         </div>
-        <p class="install-note">Want to inspect it first? <a href="https://github.com/haninaguib-devtools/t-workflow/blob/main/installer/install.sh">Read the installer source</a> or run it with <code>--help</code>.</p>
-      </section>
 
-      <section class="overview section" id="overview" aria-labelledby="overview-title">
-        <div class="section-heading">
-          <p class="section-label">What it is</p>
-          <h2 id="overview-title">A small delivery system that lives in your repository.</h2>
-          <p>It is a set of plain-language instructions, checks, and task records that coding agents can follow consistently. Your application stack stays yours.</p>
-        </div>
-        <div class="feature-grid">
-          <article class="feature-card">
-            <span class="feature-number">01</span>
-            <h3>Work starts with a clear issue</h3>
-            <p>The goal, completion criteria, scope, exclusions, and blockers are written down before implementation begins.</p>
-          </article>
-          <article class="feature-card">
-            <span class="feature-number">02</span>
-            <h3>Context ships with the change</h3>
-            <p>Every task pull request includes a record of what was asked, what changed, and which decisions were made along the way.</p>
-          </article>
-          <article class="feature-card">
-            <span class="feature-number">03</span>
-            <h3>A human controls every merge</h3>
-            <p>Agents prepare the implementation and evidence. <code>main</code> moves only through a pull request that a person explicitly confirms.</p>
-          </article>
-        </div>
-      </section>
-
-      <section class="workflow section section-tint" id="workflow" aria-labelledby="workflow-title">
-        <div class="section-heading section-heading-centered">
-          <p class="section-label">The workflow</p>
-          <h2 id="workflow-title">Five stages on the main task path</h2>
-          <p>Each command does one job, reports what happened, names the next command, and stops.</p>
-        </div>
-        <ol class="stage-list">
-          <li class="stage-card">
-            <div class="stage-top"><span>1</span><code>/t-open</code></div>
-            <h3>Open the work</h3>
-            <p>Turns the request into one task issue, an initiative with child tasks, or a design task when the shape is not yet clear.</p>
-            <div class="stage-output"><span>Produces</span><strong>Issue</strong></div>
-          </li>
-          <li class="stage-card">
-            <div class="stage-top"><span>2</span><code>/t-plan</code></div>
-            <h3>Pin the boundaries</h3>
-            <p>Records the allowed files, known risks, and separate agent and human checks. Required for protected paths.</p>
-            <div class="stage-output"><span>Produces</span><strong>Plan</strong></div>
-          </li>
-          <li class="stage-card">
-            <div class="stage-top"><span>3</span><code>/t-work</code></div>
-            <h3>Implement the task</h3>
-            <p>Creates the task branch and record, works inside scope, runs the checks, and opens a draft pull request.</p>
-            <div class="stage-output"><span>Produces</span><strong>Draft PR</strong></div>
-          </li>
-          <li class="stage-card">
-            <div class="stage-top"><span>4</span><code>/t-review</code></div>
-            <h3>Review in cold context</h3>
-            <p>Checks the full diff against the issue, plan, record, and repository rules, then posts findings and readiness.</p>
-            <div class="stage-output"><span>Produces</span><strong>Review</strong></div>
-          </li>
-          <li class="stage-card">
-            <div class="stage-top"><span>5</span><code>/t-ship</code></div>
-            <h3>Confirm and merge</h3>
-            <p>Shows the final evidence, asks the human for confirmation, and squash-merges with a self-contained commit.</p>
-            <div class="stage-output"><span>Produces</span><strong>Trusted main</strong></div>
-          </li>
-        </ol>
-      </section>
-
-      <section class="skills section" id="skills" aria-labelledby="skills-title">
-        <div class="section-heading">
-          <p class="section-label">Skill reference</p>
-          <h2 id="skills-title">Nine focused commands cover the full lifecycle.</h2>
-          <p>The five core commands move a task forward. Four supporting commands handle driving an initiative, cancellation, template sync, and status.</p>
-        </div>
-        <div class="skill-grid">
-          <article class="skill-card">
-            <div class="skill-title"><code>/t-open</code><span>Core</span></div>
-            <h3>Open work</h3>
-            <p>Create the correctly shaped tracker issue from a settled request. No branch or code is created yet.</p>
-          </article>
-          <article class="skill-card">
-            <div class="skill-title"><code>/t-plan</code><span>Core</span></div>
-            <h3>Plan a task</h3>
-            <p>Add binding allowed paths, risks, constraints, and validation ownership to an existing issue.</p>
-          </article>
-          <article class="skill-card">
-            <div class="skill-title"><code>/t-work</code><span>Core</span></div>
-            <h3>Implement a task</h3>
-            <p>Check the gates, create or resume the task branch, write the record, implement, verify, and open a draft PR.</p>
-          </article>
-          <article class="skill-card">
-            <div class="skill-title"><code>/t-review</code><span>Core</span></div>
-            <h3>Review a pull request</h3>
-            <p>Independently inspect the task in cold context and post prioritized findings with an explicit readiness verdict.</p>
-          </article>
-          <article class="skill-card">
-            <div class="skill-title"><code>/t-drive</code><span>Optional</span></div>
-            <h3>Drive an initiative</h3>
-            <p>Walk an initiative's children to completion on one integration branch — plan, implement, and independently review each — then stop once for a single confirmed pull request to main.</p>
-          </article>
-          <article class="skill-card">
-            <div class="skill-title"><code>/t-ship</code><span>Core</span></div>
-            <h3>Ship a task</h3>
-            <p>Check the PR and review evidence, obtain human confirmation, then squash-merge and close the task.</p>
-          </article>
-          <article class="skill-card">
-            <div class="skill-title"><code>/t-cancel</code><span>Terminal</span></div>
-            <h3>Cancel a task</h3>
-            <p>Record why the work stopped, decide the effect on related issues, and close out the PR and branch.</p>
-          </article>
-          <article class="skill-card">
-            <div class="skill-title"><code>/t-update</code><span>Optional</span></div>
-            <h3>Sync template updates</h3>
-            <p>For a repo generated from this template: sync its template-owned files to a pinned release, preserving local slots and applying pending migrations.</p>
-          </article>
-          <article class="skill-card">
-            <div class="skill-title"><code>/t-status</code><span>Read only</span></div>
-            <h3>Show pipeline status</h3>
-            <p>Summarize open initiatives and tasks, blockers, pull requests, CI, reviews, and useful warnings without changing anything.</p>
-          </article>
-        </div>
-      </section>
-
-      <section class="principles section section-tint" aria-labelledby="principles-title">
-        <div class="section-heading section-heading-centered">
-          <p class="section-label">Built-in rules</p>
-          <h2 id="principles-title">The important parts are difficult to skip.</h2>
-        </div>
-        <div class="principle-list">
-          <div><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg><p><strong>Issue before implementation.</strong> A fresh session can understand the task without access to the original conversation.</p></div>
-          <div><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg><p><strong>Records live in git.</strong> Outcomes and durable decisions travel with every clone of the repository.</p></div>
-          <div><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg><p><strong>Protected paths get more scrutiny.</strong> Plans and independent reviews are required where mistakes cost more.</p></div>
-          <div><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg><p><strong>No automatic stage chaining.</strong> Each stage stops so the next decision remains visible.</p></div>
-          <div><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg><p><strong>Human-confirmed pull requests.</strong> Every change to <code>main</code> ends at a clear human merge gate.</p></div>
-        </div>
-      </section>
-
-      <section class="bottom-cta section" aria-labelledby="cta-title">
-        <div>
-          <p class="section-label">Get started</p>
-          <h2 id="cta-title">Add the workflow, then choose your stack.</h2>
-          <p>t-workflow provides the delivery system. It deliberately leaves the language, framework, data model, and architecture to your project.</p>
-        </div>
-        <a class="button button-primary" href="#install">Copy the installer command</a>
-      </section>
-    </main>
-
-    <footer class="site-footer">
-      <div class="footer-wrap">
-        <a class="brand" href="#top" aria-label="Back to top">
-          <span class="brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 32 32"><circle cx="7" cy="16" r="3"/><circle cx="16" cy="7" r="3"/><circle cx="25" cy="16" r="3"/><circle cx="16" cy="25" r="3"/><path d="M9.5 14.5 13.5 9.5M18.5 9.5l4 5M22.5 18l-4 4.5M13.5 22.5l-4-4.5"/></svg>
-          </span>
-          <span>t-workflow</span>
-        </a>
-        <p>A practical delivery workflow for agent-driven software projects.</p>
-        <nav aria-label="Footer navigation">
-          <a href="https://github.com/haninaguib-devtools/t-workflow">GitHub</a>
-          <a href="https://github.com/haninaguib-devtools/t-workflow/blob/main/README.md">Documentation</a>
-          <a href="https://github.com/haninaguib-devtools/t-workflow/blob/main/LICENSE">MIT License</a>
-        </nav>
+        <aside class="callout callout-blue">
+          <span>A contract, not another service</span>
+          <p>t-workflow does not run a webhook relay or keep a second workflow database. It leaves a small correlation marker in the issue and defines how an observer may read GitHub's issues, pull requests, comments and commits. An event is only a prompt to fetch the current state again, so duplicates, late delivery and a temporary outage do not become a second source of truth.</p>
+        </aside>
       </div>
-    </footer>
-  </body>
+    </section>
+
+    <section class="section reveal" id="memory">
+      <div class="section-label"><span>05</span><p>Durable memory</p></div>
+      <div class="section-content">
+        <p class="section-kicker">Each fact has one home.</p>
+        <h2>The repository remembers what the session cannot</h2>
+        <div class="anatomy">
+          <article><code>CONSTITUTION.md</code><p>Short, binding invariants: delivery rules, protected areas and ratified stack constraints.</p></article>
+          <article><code>AGENTS.md</code><p>The session-start contract: stages, conventions, communication, the project's real checks and its optional default reviewer model.</p></article>
+          <article><code>docs/adr/</code><p>Append-only decisions with context, rationale, alternatives and revisit triggers.</p></article>
+          <article><code>docs/architecture/</code><p>Formats and contracts the workflow executes against: records, origins, previews, verification and template ownership.</p></article>
+          <article><code>docs/tasks/</code><p>The historical record for each delivered task, merged atomically beside the code it explains.</p></article>
+          <article><code>issues + pull requests</code><p>The active process: task definition, plans, dependencies, discussion, review and CI evidence.</p></article>
+        </div>
+        <div class="record-strip">
+          <span>Asked</span><i>→</i><span>Done when</span><i>→</i><span>Non-goals</span><i>→</i><span>Origin</span><i>→</i><span>Verification</span><i>→</i><span>Decisions</span><i>→</i><span>Deviations</span>
+        </div>
+        <p class="record-caption">The task record is reviewed as part of the diff. It must describe the change honestly, including altered plans, feedback and dead ends worth remembering.</p>
+      </div>
+    </section>
+
+    <section class="section reveal" id="machinery">
+      <div class="section-label"><span>06</span><p>Mechanical trust</p></div>
+      <div class="section-content">
+        <p class="section-kicker">The skill explains. The script settles.</p>
+        <h2>Small checks prevent large misunderstandings</h2>
+        <p class="section-deck">These scripts answer narrow questions from explicit inputs. They avoid asking each agent to reinterpret the same prose.</p>
+
+        <div class="machine-groups">
+          <details open>
+            <summary><span>Gate checks</span><small>Can this change proceed?</small></summary>
+            <div class="machine-list">
+              <article><code>protected-paths.sh</code><p>Finds sensitive paths using the constitution's executable twin.</p></article>
+              <article><code>check-plan-gate.sh</code><p>Requires one Plan when a protected path changed.</p></article>
+              <article><code>check-blocker-gate.sh</code><p>Distinguishes a completed blocker from an abandoned one.</p></article>
+              <article><code>check-record.sh</code><p>Validates record identity, location and required sections.</p></article>
+              <article><code>check-review-gate.sh</code><p>Requires a current, cold, ready review for protected work.</p></article>
+              <article><code>check-verification-gate.sh</code><p>Rejects unresolved or revision-stale required human verification.</p></article>
+            </div>
+          </details>
+          <details>
+            <summary><span>Read snapshots</span><small>What is true right now?</small></summary>
+            <div class="machine-list">
+              <article><code>status-snapshot.sh</code><p>Fetches issues, PRs, checks, branches and worktrees once for t-status.</p></article>
+              <article><code>review-snapshot.sh</code><p>Collects the issue, full diff, PR head and local state for a reviewer.</p></article>
+              <article><code>trunk-ref.sh</code><p>Resolves the actual default branch instead of assuming its name.</p></article>
+            </div>
+          </details>
+          <details>
+            <summary><span>Collaboration evidence</span><small>Can another system read the same story?</small></summary>
+            <div class="machine-list">
+              <article><code>check-observer-marker.sh</code><p>Checks the small issue marker that correlates a task or initiative with its parent and optional external origin. It validates the shape; it grants no authority.</p></article>
+              <article><code>check-preview-evidence.sh</code><p>Checks that preview evidence names the exact task, pull request and commit it claims to represent. A ready preview is still not a human approval.</p></article>
+              <article><code>parse-task-record.sh</code><p>Reads feedback and verification entries from a task record into a normalized form other scripts can use without interpreting prose.</p></article>
+              <article><code>derive-task-state.sh</code><p>Turns blockers, CI, review, feedback, preview and verification into one answer about what the task needs next. The answer is a status view, not a gate.</p></article>
+            </div>
+          </details>
+          <details>
+            <summary><span>Integrity and adoption</span><small>Has the workflow itself drifted?</small></summary>
+            <div class="machine-list">
+              <article><code>consistency-check.sh</code><p>Finds broken references and contradictions across living workflow documents.</p></article>
+              <article><code>plumbing-test.sh</code><p>Proves gate scripts fail on violations and pass clean fixtures.</p></article>
+              <article><code>template-owned-paths.sh</code><p>Separates shared template files from project-authored protected files.</p></article>
+              <article><code>check-manifest.sh</code><p>Detects edits outside declared local slots.</p></article>
+              <article><code>github-bootstrap.sh</code><p>Applies labels, merge policy and branch protection as settings-as-code.</p></article>
+            </div>
+          </details>
+        </div>
+
+        <aside class="callout callout-blue">
+          <span>Why three exit states?</span>
+          <p>Many gates distinguish “checked and clean” from “nothing was supplied.” Without that distinction, an empty diff or broken pipeline could be mistaken for permission to skip planning or review.</p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section reveal" id="operations">
+      <div class="section-label"><span>07</span><p>Long-term use</p></div>
+      <div class="section-content">
+        <p class="section-kicker">A workflow needs an honest exit, a status view, a small amount of configuration and an upgrade path.</p>
+        <h2>Nothing important is hidden in cleanup</h2>
+        <div class="operations-grid">
+          <article>
+            <span class="operation-command">t-status</span>
+            <h3>Derive, do not maintain</h3>
+            <p>Reads issues, dependencies, pull requests, review, CI, feedback, previews, human verification and local Git. When several facts are true at once, it gives the maintainer one ordered answer about what the task needs next—without writing a second status database.</p>
+          </article>
+          <article>
+            <span class="operation-command">t-config</span>
+            <h3>Choose the reviewer without editing the machinery</h3>
+            <p>Shows the current repository default and asks for a model name or for the override to be cleared. It edits one protected local slot in AGENTS.md and nothing else; an explicit model named on a t-review invocation still takes precedence.</p>
+          </article>
+          <article>
+            <span class="operation-command">t-cancel</span>
+            <h3>Decide before teardown</h3>
+            <p>Records why the task ends and asks what happens to every dependent, child, parent and spun-off issue. Only after confirmation does it close the PR and remove branches where safe.</p>
+          </article>
+          <article>
+            <span class="operation-command">t-update</span>
+            <h3>Advance the template safely</h3>
+            <p>Moves a consumer to a pinned release, preserves project-owned slots, applies ordered migrations and submits the update as an ordinary planned and reviewed task.</p>
+          </article>
+        </div>
+
+        <div class="ci-story">
+          <div>
+            <p class="section-kicker">CI follows the cost of evidence</p>
+            <h3>Draft while building. Run the final gate when ready.</h3>
+          </div>
+          <p>Draft pull requests skip the final GitHub Actions job, leaving a low-cost window for implementation, preview and feedback. A submitted cold review has its own gate. When t-ship marks the pull request ready, final CI starts; t-ship watches it to completion before asking for the merge.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-adopt reveal" id="adopt">
+      <div class="section-label"><span>08</span><p>Adopt it</p></div>
+      <div class="section-content">
+        <p class="section-kicker">Stack-agnostic. Versioned. Local first.</p>
+        <h2>Install the delivery system before the first application commit.</h2>
+        <div class="adopt-command">
+          <div>
+            <p>Interactive installation</p>
+            <code id="install-command-bottom">curl -fsSL https://raw.githubusercontent.com/haninaguib-devtools/t-workflow/main/installer/install.sh | bash</code>
+          </div>
+          <button class="copy-button copy-button-large" type="button" data-copy="install-command-bottom"><span>Copy command</span></button>
+        </div>
+        <div class="adopt-steps">
+          <article><span>1</span><div><h3>Fill what the template cannot know</h3><p>Add the project's stack constraints to the constitution and its real build command to the agent contract and CI.</p></div></article>
+          <article><span>2</span><div><h3>Push the first commit</h3><p>This closes the tightly bounded genesis exception. Every later tree edit begins with t-open.</p></div></article>
+          <article><span>3</span><div><h3>Apply repository settings</h3><p>Run <code>./.t-workflow/scripts/github-bootstrap.sh</code>, then run it again after CI has first completed on the trunk.</p></div></article>
+          <article><span>4</span><div><h3>Choose a review model if the project needs one</h3><p>Run <code>/t-config</code> to set a repository default. Leave it unset when reviews should use the invoking session's model, or name a different model only when invoking a particular review.</p></div></article>
+          <article><span>5</span><div><h3>Pin releases and update deliberately</h3><p>Consumer projects use the template manifest and t-update rather than drifting from an unversioned copy.</p></div></article>
+        </div>
+        <div class="closing-line">
+          <p>The code may be generated quickly.<br>The evidence should still deserve trust.</p>
+          <a href="https://github.com/haninaguib-devtools/t-workflow">Read the source on GitHub <span aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">t/</span><span>t-workflow</span></a>
+    <p>Agent-driven delivery with human authority.</p>
+    <a href="https://github.com/haninaguib-devtools/t-workflow">GitHub</a>
+  </footer>
+</body>
 </html>
