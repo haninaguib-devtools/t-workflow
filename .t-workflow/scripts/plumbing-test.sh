@@ -594,11 +594,38 @@ insert_protected_pattern() {
   ' "$1" > "$1.new" && mv "$1.new" "$1"
 }
 
+# Nothing below depends on what the live slots hold (#185, #189). This script runs in
+# every consumer's CI, and a consumer fills exactly these two slots — one whose own
+# bullet and pattern are `db/migrations/` (the path #134's motivating consumer
+# protects) would otherwise make "a bullet with no matching pattern" pass, because its
+# own pattern matches. Each fixture's slots are emptied first, so the only slot
+# content in play is what the case itself inserts.
+reset_protected_slots() {
+  # $1 = fixture root. Empties §3's slot in CONSTITUTION.md (found by its heading) and
+  # the patterns slot in protected-paths.sh (found by its `#`-prefixed marker form).
+  awk '
+    /^## 3\. Protected surfaces/ { insec=1 }
+    /^## 4\./ { insec=0 }
+    insec && /^<!-- local -->$/ { print; skip=1; next }
+    insec && /^<!-- \/local -->$/ { skip=0 }
+    !skip { print }
+  ' "$1/CONSTITUTION.md" > "$1/CONSTITUTION.md.new" && mv "$1/CONSTITUTION.md.new" "$1/CONSTITUTION.md"
+  awk '
+    /^  # <!-- local -->$/ { print; skip=1; next }
+    /^  # <!-- \/local -->$/ { skip=0 }
+    !skip { print }
+  ' "$1/.t-workflow/scripts/protected-paths.sh" > "$1/pp.new" \
+    && cat "$1/pp.new" > "$1/.t-workflow/scripts/protected-paths.sh" && rm -f "$1/pp.new"
+}
+
 bullet="- \`db/migrations/\` (a consumer's own migration files)"
 pattern="  'db/migrations/*'"
 
 fixture_sym_ok="$work/fixture-sym-ok"
 make_fixture_repo "$fixture_sym_ok"
+reset_protected_slots "$fixture_sym_ok"
+expect_rc "with both slots emptied, the fixture still passes (the reset touched only slot content)" \
+  0 .t-workflow/scripts/consistency-check.sh "$fixture_sym_ok"
 insert_protected_bullet "$fixture_sym_ok/CONSTITUTION.md" "$bullet"
 insert_protected_pattern "$fixture_sym_ok/.t-workflow/scripts/protected-paths.sh" "$pattern"
 expect_rc "a slot bullet with a matching slot pattern: passes" \
@@ -606,6 +633,7 @@ expect_rc "a slot bullet with a matching slot pattern: passes" \
 
 fixture_sym_bulletonly="$work/fixture-sym-bulletonly"
 make_fixture_repo "$fixture_sym_bulletonly"
+reset_protected_slots "$fixture_sym_bulletonly"
 insert_protected_bullet "$fixture_sym_bulletonly/CONSTITUTION.md" "$bullet"
 out=$(.t-workflow/scripts/consistency-check.sh "$fixture_sym_bulletonly" 2>&1)
 rc=$?
@@ -618,6 +646,7 @@ esac
 
 fixture_sym_patternonly="$work/fixture-sym-patternonly"
 make_fixture_repo "$fixture_sym_patternonly"
+reset_protected_slots "$fixture_sym_patternonly"
 insert_protected_pattern "$fixture_sym_patternonly/.t-workflow/scripts/protected-paths.sh" "$pattern"
 out=$(.t-workflow/scripts/consistency-check.sh "$fixture_sym_patternonly" 2>&1)
 rc=$?

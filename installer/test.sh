@@ -192,6 +192,123 @@ else
 fi
 echo
 
+# --- 7c. the consumer's own checks, with every local slot filled ------------------------
+# Everything above ran the generated project's checks with every <!-- local --> slot
+# still holding the template's placeholder — the one state a consumer never stays in.
+# Every script the template ships into a consumer's required `checks` job first met a
+# filled slot on the consumer's machine, at sync time, after a tag (#118, #120, #122,
+# #126, #130, #185, #186). This section is that consumer: a copy of the generated
+# project with every slot docs/architecture/local-slots.md names filled with real
+# content, and the consumer's whole check set run inside it. A slot is filled by the
+# template text around it (a heading, a YAML key), never by its ordinal — the same rule
+# every reader in the pipeline follows. Adding a slot to the inventory means adding its
+# fill here in the same task (local-slots.md says so).
+echo "every slot filled"
+filled="$work/demo-filled"
+cp -a "$demo" "$filled"
+
+# fill_slot <file> <anchor-regex> <content-file> — replaces the content of the first
+# `<!-- local -->` … `<!-- /local -->` pair (bare, or `#`-prefixed at any indentation)
+# after the first line matching <anchor-regex>. Fails when no such pair follows the
+# anchor — a slot the inventory names but the file does not carry is a finding, not a
+# silent no-op. Writes through `cat` so the file keeps its mode (protected-paths.sh is
+# executable).
+fill_slot() {
+  local file="$1" anchor="$2" content="$3" tmp
+  tmp=$(mktemp "$work/fill.XXXXXX") || return 1
+  awk -v anchor="$anchor" -v content="$content" '
+    $0 ~ anchor && !armed { armed = 1 }
+    armed && !done && /^[[:space:]]*#?[[:space:]]*<!-- local -->[[:space:]]*$/ {
+      print; while ((getline line < content) > 0) print line; close(content)
+      skip = 1; done = 1; next
+    }
+    skip && /^[[:space:]]*#?[[:space:]]*<!-- \/local -->[[:space:]]*$/ { skip = 0 }
+    !skip { print }
+    END { if (!done) exit 1 }
+  ' "$file" > "$tmp" || { rm -f "$tmp"; return 1; }
+  cat "$tmp" > "$file" && rm -f "$tmp"
+}
+fill() { # fill <label> <file-relative-to-filled> <anchor-regex> <content...>
+  local label="$1" file="$2" anchor="$3"; shift 3
+  local c; c=$(mktemp "$work/content.XXXXXX")
+  printf '%s\n' "$@" > "$c"
+  if fill_slot "$filled/$file" "$anchor" "$c"; then ok "fills $label"; else bad "fills $label (no slot after /$anchor/ in $file)"; fi
+  rm -f "$c"
+}
+
+fill "CONSTITUTION.md's status note"      CONSTITUTION.md '^# CONSTITUTION.md$' \
+  '**Status note:** the stack is decided (§4); the delivery system is past Phase 0.'
+fill "CONSTITUTION.md §3's protected-path bullet" CONSTITUTION.md '^## 3. Protected surfaces' \
+  '- `db/migrations/` (the fixture'"'"'s own schema migrations)'
+fill "protected-paths.sh's pattern"       .t-workflow/scripts/protected-paths.sh '^patterns=' \
+  "  'db/migrations/*'"
+fill "CONSTITUTION.md §4's stack rule"    CONSTITUTION.md '^## 4. Stack' \
+  '- The application is a Python service under `src/`; no other language is added without a decision in `docs/adr/`.'
+fill "AGENTS.md's local-skill row"        AGENTS.md '^## The pipeline' \
+  '| Skill | Stage |' '|---|---|' '| `/l-deploy` | Deploys the fixture app to its staging host. |'
+mkdir -p "$filled/.claude/skills/l-deploy"
+printf -- '---\nname: l-deploy\ndescription: Deploys the fixture app to its staging host.\n---\n\nFixture-local skill.\n' > "$filled/.claude/skills/l-deploy/SKILL.md"
+fill "AGENTS.md's reviewer model"         AGENTS.md '^## Reviewer model' \
+  'Default reviewer model: claude-sonnet-5'
+fill "AGENTS.md §Checks item 1"           AGENTS.md '^## Checks$' \
+  '1. `make test` — the fixture'"'"'s build/test command.'
+fill "AGENTS.md's documentation-only glob" AGENTS.md '^### Documentation-only paths' \
+  '- `site/**` — the fixture'"'"'s static site'
+fill "AGENTS.md's project notes"          AGENTS.md '^## Project notes' \
+  'Fixture team notes: FILLED-NOTES-MARKER.'
+fill "ci.yml's trunk line"                .github/workflows/ci.yml '^  push:' \
+  '    branches: [main, release/*]'
+fill "ci.yml's timeout"                   .github/workflows/ci.yml '^    runs-on:' \
+  '    timeout-minutes: 20'
+fill "ci.yml's trailing build step"       .github/workflows/ci.yml 'writes that exact shape' \
+  '      - name: Project checks' \
+  '        if: "!cancelled() && steps.docs-only.outputs.docs_only != '"'"'true'"'"'"' \
+  '        run: make test'
+fill "review-gate.yml's timeout"          .github/workflows/review-gate.yml '^    runs-on:' \
+  '    timeout-minutes: 20'
+fill ".gitignore's entries"               .gitignore '^# OS$' \
+  'fixture-build-cache/'
+printf 'fixture-build\n' > "$filled/.t-workflow/required-checks.local"
+ok "writes .t-workflow/required-checks.local"
+mkdir -p "$filled/site" && printf '<html></html>\n' > "$filled/site/index.html"
+git -C "$filled" add -A && git -C "$filled" commit --quiet -m "fill every local slot" || bad "commits the filled consumer"
+
+# Every fill landed inside a slot and nowhere else: the manifest hash ignores slot
+# content, so each filled file must hash exactly as the untouched generated one.
+for f in CONSTITUTION.md AGENTS.md .github/workflows/ci.yml .github/workflows/review-gate.yml \
+         .gitignore .t-workflow/scripts/protected-paths.sh; do
+  if [ "$(bash "$filled/.t-workflow/scripts/check-manifest.sh" --hash-file "$filled/$f")" = \
+       "$(bash "$demo/.t-workflow/scripts/check-manifest.sh" --hash-file "$demo/$f")" ]; then
+    ok "$f: the filled file hashes the same as the generated one (no drift)"
+  else
+    bad "$f: the filled file hashes the same as the generated one (a fill landed outside its slot)"
+  fi
+done
+
+# The consumer's check set, exactly as its own CI runs it.
+run_in_filled() { # run_in_filled <description> <command...> — the command runs from the filled tree; output shown on failure
+  local desc="$1"; shift
+  local out
+  if out=$(cd "$filled" && "$@" 2>&1); then ok "$desc"; else bad "$desc"; printf '%s\n' "$out" | grep -E 'FAIL|passed|err' | sed 's/^/    /'; fi
+}
+run_in_filled "plumbing-test.sh passes with every slot filled"      ./.t-workflow/scripts/plumbing-test.sh
+run_in_filled "consistency-check.sh passes with every slot filled"  ./.t-workflow/scripts/consistency-check.sh
+check "docs-only.sh --list includes the slot's glob" \
+  bash -c 'cd "$1" && ./.t-workflow/scripts/docs-only.sh --list | grep -qxF "site/**"' _ "$filled"
+check "docs-only.sh judges site/index.html as documentation" \
+  bash -c 'cd "$1" && ./.t-workflow/scripts/docs-only.sh site/index.html' _ "$filled"
+check "required-checks.sh --list includes the local context" \
+  bash -c 'cd "$1" && ./.t-workflow/scripts/required-checks.sh --list | grep -qxF fixture-build' _ "$filled"
+check "protected-paths.sh protects the slot's pattern" \
+  bash "$filled/.t-workflow/scripts/protected-paths.sh" db/migrations/V1__init.sql
+check "the local skill row resolves" \
+  test -f "$filled/.claude/skills/l-deploy/SKILL.md"
+check "ci.yml still parses as YAML" \
+  python3 -c 'import sys, yaml; yaml.safe_load(open(sys.argv[1]))' "$filled/.github/workflows/ci.yml"
+check "review-gate.yml still parses as YAML" \
+  python3 -c 'import sys, yaml; yaml.safe_load(open(sys.argv[1]))' "$filled/.github/workflows/review-gate.yml"
+echo
+
 # --- 8. the closing message says the two things it must ----------------------
 echo "closing message"
 case "$run_out" in *"No LICENSE file was created"*) ok "states that no LICENSE was created" ;;
@@ -430,6 +547,14 @@ check "README.md was never touched" \
   grep -q "fixture consumer repo" "$happy/README.md"
 check "installer/ itself was not copied into the consumer" \
   test ! -e "$happy/installer"
+# adopt.sh filled this consumer's slots for real (build command, project notes, the
+# consumer's own .gitignore entries, a legacy ci.yml renamed) — so the template's own
+# test script must pass here too, the same as in section 7c's hand-filled consumer.
+if out=$(cd "$happy" && ./.t-workflow/scripts/plumbing-test.sh 2>&1); then
+  ok "plumbing-test.sh passes inside the adopted consumer"
+else
+  bad "plumbing-test.sh passes inside the adopted consumer"; printf '%s\n' "$out" | grep -E 'FAIL|passed' | sed 's/^/    /'
+fi
 echo
 
 # --- 12. refusals: each writes nothing and never reaches the tracker ------------------

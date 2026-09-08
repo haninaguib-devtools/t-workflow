@@ -130,6 +130,15 @@ closing paragraph about `ci.yml` is worded that way for the same reason). A temp
 task that adds or edits such a sentence picks one of the two in the same task, and a
 reviewer treats an unmarked consumer-state sentence as a finding.
 
+**This inventory has an executable guard**: `installer/test.sh`'s "every slot filled"
+section copies a freshly generated project, fills each slot listed above with real
+content (by the template text around it, never by ordinal), and runs the consumer's
+own check set — `plumbing-test.sh`, `consistency-check.sh`, `docs-only.sh`,
+`required-checks.sh`, `protected-paths.sh`, both workflow files parsed — inside that
+tree, in this repo's own CI. A template change that would fail in a consumer with a
+filled slot fails there first, before any tag exists (#189). A task that adds a slot
+adds its fill to that section in the same task.
+
 ## The required-checks file
 
 One per-repo customization is a **separate consumer-owned file** rather than a marked
