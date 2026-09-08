@@ -91,8 +91,8 @@ blocks nothing, because nothing on the forge yet requires it to pass.
 - `CONSTITUTION.md` §3's genesis paragraph gains one sentence pointing at adoption as
   ordinary work through `installer/adopt.sh`, changing neither the exception's own
   wording nor its stated end-point.
-- `README.md` gains a §Adopting an existing repository section describing the command,
-  what it merges and refuses, the plan-and-review-from-the-branch step, and
+- `README.md` gains an "Adopting an existing repository" section describing the
+  command, what it merges and refuses, the plan-and-review-from-the-branch step, and
   `github-bootstrap.sh` as the confirmed post-merge step.
 - `AGENTS.md` §Conventions' first bullet names `installer/adopt.sh`, run on the
   adoption task's own branch, as that task's work stage, the same way `/t-update`'s own

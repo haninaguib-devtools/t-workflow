@@ -60,6 +60,25 @@ none
   `--build-command`, `--dry-run`, `-h`/`--help` (agent, 2026-09-08).
 
 ## Deviations / notes
+- **Fix pass (agent, 2026-09-08), addressing `/t-review`'s one blocker finding on
+  PR #180.** The first commit's `CONSTITUTION.md` sentence and the matching
+  `docs/adr/011-*.md` Consequences bullet cited `` `README.md` §Adopting an existing
+  repository `` as a named-section reference. Both files are template-owned and ship
+  into every generated and adopted project; `consistency-check.sh`'s named-section
+  check (§2b) resolves that citation against the *destination* project's own
+  `README.md` — which is `installer/templates/README.md` for a generated project and
+  a consumer's own untouched file for an adopted one, neither of which carries an
+  "Adopting an existing repository" heading (out of this task's own Non-goals to add
+  to the former; adoption never touches the latter). `installer/test.sh` confirmed
+  this concretely: 2 of 96 assertions failed (both `consistency-check.sh` runs, one
+  inside the generated-project fixture, one inside the adopted fixture), matching the
+  red `installer` CI job the reviewer found on PR #180. Fixed by rewording both
+  citations to drop the `§`-prefixed named-section pattern — `` `installer/adopt.sh`,
+  `README.md`'s own adoption instructions `` in `CONSTITUTION.md`, and a plain quoted
+  phrase (no `§`) in the ADR — which keeps the same pointer without asserting a
+  section heading that only exists in this template repository's own `README.md`.
+  Re-ran `./.t-workflow/scripts/consistency-check.sh` (PASS) and `bash
+  installer/test.sh` (96 passed, 0 failed) after the fix.
 - **The flagged `README.md` §Bootstrapping gap is not resolved by this task, and
   cannot be resolved naturally within its scope.** #172's own record and its
   independent reviewer both flagged that `CONSTITUTION.md` cites `README.md
