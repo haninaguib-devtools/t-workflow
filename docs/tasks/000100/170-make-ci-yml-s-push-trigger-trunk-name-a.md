@@ -71,7 +71,28 @@ none
   2026-09-08).
 
 ## Deviations / notes
-none — implemented within the Plan's Allowed paths and Scope, no scope changes needed.
+- The predicted collision materialized: sibling task #169 merged its own
+  `docs/architecture/local-slots.md` edit (the `AGENTS.md` §Project notes slot,
+  "Nine places" → "Ten") into `wip/168-integration` after this branch was cut,
+  and the independent review's own low finding, before this happened. GitHub then
+  reported PR #177 as `mergeStateStatus: DIRTY` / `mergeable: CONFLICTING` against
+  `wip/168-integration`. Resolved by fetching `origin` and merging (not rebasing —
+  this branch was already pushed and reviewed) `origin/wip/168-integration` into
+  `wip/170-make-ci-yml-s-push-trigger-trunk-name-a` (merge commit `392aaf0`). The
+  only real conflict was `docs/architecture/local-slots.md`'s opening paragraph and
+  placeholder list, where both siblings had independently written "Nine"→"Ten" for
+  their own one new slot. Resolved by reading `origin/wip/168-integration`'s own
+  post-#169 content first, then adding this task's ci.yml trunk-name slot on top of
+  it rather than reintroducing #169's slot a second time — both new slots (the
+  `AGENTS.md` §Project notes slot and `ci.yml`'s `push:`-trigger trunk-name slot)
+  are now listed, and the count correctly reads **eleven**, not ten. `AGENTS.md`
+  and the new `docs/tasks/000100/169-add-a-project-notes-local-slot-to-agents.md`
+  record came along automatically as part of the merge — neither was hand-edited by
+  this task. Re-ran `./installer/test.sh` (46 passed, 0 failed) and
+  `./.t-workflow/scripts/consistency-check.sh` (passed) after the resolution; both
+  still pass. Re-verified `.github/workflows/ci.yml`'s manifest hash is unchanged
+  by the merge (`35c3c8c29f9b8cd85085f9d3ddb9923fb04542a94ba8fe282079bb9e0c66ff50`,
+  same as before — #169 never touched `ci.yml`) (agent, 2026-09-08).
 
 ## Checks demonstrated
 - `./.t-workflow/scripts/check-manifest.sh --hash-file .github/workflows/ci.yml` before
