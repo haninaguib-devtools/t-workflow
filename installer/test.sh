@@ -355,7 +355,7 @@ happy_log="$work/happy-gh.log"; rm -f "$happy_log"
 happy_out=$(cd "$happy" && \
   PATH="$fakebin:$PATH" FAKE_GH_TRUNK=main FAKE_GH_LOG="$happy_log" FAKE_GH_ISSUE_NUM=501 \
   bash "$root/installer/adopt.sh" --ref "$adopt_tag" --source "$srcrepo" \
-       --template example/adopted-fixture 2>&1); happy_rc=$?
+       --template example/adopted-fixture --build-command 'make fixture-test' 2>&1); happy_rc=$?
 if [ "$happy_rc" -eq 0 ]; then
   ok "exits 0"
 else
@@ -396,6 +396,34 @@ check "ci.yml is now the template's own" \
   grep -q "consistency-check.sh" "$happy/.github/workflows/ci.yml"
 check "the consumer's own ADR is untouched" \
   test -f "$happy/docs/adr/100-a-fixture-local-decision.md"
+
+# AGENTS.md's marker pairs are addressed by ordinal in adopt.sh (splice_local_slot),
+# so each piece of consumer content must land in the slot whose heading names it —
+# #183 added a fourth pair under ## Checks and moved project notes to the fifth.
+echo "  each AGENTS.md slot holds its own kind of content"
+agents_section() { # agents_section <file> <heading-regex> <stop-regex> — the section's text up to the next line matching <stop-regex>
+  awk -v h="$2" -v stop="$3" '$0 ~ h { f = 1; next } $0 ~ stop { f = 0 } f' "$1"
+}
+export -f agents_section   # the checks below call it from `bash -c` subshells
+h2='^## '      # stop at the next h2 — harvested notes carry their own "### From <file>" h3 headings
+h2h3='^##'     # stop at the next h2 or h3
+export h2 h2h3  # read inside the same `bash -c` subshells
+check "the build command landed in §Checks item 1" \
+  bash -c 'agents_section "$1" "^## Checks$" "$h2h3" | grep -q "1\. \`make fixture-test\`"' _ "$happy/AGENTS.md"
+check "the harvested CLAUDE.md landed under §Project notes" \
+  bash -c 'agents_section "$1" "^## Project notes$" "$h2" | grep -q CLAUDE-MD-FIXTURE-MARKER' _ "$happy/AGENTS.md"
+check "the documentation-only slot still holds the template placeholder" \
+  bash -c 'agents_section "$1" "^### Documentation-only paths$" "$h2h3" | grep -q "reserved: this project.s own documentation-only paths"' _ "$happy/AGENTS.md"
+check "the documentation-only slot holds no harvested notes" \
+  bash -c '! agents_section "$1" "^### Documentation-only paths$" "$h2h3" | grep -q CLAUDE-MD-FIXTURE-MARKER' _ "$happy/AGENTS.md"
+check "docs-only.sh --list in the adopted repo prints the defaults" \
+  bash -c 'cd "$1" && [ "$(./.t-workflow/scripts/docs-only.sh --list)" = "$(printf "*.md\ndocs/**")" ]' _ "$happy"
+check "the Project checks step carries the documentation-only guard" \
+  bash -c 'grep -A1 "name: Project checks" "$1" | grep -q "steps.docs-only.outputs.docs_only != '"'"'true'"'"'"' _ "$happy/.github/workflows/ci.yml"
+check "the Project checks step runs the build command" \
+  grep -q "run: make fixture-test" "$happy/.github/workflows/ci.yml"
+check "ci.yml still parses as YAML" \
+  python3 -c 'import sys, yaml; yaml.safe_load(open(sys.argv[1]))' "$happy/.github/workflows/ci.yml"
 check "the fixture app file is untouched" \
   test -f "$happy/src/app.py"
 check "README.md was never touched" \

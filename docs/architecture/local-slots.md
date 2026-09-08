@@ -2,10 +2,12 @@
 
 **Status:** binding convention.
 
-Eleven places across the pipeline's own files are per-repo **by design**, not
+Twelve places across the pipeline's own files are per-repo **by design**, not
 template-owned: `CONSTITUTION.md` §4 (stack & architecture), `CONSTITUTION.md` §3's own
 protected-path bullet list (a consumer's own protected-path bullets), `AGENTS.md`
-§Checks item 1 (the build/test check command), `AGENTS.md` §The pipeline's slot after
+§Checks item 1 (the build/test check command), `AGENTS.md` §Checks' documentation-only
+paths list (a consumer's own extra documentation globs, read by
+`.t-workflow/scripts/docs-only.sh` in addition to its defaults), `AGENTS.md` §The pipeline's slot after
 the `t-*` table (consumer-local skill rows), `AGENTS.md` §Reviewer model (the default
 model `/t-review`'s subagent reviewer runs under), `AGENTS.md` §Project notes (a
 consumer's own session-start instructions), three spots in
@@ -44,13 +46,24 @@ parses the same with or without a consumer's own content inside its slot.
 an optional `#` for exactly this reason — a bare marker and a commented, indented one
 strip the same way.
 
+**A slot is found by the template text around it, never by counting pairs** — every
+reader in the pipeline (`check-manifest.sh`, `consistency-check.sh`'s skill-row check,
+`docs-only.sh`) scopes to a heading or strips regions generically, so a file may gain a
+slot without the others moving. The one exception is `installer/adopt.sh`'s
+`splice_local_slot`, which addresses a pair by its ordinal position in the file; a task
+that adds a pair to a file `adopt.sh` writes (`AGENTS.md`'s pairs are, in order: skill
+rows, reviewer model, §Checks item 1, §Checks documentation-only paths, project notes)
+updates those ordinals in the same task, as #183 did when the fourth pair was added.
+
 This repo, being itself at Phase 0, keeps the neutral placeholder inside every marker
 today: `(reserved: stack and architecture constraints — …)` in `CONSTITUTION.md` §4,
 `(reserved: this consumer's own protected-path bullets — …)` in `CONSTITUTION.md` §3, an
 empty region (comments only) in `protected-paths.sh`'s `patterns` array, `(none yet — no
 stack exists.)` in `AGENTS.md` §Checks item 1, `(reserved: consumer-local
 skills — …)` in `AGENTS.md` §The pipeline's skill-row slot, `(none — reviews inherit the
-invoking session's model)` in `AGENTS.md` §Reviewer model, `(reserved: this consumer's
+invoking session's model)` in `AGENTS.md` §Reviewer model, `(reserved: this project's
+own documentation-only paths — …)` in `AGENTS.md` §Checks' documentation-only slot,
+`(reserved: this consumer's
 own session-start instructions — …; none exist yet.)` in `AGENTS.md` §Project notes, the
 template's own trunk name `branches: [main]` on `ci.yml`'s `push:` trigger, the
 template's own default `timeout-minutes: 10` in `ci.yml`, an empty region at the end of
@@ -58,6 +71,7 @@ template's own default `timeout-minutes: 10` in `ci.yml`, an empty region at the
 `review-gate.yml`, and an empty region at the end of `.gitignore`. A consumer repo
 replaces each placeholder with its own real content once it adopts — its own stack
 rule, its own protected-path bullets and patterns, its own build/test command, its own
+extra documentation paths, its own
 table of local skill rows, its own default reviewer model, its own session-start
 instructions, its own trunk branch name, its own CI timeout, its own trailing
 build/manifest-check steps
@@ -73,10 +87,12 @@ placed following a short template-owned sentence pointing at it instead. The tem
 table itself — the `t-*` rows — stays outside any marker and template-owned, the same
 as every other row-based content in these files.
 
-**Why only item 1 of §Checks is marked, not the whole section**: items 2 and 3
-(`./.t-workflow/scripts/consistency-check.sh`, the scope-diff review) and the CI-wiring sentence
-that follows are pipeline machinery every consumer shares — they belong outside the
-marker, so a sync always brings consumers current on them. The same reasoning bounds
+**Why only two regions of §Checks are marked, not the whole section**: item 1 (the
+build/test command) and the documentation-only paths list are the consumer's own; items
+2 and 3 (`./.t-workflow/scripts/consistency-check.sh`, the scope-diff review), the
+documentation-only rule itself (ADR-012) with its default set, and the CI-wiring
+sentence that follows are pipeline machinery every consumer shares — they belong
+outside the markers, so a sync always brings consumers current on them. The same reasoning bounds
 `ci.yml`'s and `review-gate.yml`'s slots: only the lines/regions a consumer actually
 customizes are inside markers — every gate step, and the explanatory comments around
 them, is pipeline machinery every consumer shares and stays outside, so a sync always

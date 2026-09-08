@@ -118,7 +118,9 @@ Two things this installer cannot know, left for you to fill in:
                        each one ratified by an ADR in docs/adr/.
   2. AGENTS.md         section Checks — your build/test command. That section is
                        the only place the workflow reads it from; add the same
-                       command to .github/workflows/ci.yml as a third job.
+                       command to .github/workflows/ci.yml as a step in the checks
+                       job's trailing local slot, guarded as that slot's comment
+                       shows so a documentation-only change skips it.
 
 No LICENSE file was created. A project with no licence is "all rights reserved" by
 default, which is the safe place to start — add the one you want before publishing.

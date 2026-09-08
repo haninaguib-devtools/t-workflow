@@ -28,7 +28,9 @@ ordinary pipeline work like anything else:
    it says.
 2. **`AGENTS.md` §Checks** — the project's build and test command. That section is the
    only place the workflow reads it from. Name it there first, then add the same command
-   to `.github/workflows/ci.yml` as a third job alongside `consistency` and `record`.
+   to `.github/workflows/ci.yml` as a step inside the `checks` job's trailing local
+   slot, guarded so a documentation-only change skips it — the slot's own comment shows
+   the exact shape, and `AGENTS.md` §Checks states the rule.
 
 The installer does not create a remote repository. Create one and apply the settings:
 

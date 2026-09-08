@@ -160,6 +160,16 @@ implementation before editing files.
    each check's exact command and result — step 5 records the ones tagged `either` (or,
    with no plan, this whole set) as this commit's provenance for `/t-review` to reuse,
    sparing it from running the same command again on an unchanged tree.
+
+   **Check 1 follows `AGENTS.md` §Checks' documentation-only rule (ADR-012).** Before
+   running it, pipe the whole task diff — `git -c core.quotePath=false diff --name-only
+   <trunk>...HEAD`, never this pass's own delta — through
+   `bash .t-workflow/scripts/docs-only.sh --stdin`. Exit **0** → do not run check 1;
+   write `check 1 skipped: documentation-only diff` into the record's Deviations / notes,
+   and step 5 lists that same line in `## Checks run` in place of the command. Exit **1**
+   (the non-documentation paths are echoed) or **2** (nothing was checked) → run check 1
+   exactly as before. Where item 1 names no command yet, there is nothing to run or skip
+   — say so plainly, as that item already asks.
 2. **Read your own diff** (`git diff <trunk>...HEAD`, `<trunk>` from
    `.t-workflow/scripts/trunk-ref.sh`) for scope drift, unintended deletions, and
    leftover scratch; remove what does not belong. **An edit here invalidates step 1's
@@ -216,7 +226,11 @@ implementation before editing files.
    actual results, and what remains open. **Include a `## Checks run` section**, one line per check that is a candidate
    for `/t-review` to reuse — tagged `either` in the plan, or (no plan) named in
    `AGENTS.md` §Checks — each exactly `- \`<command>\` — <PASS/FAIL> — commit \`<sha>\``,
-   `<sha>` being `git rev-parse HEAD` for the commit step 4 just made. A check tagged
+   `<sha>` being `git rev-parse HEAD` for the commit step 4 just made. A check 1 the
+   documentation-only rule skipped (step 1) is listed as exactly
+   `- \`check 1 skipped: documentation-only diff\` — commit \`<sha>\`` — a claim
+   `/t-review` confirms by re-running `docs-only.sh` on the same diff, never one it
+   takes on trust. A check tagged
    `implementation`-only is never listed here — `/t-review` was never going to run it
    itself, so there is nothing for it to reuse.
 6. **Stop and report.** Nothing chains from here (ADR-001). Say what the change does in
@@ -232,7 +246,9 @@ Address **only** the named blocker and high findings. Anything else found is rep
 not acted on: describe it as a further finding, or as an issue you recommend the human
 open — never open one yourself (AGENTS.md §Conventions). Medium/low findings are fixed
 only when the human asks by number. Append what each change answers to the record's
-Deviations / notes, re-run the checks the findings falsify, apply Phase 3 step 2's
+Deviations / notes, re-run the checks the findings falsify — re-deciding check 1's
+documentation-only skip over the whole `<trunk>...HEAD` diff (Phase 3 step 1): a fix
+that adds a non-documentation file un-skips it — apply Phase 3 step 2's
 verification-invalidation judgment to this pass's own diff, and push to the same branch
 and PR. **Rewrite the PR body's `## Checks run` section wholesale** (never append — the
 same replace-not-append rule `/t-plan` uses for `## Plan`), listing only the checks this
@@ -283,7 +299,8 @@ opening one under a different path than Phase 3 already does.
      own classification.
 3. **Proceed through Phase 2 and Phase 3 exactly as Fix mode already does** for every
    `defect`/`in-scope adjustment` item this pass addresses: same branch, same draft PR,
-   re-run the checks the changes falsify, apply Phase 3 step 2's verification-
+   re-run the checks the changes falsify (check 1's documentation-only skip re-decided
+   over the whole `<trunk>...HEAD` diff, exactly as Fix mode does), apply Phase 3 step 2's verification-
    invalidation judgment to this pass's own diff (unchanged — any new commit already
    trips it), and rely on `check-review-gate.sh`'s existing timestamp comparison to
    invalidate a now-stale review (also unchanged — no new invalidation mechanism is

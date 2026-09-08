@@ -114,7 +114,8 @@ done
 # A consumer's own local-skill rows (docs/architecture/local-slots.md) get the same
 # staleness check as the /t-* rows above: a stale row with no matching directory fails
 # the same way. Scoped to the "## The pipeline" section specifically — AGENTS.md carries
-# a second, unrelated <!-- local --> pair under "## Checks" that this must not read from.
+# further, unrelated <!-- local --> pairs (two under "## Checks", one under "## Project
+# notes") that this must not read from.
 pipeline_section=$(awk '/^## The pipeline/{f=1;next} /^## /{f=0} f' AGENTS.md)
 for s in $(printf '%s\n' "$pipeline_section" \
              | awk '/^<!-- local -->$/{f=1;next} /^<!-- \/local -->$/{f=0} f' \
