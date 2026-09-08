@@ -2,12 +2,13 @@
 
 **Status:** binding convention.
 
-Ten places across the pipeline's own files are per-repo **by design**, not
+Eleven places across the pipeline's own files are per-repo **by design**, not
 template-owned: `CONSTITUTION.md` §4 (stack & architecture), `CONSTITUTION.md` §3's own
 protected-path bullet list (a consumer's own protected-path bullets), `AGENTS.md`
 §Checks item 1 (the build/test check command), `AGENTS.md` §The pipeline's slot after
 the `t-*` table (consumer-local skill rows), `AGENTS.md` §Reviewer model (the default
-model `/t-review`'s subagent reviewer runs under), three spots in
+model `/t-review`'s subagent reviewer runs under), `AGENTS.md` §Project notes (a
+consumer's own session-start instructions), three spots in
 `.github/workflows/ci.yml` — its `on:` `push:` trigger's `branches:` line (the trunk
 branch name a workflow trigger can't resolve at run time, unlike a skill or script),
 the `checks` job's `timeout-minutes` value, and an extension point at the end of its
@@ -49,15 +50,17 @@ today: `(reserved: stack and architecture constraints — …)` in `CONSTITUTION
 empty region (comments only) in `protected-paths.sh`'s `patterns` array, `(none yet — no
 stack exists.)` in `AGENTS.md` §Checks item 1, `(reserved: consumer-local
 skills — …)` in `AGENTS.md` §The pipeline's skill-row slot, `(none — reviews inherit the
-invoking session's model)` in `AGENTS.md` §Reviewer model, the template's own trunk
-name `branches: [main]` on `ci.yml`'s `push:` trigger, the template's own default
-`timeout-minutes: 10` in `ci.yml`, an empty region at the end of `ci.yml`'s `steps:`
-list, the template's own default `timeout-minutes: 10` in `review-gate.yml`, and an
-empty region at the end of `.gitignore`. A consumer repo replaces each
-placeholder with its own real content once it adopts — its own stack rule, its own
-protected-path bullets and patterns, its own build/test command, its own table of local
-skill rows, its own default reviewer model, its own trunk branch name, its own CI
-timeout, its own trailing build/manifest-check steps
+invoking session's model)` in `AGENTS.md` §Reviewer model, `(reserved: this consumer's
+own session-start instructions — …; none exist yet.)` in `AGENTS.md` §Project notes, the
+template's own trunk name `branches: [main]` on `ci.yml`'s `push:` trigger, the
+template's own default `timeout-minutes: 10` in `ci.yml`, an empty region at the end of
+`ci.yml`'s `steps:` list, the template's own default `timeout-minutes: 10` in
+`review-gate.yml`, and an empty region at the end of `.gitignore`. A consumer repo
+replaces each placeholder with its own real content once it adopts — its own stack
+rule, its own protected-path bullets and patterns, its own build/test command, its own
+table of local skill rows, its own default reviewer model, its own session-start
+instructions, its own trunk branch name, its own CI timeout, its own trailing
+build/manifest-check steps
 (`docs/architecture/manifest.md` §The CI lock), its own review-gate timeout, its own
 ignore entries — and a later template sync leaves that content alone.
 
