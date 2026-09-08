@@ -1,9 +1,8 @@
 # Migrations
 
-**Status:** binding convention. No migration files exist yet — the first is written
-when the first breaking change to a template-owned file actually happens (issue #20's
-own Non-goals); this page fixes the shape in advance so that first one has somewhere
-to land.
+**Status:** binding convention. This page fixed the shape in advance of the first
+migration (issue #20's own Non-goals); `migrations/` now holds the ones written since,
+one per breaking change to a template-owned file.
 
 A migration exists only for a **breaking** template change — one where copying the new
 file over the old one and re-applying local slots (the ordinary `t-update` sync,
