@@ -1094,110 +1094,181 @@ expect_rc "no arguments is a usage error" \
   2 "$com"
 echo
 
-# --- 23. .t-workflow/scripts/docs-only.sh (issue #183) -----------------------------------
+# --- 23. .t-workflow/scripts/docs-only.sh (issues #183, #185) ----------------------------
 # The executable form of AGENTS.md §Checks' documentation-only rule (ADR-012): exit 0
 # when every changed path is documentation (check 1 may be skipped), 1 when any is not
 # (echoed — that is why the build runs), 2 when nothing was checked. The set is *.md
 # anywhere plus docs/**, widened only by the globs in AGENTS.md's documentation-only
 # slot, which the script finds by heading, never by counting marker pairs.
+#
+# Nothing in this section reads the live AGENTS.md (#185). This script is template-owned
+# and runs unconditionally in every consumer's CI, and a consumer fills the slot — that
+# is what it is for — so an assertion about "the empty slot" made against the running
+# repo's own file would fail in exactly the repos the rule serves (locklane#835). Every
+# assertion below runs against a fixture copy whose slot the test itself set: reset to
+# the neutral placeholder first, then filled with precisely the content the case needs.
+# The whole assertion set is one function, run twice — once on this repo, once on a copy
+# whose slot already carries `site/**` — so the consumer case can never drift from the
+# template one.
 echo "docs-only.sh"
 dos=.t-workflow/scripts/docs-only.sh
 
-expect_rc "no paths at all → 2 (nothing was checked)" 2 "$dos"
-expect_rc "empty stdin → 2 (nothing was checked)" 2 bash -c ': | "$1" --stdin' _ "$dos"
-expect_rc "Markdown + docs/ + a task record → 0 (documentation-only)" \
-  0 bash -c 'printf "docs/adr/012-x.md\nREADME.md\ndocs/tasks/000100/183-x.md\n" | "$1" --stdin' _ "$dos"
-expect_rc "a non-.md file under docs/ is still documentation → 0" \
-  0 "$dos" docs/architecture/diagram.svg
-expect_rc "AGENTS.md and a SKILL.md are *.md → 0 (no build reads them)" \
-  0 "$dos" ./AGENTS.md .claude/skills/t-work/SKILL.md
-for bad_path in src/A.java .t-workflow/scripts/x.sh .github/workflows/ci.yml .template-manifest.json \
-                package.json Makefile site/index.html; do
-  expect_rc "docs plus $bad_path → 1 (not documentation-only)" \
-    1 bash -c 'printf "docs/adr/012-x.md\n%s\n" "$2" | "$1" --stdin' _ "$dos" "$bad_path"
-done
-out=$(printf 'docs/adr/012-x.md\nsrc/A.java\nREADME.md\n.t-workflow/scripts/x.sh\n' | "$dos" --stdin)
-if [ "$out" = "$(printf 'src/A.java\n.t-workflow/scripts/x.sh')" ]; then
-  ok "exit 1 echoes exactly the non-documentation paths, in order"
-else
-  bad "exit 1 echoes exactly the non-documentation paths, in order (got: $out)"
-fi
-expect_rc "a git-quoted non-ASCII .md path is un-quoted and judged documentation → 0" \
-  0 bash -c 'printf "%s\n" "\"docs/adr/002-caf\\303\\251.md\"" | "$1" --stdin' _ "$dos"
-expect_rc "a leading ./ is normalized away → 1 for ./src/A.java" 1 "$dos" ./src/A.java
-
-# --list prints the defaults, and only the defaults, in this repo (empty slot).
-if [ "$("$dos" --list)" = "$(printf '*.md\ndocs/**')" ]; then
-  ok "--list prints exactly the two defaults in this repo (empty slot)"
-else
-  bad "--list prints exactly the two defaults in this repo (got: $("$dos" --list))"
-fi
-
-# The AGENTS.md slot widens the set. The script resolves AGENTS.md from its own location,
-# so exercise it in a fixture copy of the repo whose slot carries a glob — and one whose
-# slot carries a bullet that is not backticked, which must be ignored, and one whose
-# AGENTS.md predates the heading entirely, which must fall back to the defaults.
-insert_docs_only_glob() {
-  # $1 = AGENTS.md path, $2 = bullet line to insert into the documentation-only slot
-  awk -v row="$2" '
-    /^### Documentation-only paths/ { insec=1 }
-    /^## / { insec=0 }
-    { print }
-    insec && /^<!-- local -->$/ && !inserted { print row; inserted=1 }
-  ' "$1" > "$1.new" && mv "$1.new" "$1"
+copy_tree() {
+  # $1 = source directory, $2 = destination. Unlike make_fixture_repo (git ls-files of
+  # $root), this copies any directory, so a fixture can itself be the source of a fixture.
+  mkdir -p "$2"
+  tar -C "$1" -cf - . | tar -xf - -C "$2"
 }
-fixture_dos="$work/fixture-docs-only"
-make_fixture_repo "$fixture_dos"
-insert_docs_only_glob "$fixture_dos/AGENTS.md" '- `site/**` — the project site'
-if [ "$("$fixture_dos/$dos" --list)" = "$(printf '*.md\ndocs/**\nsite/**')" ]; then
-  ok "--list includes a glob from the slot after the defaults"
+docs_only_slot_awk='
+  # Rewrites the documentation-only slot of an AGENTS.md: scoped to its heading exactly
+  # as docs-only.sh'"'"'s slot_globs is (never by marker ordinal), the region between
+  # the markers is replaced by `content` — the placeholder, one bullet, or nothing.
+  /^### Documentation-only paths/ { insec=1 }
+  /^## / { insec=0 }
+  insec && /^<!-- local -->$/ { print; printf "%s", content; skip=1; next }
+  insec && /^<!-- \/local -->$/ { skip=0 }
+  !skip { print }
+'
+docs_only_placeholder=$'*(reserved: this project\'s own documentation-only paths — one bullet per glob, in\nbackticks; none yet, the defaults alone are in force.)*\n'
+reset_docs_only_slot() {
+  # $1 = AGENTS.md path. Puts the template's neutral placeholder back into the slot,
+  # whatever a consumer had written there.
+  awk -v content="$docs_only_placeholder" "$docs_only_slot_awk" "$1" > "$1.new" && mv "$1.new" "$1"
+}
+insert_docs_only_glob() {
+  # $1 = AGENTS.md path, $2 = bullet line the slot should carry — and only that line:
+  # the placeholder (or whatever was there) is replaced, never appended to.
+  awk -v content="$2"$'\n' "$docs_only_slot_awk" "$1" > "$1.new" && mv "$1.new" "$1"
+}
+
+run_docs_only_section() {
+  # $1 = the tree to test (this repo, or a consumer-shaped copy), $2 = label for output.
+  local src="$1" label="$2"
+  local fx="$work/fixture-docs-only-$label"
+  echo "  [$label]"
+
+  # The "empty slot" fixture every plain assertion runs against.
+  copy_tree "$src" "$fx"
+  reset_docs_only_slot "$fx/AGENTS.md"
+  local d="$fx/$dos"
+  # The reset touched only the slot: the manifest hash ignores slot content, so the
+  # reset copy must hash the same as the source tree's own file, filled or not.
+  if [ "$(.t-workflow/scripts/check-manifest.sh --hash-file "$fx/AGENTS.md")" = \
+       "$(.t-workflow/scripts/check-manifest.sh --hash-file "$src/AGENTS.md")" ]; then
+    ok "the slot reset changes nothing outside the slot (same manifest hash as the source)"
+  else
+    bad "the slot reset changes nothing outside the slot (hash differs from the source)"
+  fi
+
+  expect_rc "no paths at all → 2 (nothing was checked)" 2 "$d"
+  expect_rc "empty stdin → 2 (nothing was checked)" 2 bash -c ': | "$1" --stdin' _ "$d"
+  expect_rc "Markdown + docs/ + a task record → 0 (documentation-only)" \
+    0 bash -c 'printf "docs/adr/012-x.md\nREADME.md\ndocs/tasks/000100/183-x.md\n" | "$1" --stdin' _ "$d"
+  expect_rc "a non-.md file under docs/ is still documentation → 0" \
+    0 "$d" docs/architecture/diagram.svg
+  expect_rc "AGENTS.md and a SKILL.md are *.md → 0 (no build reads them)" \
+    0 "$d" ./AGENTS.md .claude/skills/t-work/SKILL.md
+  local bad_path
+  for bad_path in src/A.java .t-workflow/scripts/x.sh .github/workflows/ci.yml .template-manifest.json \
+                  package.json Makefile site/index.html; do
+    expect_rc "docs plus $bad_path → 1 (not documentation-only)" \
+      1 bash -c 'printf "docs/adr/012-x.md\n%s\n" "$2" | "$1" --stdin' _ "$d" "$bad_path"
+  done
+  local out
+  out=$(printf 'docs/adr/012-x.md\nsrc/A.java\nREADME.md\n.t-workflow/scripts/x.sh\n' | "$d" --stdin)
+  if [ "$out" = "$(printf 'src/A.java\n.t-workflow/scripts/x.sh')" ]; then
+    ok "exit 1 echoes exactly the non-documentation paths, in order"
+  else
+    bad "exit 1 echoes exactly the non-documentation paths, in order (got: $out)"
+  fi
+  expect_rc "a git-quoted non-ASCII .md path is un-quoted and judged documentation → 0" \
+    0 bash -c 'printf "%s\n" "\"docs/adr/002-caf\\303\\251.md\"" | "$1" --stdin' _ "$d"
+  expect_rc "a leading ./ is normalized away → 1 for ./src/A.java" 1 "$d" ./src/A.java
+
+  # --list prints the defaults, and only the defaults, with the slot reset to the
+  # placeholder — whatever the source tree's own slot carried.
+  if [ "$("$d" --list)" = "$(printf '*.md\ndocs/**')" ]; then
+    ok "--list prints exactly the two defaults with the slot reset (empty slot)"
+  else
+    bad "--list prints exactly the two defaults with the slot reset (got: $("$d" --list))"
+  fi
+  expect_rc "with the slot reset, site/index.html is not documentation → 1" 1 "$d" site/index.html
+
+  # The AGENTS.md slot widens the set. The script resolves AGENTS.md from its own
+  # location, so exercise it in a further copy whose slot carries a glob — and one whose
+  # slot carries a bullet that is not backticked, which must be ignored, and one whose
+  # AGENTS.md predates the heading entirely, which must fall back to the defaults. Each
+  # is copied from the reset fixture, so the slot holds exactly what the case inserts.
+  local fx_glob="$fx-glob"
+  copy_tree "$fx" "$fx_glob"
+  insert_docs_only_glob "$fx_glob/AGENTS.md" '- `site/**` — the project site'
+  if [ "$("$fx_glob/$dos" --list)" = "$(printf '*.md\ndocs/**\nsite/**')" ]; then
+    ok "--list includes a glob from the slot after the defaults, exactly once"
+  else
+    bad "--list includes a glob from the slot after the defaults, exactly once (got: $("$fx_glob/$dos" --list))"
+  fi
+  expect_rc "with site/** in the slot, site/index.html is documentation → 0" \
+    0 "$fx_glob/$dos" site/index.html site/styles.css docs/x.md
+  expect_rc "the slot only adds: a script path is still not documentation → 1" \
+    1 "$fx_glob/$dos" site/index.html .t-workflow/scripts/x.sh
+
+  local fx_plain="$fx-plain"
+  copy_tree "$fx" "$fx_plain"
+  insert_docs_only_glob "$fx_plain/AGENTS.md" '- site/** (not backticked — ignored)'
+  if [ "$("$fx_plain/$dos" --list)" = "$(printf '*.md\ndocs/**')" ]; then
+    ok "a slot bullet without backticks is ignored"
+  else
+    bad "a slot bullet without backticks is ignored (got: $("$fx_plain/$dos" --list))"
+  fi
+
+  local fx_old="$fx-old"
+  copy_tree "$fx" "$fx_old"
+  awk '/^### Documentation-only paths/ { skip=1 } /^## Project notes/ { skip=0 } !skip' \
+    "$fx_old/AGENTS.md" > "$fx_old/AGENTS.md.new" && mv "$fx_old/AGENTS.md.new" "$fx_old/AGENTS.md"
+  if [ "$("$fx_old/$dos" --list)" = "$(printf '*.md\ndocs/**')" ]; then
+    ok "an AGENTS.md without the heading (a consumer not yet synced) falls back to the defaults"
+  else
+    bad "an AGENTS.md without the heading falls back to the defaults (got: $("$fx_old/$dos" --list))"
+  fi
+  expect_rc "…and still judges a documentation diff → 0" 0 "$fx_old/$dos" docs/x.md README.md
+
+  # The slot is a real slot: a consumer's globs inside it never register as manifest
+  # drift (the same round-trip #16 proves for CONSTITUTION.md / protected-paths.sh).
+  # Compared on the reset fixture against the glob fixture — both the test's own files.
+  local h_empty h_filled
+  h_empty=$(.t-workflow/scripts/check-manifest.sh --hash-file "$fx/AGENTS.md")
+  h_filled=$(.t-workflow/scripts/check-manifest.sh --hash-file "$fx_glob/AGENTS.md")
+  if [ "$h_empty" = "$h_filled" ]; then ok "AGENTS.md: a filled documentation-only slot hashes the same as the empty one"
+  else bad "AGENTS.md: a filled documentation-only slot hashes the same as the empty one (got $h_filled != $h_empty)"; fi
+
+  # The slot sits fourth of five pairs in AGENTS.md — the ordinal installer/adopt.sh's
+  # splice_local_slot now assumes for project notes (fifth). Pin the count and the
+  # order — on the fixture, whose structure is the template's (slots are content, not
+  # markers, so a consumer's fill never changes either).
+  local pairs order want
+  pairs=$(grep -c '^<!-- local -->$' "$fx/AGENTS.md")
+  [ "$pairs" -eq 5 ] && ok "AGENTS.md carries exactly five marker pairs" || bad "AGENTS.md carries exactly five marker pairs (got $pairs)"
+  order=$(awk '/^## |^### /{h=$0} /^<!-- local -->$/{print h}' "$fx/AGENTS.md" | paste -sd'|')
+  want='## The pipeline|## Reviewer model|## Checks|### Documentation-only paths|## Project notes'
+  [ "$order" = "$want" ] && ok "the pairs sit under: $want" || bad "the pairs sit under: $want (got: $order)"
+}
+
+# Once on this repo, exactly as before.
+run_docs_only_section "$root" "template"
+
+# And once on a consumer-shaped copy whose slot already carries `site/**` — the shape
+# locklane#835 hit. First prove the copy really is consumer-shaped (its own docs-only.sh
+# lists the glob), so the second run is known to be exercising a filled slot rather than
+# the same empty one twice; then the identical assertion set must pass against it.
+consumer="$work/consumer-docs-only"
+make_fixture_repo "$consumer"
+insert_docs_only_glob "$consumer/AGENTS.md" '- `site/**`'
+if [ "$("$consumer/$dos" --list)" = "$(printf '*.md\ndocs/**\nsite/**')" ]; then
+  ok "the consumer-shaped copy's own docs-only.sh lists site/** (the slot is really filled)"
 else
-  bad "--list includes a glob from the slot after the defaults (got: $("$fixture_dos/$dos" --list))"
+  bad "the consumer-shaped copy's own docs-only.sh lists site/** (got: $("$consumer/$dos" --list))"
 fi
-expect_rc "with site/** in the slot, site/index.html is documentation → 0" \
-  0 "$fixture_dos/$dos" site/index.html site/styles.css docs/x.md
-expect_rc "the slot only adds: a script path is still not documentation → 1" \
-  1 "$fixture_dos/$dos" site/index.html .t-workflow/scripts/x.sh
-expect_rc "without the slot entry (this repo), site/index.html is not documentation → 1" \
-  1 "$dos" site/index.html
-
-fixture_dos_plain="$work/fixture-docs-only-plain"
-make_fixture_repo "$fixture_dos_plain"
-insert_docs_only_glob "$fixture_dos_plain/AGENTS.md" '- site/** (not backticked — ignored)'
-if [ "$("$fixture_dos_plain/$dos" --list)" = "$(printf '*.md\ndocs/**')" ]; then
-  ok "a slot bullet without backticks is ignored"
-else
-  bad "a slot bullet without backticks is ignored (got: $("$fixture_dos_plain/$dos" --list))"
-fi
-
-fixture_dos_old="$work/fixture-docs-only-old"
-make_fixture_repo "$fixture_dos_old"
-awk '/^### Documentation-only paths/ { skip=1 } /^## Project notes/ { skip=0 } !skip' \
-  "$fixture_dos_old/AGENTS.md" > "$fixture_dos_old/AGENTS.md.new" && mv "$fixture_dos_old/AGENTS.md.new" "$fixture_dos_old/AGENTS.md"
-if [ "$("$fixture_dos_old/$dos" --list)" = "$(printf '*.md\ndocs/**')" ]; then
-  ok "an AGENTS.md without the heading (a consumer not yet synced) falls back to the defaults"
-else
-  bad "an AGENTS.md without the heading falls back to the defaults (got: $("$fixture_dos_old/$dos" --list))"
-fi
-expect_rc "…and still judges a documentation diff → 0" 0 "$fixture_dos_old/$dos" docs/x.md README.md
-
-# The new slot is a real slot: a consumer's globs inside it never register as manifest
-# drift (the same round-trip #16 proves for CONSTITUTION.md / protected-paths.sh).
-filled_agents="$work/AGENTS-docs-only-filled.md"
-cp AGENTS.md "$filled_agents"
-insert_docs_only_glob "$filled_agents" '- `site/**`'
-h_empty=$(.t-workflow/scripts/check-manifest.sh --hash-file AGENTS.md)
-h_filled=$(.t-workflow/scripts/check-manifest.sh --hash-file "$filled_agents")
-if [ "$h_empty" = "$h_filled" ]; then ok "AGENTS.md: a filled documentation-only slot hashes the same as the empty one"
-else bad "AGENTS.md: a filled documentation-only slot hashes the same as the empty one (got $h_filled != $h_empty)"; fi
-
-# The slot sits fourth of five pairs in AGENTS.md — the ordinal installer/adopt.sh's
-# splice_local_slot now assumes for project notes (fifth). Pin the count and the order.
-pairs=$(grep -c '^<!-- local -->$' AGENTS.md)
-[ "$pairs" -eq 5 ] && ok "AGENTS.md carries exactly five marker pairs" || bad "AGENTS.md carries exactly five marker pairs (got $pairs)"
-order=$(awk '/^## |^### /{h=$0} /^<!-- local -->$/{print h}' AGENTS.md | paste -sd'|')
-want='## The pipeline|## Reviewer model|## Checks|### Documentation-only paths|## Project notes'
-[ "$order" = "$want" ] && ok "the pairs sit under: $want" || bad "the pairs sit under: $want (got: $order)"
+run_docs_only_section "$consumer" "consumer"
 echo
 
 echo "$pass passed, $fail failed"
