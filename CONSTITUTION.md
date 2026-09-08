@@ -103,7 +103,10 @@ ends when that first commit is pushed** — one end-point, stated the same way i
 pipeline, including further edits to those same files. Running
 `.t-workflow/scripts/github-bootstrap.sh` is not such an edit — it changes settings on the forge and
 produces no diff — so it needs no task, before or after the push. The exception never
-covers a second round of "just this once".
+covers a second round of "just this once" — adopting t-workflow into a repository that
+already exists is such an ordinary task, not a second pass through this exception,
+run from its own branch like any other protected change (`README.md` §Adopting an
+existing repository) (ADR-011).
 
 The exception belongs to the repository being *created*, and covers only its own genesis.
 It never covers work on the tooling that creates one: in a repository that ships an

@@ -121,6 +121,52 @@ The installer only automates the steps below; nothing depends on having used it.
    protection, and re-run it after CI's first run on `main`.
 7. From then on every change goes through the pipeline, starting with `/t-open`.
 
+## Adopting an existing repository
+
+If you already have a repository — code, history, its own CI — and want the delivery
+pipeline without starting over, run the adoption script from a clean, up-to-date
+checkout of its trunk:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/haninaguib-devtools/t-workflow/main/installer/adopt.sh | bash
+```
+
+(or clone this repo and run `installer/adopt.sh` directly.) `--ref <tag>` pins the
+template release (a tag, never a branch — the manifest it writes pins one);
+`--source <url|path>` and `--template <owner/name>` point it at a template source
+other than this public repository; `--build-command <cmd>` fills `AGENTS.md` §Checks
+item 1 and adds the matching CI step, left as the template's own placeholder when
+omitted; `--dry-run` computes and prints the plan, then stops, writing nothing;
+`--help` lists all of it.
+
+It works out loud before writing a byte: it computes the whole plan first and prints
+it. What it merges automatically: a real `CLAUDE.md`/`AGENTS.md`/`GEMINI.md`/
+`.github/copilot-instructions.md` moves verbatim into `AGENTS.md`'s project-notes
+slot, becoming the template's own alias symlink; an existing `.gitignore` folds into
+the template file's own trailing slot; an existing `.github/workflows/ci.yml` is
+renamed so it keeps running unmodified, with folding its build step into the new
+workflow left as a follow-up in the generated task record. What it refuses outright,
+listing every collision at once rather than stopping at the first: a `.claude/`
+skill directory literally named `t-*` that collides with the pipeline's own, a
+consumer `docs/adr/` file numbered below 100, or any other template-owned path it has
+no merge rule for. Any refusal stops it before anything is written — **consumer
+content is never deleted**. `README.md` and `LICENSE` are never touched, in either
+direction.
+
+On success it opens a tracking issue, checks out a new branch
+(`wip/<id>-adopt-t-workflow`) from the trunk, and commits the merged tree there —
+**it never pushes, opens a PR, or changes any forge-wide setting.** It prints the
+push and draft-PR commands on exit, plus `/t-plan` and `/t-review`: from the moment
+that branch exists, the checkout already carries every skill, script, and adapter the
+pipeline needs, so those run against it exactly like any other protected task's plan
+and review — the trunk only gains the pipeline once that PR is reviewed and merged
+(`docs/architecture/adoption.md`; `CONSTITUTION.md` §3, ADR-011). Once it merges, run
+`.t-workflow/scripts/github-bootstrap.sh` yourself — a separate step a human confirms
+deliberately, never run by `adopt.sh` itself, because it changes settings (merge
+strategy, delete-branch-on-merge, branch protection) that affect everyone with access
+to the repository, and an existing team already has habits around them that a tree
+edit should not silently override.
+
 ## License
 
 MIT — see `LICENSE`. That covers **this template**, not the projects made from it.
