@@ -25,6 +25,10 @@ source_url="${TWORKFLOW_SOURCE_URL:-}"
 [ -d "$src/.git" ] || die "$src is not a git clone."
 [ -e "$target" ] && die "'$target' already exists."
 
+# The exclusion list and the strip function are shared with installer/adopt.sh (#172),
+# so they live in one file both source rather than two copies that drift.
+. "$src/installer/consumer-tree.sh"
+
 # Read the provenance before the copy: .git is about to be deleted, and after that there
 # is no way to say which version of the template this project came from.
 ref=$(git -C "$src" rev-parse --short HEAD) || die "could not read the template's commit."
@@ -57,25 +61,9 @@ trap cleanup_target EXIT
 
 cp -R "$src" "$target" || die "could not copy the template into '$target'."
 
-# Everything the new project must not inherit.
-#   .git       — this is a new project, not a fork of the template's history
-#   LICENSE    — the template's MIT file names the template's copyright holder; putting
-#                that on someone else's project would be wrong. They choose their own.
-#   installer/ — a project does not ship the thing that made it
-#   .github/workflows/installer.yml — nor the workflow that tests it. Left behind, that
-#              workflow would reference ./installer/test.sh, which was just deleted.
-#   site/      — the public website describes this delivery-system template, not the
-#                project being generated
-#   .github/workflows/pages.yml — deploys that website and would fail without site/.
-rm -rf "$target/.git" "$target/LICENSE" "$target/installer" "$target/site" \
-       "$target/.github/workflows/installer.yml" \
-       "$target/.github/workflows/pages.yml"
-
-# Task records describe the template's own history. The shape of a record stays
-# (TEMPLATE.md, README.md); the records themselves go.
-if [ -d "$target/docs/tasks" ]; then
-  find "$target/docs/tasks" -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} +
-fi
+# Everything the new project must not inherit — see installer/consumer-tree.sh for the
+# exclusion list and the rationale behind each entry.
+strip_consumer_exclusions "$target"
 
 # --- the project's README ---------------------------------------------------
 # The template's own README describes the template. The new project gets its own, with
