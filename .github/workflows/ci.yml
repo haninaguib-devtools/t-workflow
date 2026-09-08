@@ -26,7 +26,16 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
   push:
+    # The trunk branch this workflow reacts to on push. A workflow trigger is static
+    # YAML — trunk-ref.sh can resolve the trunk name for a skill or script at run
+    # time, but nothing here can — so the name itself has to live somewhere a
+    # consumer on `master` or `trunk` can set it. The line itself is a
+    # docs/architecture/local-slots.md slot: a consumer puts its own trunk name here
+    # (installer/adopt.sh fills it from the detected trunk at adoption time, #172),
+    # and a template sync never overwrites that override.
+    # <!-- local -->
     branches: [main]
+    # <!-- /local -->
 
 permissions:
   contents: read

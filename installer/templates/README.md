@@ -72,9 +72,12 @@ is a map, not a substitute for it.
 ## Notes
 
 The workflow is stack-agnostic: nothing in the skills assumes a language or framework.
-It does assume the trunk is called `main` — that name is written literally in the skills
-and scripts, so a repository on `master` or `trunk` renames it there first (one task, one
-find-and-replace across the protected surfaces).
+It also does not assume the trunk is called `main`: the skills and scripts resolve the
+real trunk name at run time (`.t-workflow/scripts/trunk-ref.sh`), and
+`.github/workflows/ci.yml`'s push trigger names it in its own local slot
+(`docs/architecture/local-slots.md`) rather than writing it in literally — a repository
+on `master` or `trunk` fills that one slot with its own name instead of a repo-wide
+find-and-replace.
 
 The tracker and the forge are pluggable: `docs/adapters/TRACKER.md` and
 `docs/adapters/FORGE.md` map every issue and pull-request operation to concrete commands.
