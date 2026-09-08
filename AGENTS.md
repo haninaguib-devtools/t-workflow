@@ -196,12 +196,14 @@ pull a file out of the default set.
 backticks; none yet, the defaults alone are in force.)*
 <!-- /local -->
 
-`.github/workflows/ci.yml` runs check 2 on every PR today, as one step of its single
-`checks` job alongside the record, plan, title and blocker gates, plus a `docs-only`
-step that publishes this same verdict as `steps.docs-only.outputs.docs_only`. Add check
-1 to it, inside its trailing local slot, once the stack exists — guarded with
-`if: "!cancelled() && steps.docs-only.outputs.docs_only != 'true'"` so CI follows the
-rule above too.
+`.github/workflows/ci.yml` runs check 2 on every PR, as one step of its single `checks`
+job alongside the record, plan, title and blocker gates, plus a `docs-only` step that
+publishes this same verdict as `steps.docs-only.outputs.docs_only`. Check 1 runs there
+too whenever item 1 names a command: as a step inside the job's trailing local slot,
+guarded with `if: "!cancelled() && steps.docs-only.outputs.docs_only != 'true'"` so CI
+follows the rule above (`installer/adopt.sh --build-command` writes that step; a project
+that fills item 1 by hand adds it the same way, and one whose item 1 is still empty has
+nothing there yet).
 
 ## Project notes
 

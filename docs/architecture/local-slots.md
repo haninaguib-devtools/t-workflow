@@ -2,8 +2,10 @@
 
 **Status:** binding convention.
 
-Twelve places across the pipeline's own files are per-repo **by design**, not
-template-owned: `CONSTITUTION.md` §4 (stack & architecture), `CONSTITUTION.md` §3's own
+Thirteen places across the pipeline's own files are per-repo **by design**, not
+template-owned: `CONSTITUTION.md`'s status note (the one paragraph above §1 that
+describes the consumer's own project state — which phase it is at, whether its stack
+is decided), `CONSTITUTION.md` §4 (stack & architecture), `CONSTITUTION.md` §3's own
 protected-path bullet list (a consumer's own protected-path bullets), `AGENTS.md`
 §Checks item 1 (the build/test check command), `AGENTS.md` §Checks' documentation-only
 paths list (a consumer's own extra documentation globs, read by
@@ -56,7 +58,9 @@ rows, reviewer model, §Checks item 1, §Checks documentation-only paths, projec
 updates those ordinals in the same task, as #183 did when the fourth pair was added.
 
 This repo, being itself at Phase 0, keeps the neutral placeholder inside every marker
-today: `(reserved: stack and architecture constraints — …)` in `CONSTITUTION.md` §4,
+today: the Phase 0 sentence itself (`**Status note:** the project is at Phase 0 — …`)
+in `CONSTITUTION.md`'s status note, `(reserved: stack and architecture constraints —
+…)` in `CONSTITUTION.md` §4,
 `(reserved: this consumer's own protected-path bullets — …)` in `CONSTITUTION.md` §3, an
 empty region (comments only) in `protected-paths.sh`'s `patterns` array, `(none yet — no
 stack exists.)` in `AGENTS.md` §Checks item 1, `(reserved: consumer-local
@@ -69,8 +73,8 @@ template's own trunk name `branches: [main]` on `ci.yml`'s `push:` trigger, the
 template's own default `timeout-minutes: 10` in `ci.yml`, an empty region at the end of
 `ci.yml`'s `steps:` list, the template's own default `timeout-minutes: 10` in
 `review-gate.yml`, and an empty region at the end of `.gitignore`. A consumer repo
-replaces each placeholder with its own real content once it adopts — its own stack
-rule, its own protected-path bullets and patterns, its own build/test command, its own
+replaces each placeholder with its own real content once it adopts — its own
+project-state sentence, its own stack rule, its own protected-path bullets and patterns, its own build/test command, its own
 extra documentation paths, its own
 table of local skill rows, its own default reviewer model, its own session-start
 instructions, its own trunk branch name, its own CI timeout, its own trailing
@@ -111,6 +115,20 @@ Reach for this idiom, not a new slot, whenever a fixed list elsewhere in the tem
 would otherwise need one more per-consumer addition: a slot is for a consumer's own
 content, but a list of *where §3's own slot already lives* needs no second slot of its
 own.
+
+**Template prose that describes the consumer, not the template, is never left
+unmarked.** A sentence in a template-owned file that states something about the
+adopting project's own state — which phase it is at, whether its stack is decided, what
+its build runs, which steps its CI has — becomes false for some consumer the moment that
+consumer moves on, and the consumer's correction is then exactly the unmarked drift
+`check-manifest.sh` flags and a sync reverts (#186: `CONSTITUTION.md`'s "not yet
+decided" status note, corrected by a consumer that had ratified its stack, would have
+been overwritten by its next sync). Such a sentence either sits inside its own slot, with
+the template's own wording as the placeholder (the status note), or is written so it
+stays true for every consumer (the generic-pointer idiom above; `AGENTS.md` §Checks'
+closing paragraph about `ci.yml` is worded that way for the same reason). A template
+task that adds or edits such a sentence picks one of the two in the same task, and a
+reviewer treats an unmarked consumer-state sentence as a finding.
 
 ## The required-checks file
 

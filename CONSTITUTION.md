@@ -4,9 +4,11 @@ The invariants of this project. Terse by design: rules live here, rationale live
 `docs/adr/` and `docs/workflow.md`. Changing this file faces the highest scrutiny the
 project has (see §Amendment below).
 
+<!-- local -->
 **Status note:** the project is at Phase 0 — only the delivery system exists. Its stack
 and domain rules are **not yet decided** — sections marked *(reserved)* will be filled
 by ADRs as decisions are ratified.
+<!-- /local -->
 
 ## 1. Delivery
 

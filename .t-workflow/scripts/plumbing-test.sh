@@ -651,6 +651,43 @@ h_empty=$(.t-workflow/scripts/check-manifest.sh --hash-file .t-workflow/scripts/
 h_filled=$(.t-workflow/scripts/check-manifest.sh --hash-file "$filled_pp")
 if [ "$h_empty" = "$h_filled" ]; then ok "protected-paths.sh: a filled patterns slot hashes the same as the empty one"
 else bad "protected-paths.sh: a filled patterns slot hashes the same as the empty one (got $h_filled != $h_empty)"; fi
+
+# CONSTITUTION.md's status note (#186) is the consumer's own project-state sentence,
+# not the template's: a consumer that has ratified its stack rewrites it, and that
+# rewrite must be slot content the manifest ignores, never drift a sync reverts. The
+# slot is the one above `## 1. Delivery` — found by that heading, as migration V6 and
+# every other reader do, never by counting pairs.
+set_status_note() {
+  # $1 = CONSTITUTION.md path, $2 = the paragraph the status-note slot should carry
+  awk -v content="$2" '
+    /^## / { seen_h1=1 }
+    !seen_h1 && /^<!-- local -->$/ { print; print content; skip=1; next }
+    /^<!-- \/local -->$/ { skip=0 }
+    !skip { print }
+  ' "$1" > "$1.new" && mv "$1.new" "$1"
+}
+status_note_region() { # the text between the markers of the slot above §1
+  awk '/^## / { exit } /^<!-- local -->$/ { f=1; next } /^<!-- \/local -->$/ { f=0 } f' "$1"
+}
+consumer_note='**Status note:** the stack is decided (ADR-100–102); the delivery system is past Phase 0.'
+filled_note="$work/CONSTITUTION-status-note-filled.md"
+cp CONSTITUTION.md "$filled_note"
+set_status_note "$filled_note" "$consumer_note"
+if [ "$(status_note_region CONSTITUTION.md)" != "" ]; then ok "CONSTITUTION.md carries a status-note slot above §1"
+else bad "CONSTITUTION.md carries a status-note slot above §1 (no marked region before the first ## heading)"; fi
+if [ "$(status_note_region "$filled_note")" = "$consumer_note" ]; then ok "a consumer's rewritten status note lands inside that slot, replacing the placeholder"
+else bad "a consumer's rewritten status note lands inside that slot (got: $(status_note_region "$filled_note"))"; fi
+h_empty=$(.t-workflow/scripts/check-manifest.sh --hash-file CONSTITUTION.md)
+h_filled=$(.t-workflow/scripts/check-manifest.sh --hash-file "$filled_note")
+if [ "$h_empty" = "$h_filled" ]; then ok "CONSTITUTION.md: a rewritten status note hashes the same as the template's own"
+else bad "CONSTITUTION.md: a rewritten status note hashes the same as the template's own (got $h_filled != $h_empty)"; fi
+# The same sentence written *outside* the slot — what a consumer had to do before
+# this slot existed — is drift, which is the whole reason the slot exists.
+outside_note="$work/CONSTITUTION-status-note-outside.md"
+awk -v content="$consumer_note" '/^## 1\. Delivery$/ { print content; print "" } { print }' CONSTITUTION.md > "$outside_note"
+h_outside=$(.t-workflow/scripts/check-manifest.sh --hash-file "$outside_note")
+if [ "$h_empty" != "$h_outside" ]; then ok "the same sentence outside the slot still registers as drift"
+else bad "the same sentence outside the slot still registers as drift (hash unchanged)"; fi
 echo
 
 # --- 17. .t-workflow/scripts/check-verification-gate.sh (issue #144) --------------------
