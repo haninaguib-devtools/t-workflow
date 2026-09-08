@@ -168,3 +168,14 @@ Where a skill says "run the checks", the current check set is:
 
 `.github/workflows/ci.yml` runs check 2 on every PR today, plus a `record` job asserting
 that a task PR carries its task record. Add check 1 to it once the stack exists.
+
+## Project notes
+
+A consumer's own session-start instructions live in the marked region below, kept
+verbatim by every template sync.
+
+<!-- local -->
+*(reserved: this consumer's own session-start instructions — whatever a real
+`CLAUDE.md`/`AGENTS.md`/`GEMINI.md`/`.github/copilot-instructions.md` said before this
+repo adopted the template, or whatever a consumer writes directly; none exist yet.)*
+<!-- /local -->
