@@ -74,6 +74,12 @@ none
   instruction to close #185 and #186 end to end. (haninaguib, 2026-09-08)
 
 ## Deviations / notes
+- V6 was tightened after the cold review (PR #188): step 3 compares the consumer's
+  text with the placeholder the sync just wrote, not with the old template at the
+  manifest's tag — a first adoption has no manifest, and t-preview's case is a first
+  adoption; step 2 extracts whatever sits above `## 1. Delivery` rather than only a
+  paragraph labelled `**Status note:**`, since the slot holds whatever the consumer
+  wrote there. Both were review findings, fixed before merge.
 - Ride-along, listed here: `migrations/README.md` and `docs/architecture/migrations.md`
   both still said "No migration files exist yet" with V1–V5 (now V6) in the directory —
   the staleness #183's closing report proposed as its own issue. Both are documents

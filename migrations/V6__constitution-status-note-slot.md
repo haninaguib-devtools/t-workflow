@@ -32,15 +32,20 @@ file. Nothing is committed until step 9, so `HEAD` is still the pre-sync content
 1. Read the consumer's pre-sync `CONSTITUTION.md` (`git show HEAD:CONSTITUTION.md`). If
    it errors (the file did not exist pre-sync — a first-adoption sync with nothing to
    migrate), skip this migration entirely; the ordinary sync's placeholder is correct.
-2. Extract the consumer's status-note paragraph: every line from the first line that
-   begins `**Status note:**` up to (not including) the next blank line. If there is no
-   such line, the consumer removed the paragraph altogether — treat the extracted text
-   as empty.
-3. Read the old template's own paragraph the same way, from the version at the tag
-   named in the current manifest's `tag` field (`git -C <scratch-clone> show
-   <old-tag>:CONSTITUTION.md`, the scratch clone from step 2 of the skill). If the two
-   paragraphs are identical, the consumer never rewrote it — skip the rest of this
-   migration; the placeholder the sync wrote is exactly the consumer's own text.
+2. Extract the consumer's status-note text: everything between the file's opening
+   paragraph (the one beginning "The invariants of this project") and the
+   `## 1. Delivery` heading, with the blank lines around it trimmed. That is the text
+   the new slot holds — normally one paragraph beginning `**Status note:**`, but
+   whatever the consumer wrote there, label or not. If there is nothing between the
+   two, the consumer removed the paragraph altogether — treat the extracted text as
+   empty.
+3. Compare it with the placeholder the sync just wrote into the new slot (the Phase 0
+   sentence, the region between the markers above `## 1. Delivery` in the freshly
+   synced file). If they are byte-identical, the consumer never rewrote it — say so
+   in the report and stop; nothing needs moving. No manifest tag or old template
+   version is needed for this comparison, so it is followable on a first adoption
+   (no manifest yet — the case that produced this migration) as well as on a pinned
+   consumer's sync.
 4. Otherwise, re-open the freshly synced `CONSTITUTION.md` and replace the content of
    the slot above `## 1. Delivery` — the region between the first `<!-- local -->` /
    `<!-- /local -->` pair that appears before that heading, found by the heading, never
