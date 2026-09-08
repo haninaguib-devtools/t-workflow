@@ -234,5 +234,267 @@ else
 fi
 echo
 
+# ==============================================================================
+# installer/adopt.sh (#172) — retrofitting t-workflow into an existing repository.
+#
+# Test safety: every gh call adopt.sh makes goes through the fake `gh` below, on a
+# PATH that shadows the real one for these invocations only. The fake never shells
+# out to the real gh and never touches the network — a mutating call (`issue
+# create`/`issue edit`) is impossible to route to the real haninaguib-devtools/t-workflow
+# by construction, not merely by convention. `$fake_gh_log` records every `issue
+# create` the fake actually received, so "the refusal/dry-run paths never create an
+# issue" is an assertion here, not a claim taken on faith.
+#
+# Release-tag reality: adopt.sh's default --ref is the template's latest real tag,
+# which at the time this was written (v0.1.1) predates this very change — a real run
+# against the public default would not see it. Every fixture below instead builds
+# "the template at --ref" from this checkout's own committed HEAD (same srcrepo the
+# tests above already stage, plus one tag on it), never from the public tag — see
+# the task record for why.
+echo "installer/adopt.sh"
+
+fakebin="$work/fakebin"
+mkdir -p "$fakebin"
+cat > "$fakebin/gh" <<'FAKEGH'
+#!/usr/bin/env bash
+set -u
+case "${1:-}" in
+  auth)
+    [ "${2:-}" = status ] && exit 0
+    ;;
+  repo)
+    if [ "${2:-}" = view ]; then
+      printf '%s\n' "${FAKE_GH_TRUNK:-main}"
+      exit 0
+    fi
+    ;;
+  issue)
+    case "${2:-}" in
+      create)
+        [ -n "${FAKE_GH_LOG:-}" ] && printf '%s\n' "${FAKE_GH_ISSUE_NUM:-9001}" >> "$FAKE_GH_LOG"
+        printf 'https://github.com/example/adopted-fixture/issues/%s\n' "${FAKE_GH_ISSUE_NUM:-9001}"
+        exit 0 ;;
+      view)
+        printf '%s\n' "${FAKE_GH_ISSUE_BODY:-}"
+        exit 0 ;;
+      edit)
+        exit 0 ;;
+    esac
+    ;;
+esac
+echo "fake-gh: unhandled invocation: $*" >&2
+exit 1
+FAKEGH
+chmod +x "$fakebin/gh"
+
+# One template source for every adopt.sh fixture below: this checkout's own committed
+# HEAD, tagged rather than assumed to already be the public "latest tag" (see above).
+adopt_tag="adopt-fixture-tag"
+git -C "$root" push --quiet "$srcrepo" "HEAD:refs/tags/$adopt_tag" || {
+  echo "could not tag the test source for adopt.sh's fixtures" >&2
+  exit 2
+}
+
+# make_consumer_fixture <dir> <trunk> — an existing repository with its own remote,
+# a real app file, and a clean, fully-pushed trunk: exactly the state adopt.sh's own
+# preconditions require before it will touch anything.
+make_consumer_fixture() {
+  local dir="$1" trunk="$2" origin="$1.origin.git"
+  git init --quiet --bare "$origin" || return 1
+  git -C "$origin" symbolic-ref HEAD "refs/heads/$trunk" || return 1
+  git init --quiet -b "$trunk" "$dir" || return 1
+  git -C "$dir" config user.email "$GIT_AUTHOR_EMAIL"
+  git -C "$dir" config user.name "$GIT_AUTHOR_NAME"
+  mkdir -p "$dir/src"
+  printf '# fixture consumer repo\n' > "$dir/README.md"
+  printf "print('hello from the fixture app')\n" > "$dir/src/app.py"
+  git -C "$dir" add -A
+  git -C "$dir" commit --quiet -m "seed the fixture repo"
+  git -C "$dir" remote add origin "$origin"
+  git -C "$dir" push --quiet -u origin "$trunk"
+}
+
+# push_fixture <dir> <trunk> — commits whatever is staged/changed and pushes, leaving
+# the fixture in the clean, up-to-date state adopt.sh's preconditions require.
+push_fixture() {
+  local dir="$1" trunk="$2" msg="${3:-fixture setup}"
+  git -C "$dir" add -A
+  git -C "$dir" commit --quiet -m "$msg"
+  git -C "$dir" push --quiet origin "$trunk"
+}
+
+adopt_fixtures="$work/adopt-fixtures"
+mkdir -p "$adopt_fixtures"
+
+# --- 11. happy path: real CLAUDE.md, own .gitignore, own ci.yml, a non-colliding ADR ---
+echo "happy path"
+happy="$adopt_fixtures/happy"
+make_consumer_fixture "$happy" main
+# CONSTITUTION.md §3 cites "README.md §Bootstrapping" three times, and
+# consistency-check.sh's named-section check (its own §2b) resolves every such
+# citation against the file actually present — including in an adopted repository,
+# where adopt.sh deliberately never touches README.md (docs/architecture/adoption.md
+# §2: "README.md ... never touched, in either direction"). A real team's own
+# pre-existing README essentially never carries a heading named that, so this specific
+# CONSTITUTION.md cross-reference fails consistency-check.sh in every real adoption
+# until it does — a pre-existing gap in the adoption design this task's record flags
+# as its own follow-up, not something installer/ can fix (CONSTITUTION.md is outside
+# this task's scope and is protected in its own right). This fixture's README carries
+# the heading only so the mechanics under test — the merge/add/refuse plan itself —
+# aren't obscured by that separate, already-flagged defect.
+printf '# fixture consumer repo\n\n## Bootstrapping\n\nHow this fixture repo itself gets set up locally (present only to satisfy\nCONSTITUTION.md'"'"'s README.md §Bootstrapping cross-reference — see the note above).\n' > "$happy/README.md"
+printf 'These are the fixture team'"'"'s own pre-t-workflow instructions.\nUnique marker: CLAUDE-MD-FIXTURE-MARKER\n' > "$happy/CLAUDE.md"
+printf 'fixture-build-cache/\nUnique marker: GITIGNORE-FIXTURE-MARKER\n' > "$happy/.gitignore"
+mkdir -p "$happy/.github/workflows"
+printf 'name: legacy-ci\nUnique marker: CI-YML-FIXTURE-MARKER\non: [push]\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo hi\n' > "$happy/.github/workflows/ci.yml"
+mkdir -p "$happy/docs/adr"
+printf '# 100 — A fixture-local decision\n\nNon-colliding: numbered 100+, per docs/architecture/local-slots.md.\n' > "$happy/docs/adr/100-a-fixture-local-decision.md"
+push_fixture "$happy" main "add pre-adoption content"
+
+happy_log="$work/happy-gh.log"; rm -f "$happy_log"
+happy_out=$(cd "$happy" && \
+  PATH="$fakebin:$PATH" FAKE_GH_TRUNK=main FAKE_GH_LOG="$happy_log" FAKE_GH_ISSUE_NUM=501 \
+  bash "$root/installer/adopt.sh" --ref "$adopt_tag" --source "$srcrepo" \
+       --template example/adopted-fixture 2>&1); happy_rc=$?
+if [ "$happy_rc" -eq 0 ]; then
+  ok "exits 0"
+else
+  bad "exits 0 (got $happy_rc)"
+  printf '%s\n' "$happy_out" | sed 's/^/    /'
+fi
+
+check "created exactly one adoption issue (the fake gh log)" \
+  bash -c '[ "$(wc -l < "$1")" = 1 ]' _ "$happy_log"
+check "checked out the adoption branch" \
+  bash -c 'cd "$1" && [ "$(git symbolic-ref --short HEAD)" = wip/501-adopt-t-workflow ]' _ "$happy"
+check "the branch was never pushed" \
+  bash -c '[ -z "$(git -C "$1" ls-remote origin "refs/heads/wip/*")" ]' _ "$happy"
+check "the working tree is clean (everything committed)" \
+  bash -c '[ -z "$(git -C "$1" status --porcelain)" ]' _ "$happy"
+
+check "manifest validates" \
+  bash -c 'cd "$1" && ./.t-workflow/scripts/check-manifest.sh' _ "$happy"
+check "consistency-check.sh passes" \
+  bash -c 'cd "$1" && ./.t-workflow/scripts/consistency-check.sh' _ "$happy"
+check "the record exists in the right bucket" \
+  test -f "$happy/docs/tasks/000500/501-adopt-t-workflow.md"
+check "the record is a real record for task 501" \
+  bash -c 'cd "$1" && ./.t-workflow/scripts/check-record.sh 501 docs/tasks/000500/501-adopt-t-workflow.md' _ "$happy"
+
+echo "  no consumer content lost"
+check "CLAUDE.md's content survives, folded into AGENTS.md" \
+  grep -q "CLAUDE-MD-FIXTURE-MARKER" "$happy/AGENTS.md"
+check "CLAUDE.md itself became the template's alias symlink" \
+  test -L "$happy/CLAUDE.md"
+check ".gitignore keeps the consumer's own entry" \
+  grep -q "GITIGNORE-FIXTURE-MARKER" "$happy/.gitignore"
+check ".gitignore also keeps the template's own entries" \
+  grep -q '\.DS_Store' "$happy/.gitignore"
+check "the consumer's ci.yml was renamed, not deleted" \
+  grep -q "CI-YML-FIXTURE-MARKER" "$happy/.github/workflows/ci-legacy.yml"
+check "ci.yml is now the template's own" \
+  grep -q "consistency-check.sh" "$happy/.github/workflows/ci.yml"
+check "the consumer's own ADR is untouched" \
+  test -f "$happy/docs/adr/100-a-fixture-local-decision.md"
+check "the fixture app file is untouched" \
+  test -f "$happy/src/app.py"
+check "README.md was never touched" \
+  grep -q "fixture consumer repo" "$happy/README.md"
+check "installer/ itself was not copied into the consumer" \
+  test ! -e "$happy/installer"
+echo
+
+# --- 12. refusals: each writes nothing and never reaches the tracker ------------------
+echo "refusals"
+
+assert_refused() { # assert_refused <name> <fixture-dir> <trunk>
+  local name="$1" dir="$2" trunk="$3" log="$2.gh.log" out rc
+  rm -f "$log"
+  out=$(cd "$dir" && \
+    PATH="$fakebin:$PATH" FAKE_GH_TRUNK="$trunk" FAKE_GH_LOG="$log" FAKE_GH_ISSUE_NUM=999999 \
+    bash "$root/installer/adopt.sh" --ref "$adopt_tag" --source "$srcrepo" \
+         --template example/adopted-fixture 2>&1); rc=$?
+  if [ "$rc" -ne 0 ]; then ok "$name: refuses"; else bad "$name: refuses (exited 0)"; fi
+  check "$name: still on the trunk" \
+    bash -c 'cd "$1" && [ "$(git symbolic-ref --short HEAD)" = "$2" ]' _ "$dir" "$trunk"
+  check "$name: working tree unchanged" \
+    bash -c '[ -z "$(git -C "$1" status --porcelain)" ]' _ "$dir"
+  check "$name: never reached the tracker" test ! -s "$log"
+  case "$out" in
+    *"nothing was written"*|*Refusing*) ok "$name: message names the refusal" ;;
+    *) bad "$name: message names the refusal" ;;
+  esac
+}
+
+t_star="$adopt_fixtures/t-star"
+make_consumer_fixture "$t_star" main
+mkdir -p "$t_star/.claude/skills/t-work"
+printf '# a consumer skill that happens to share a reserved name\n' > "$t_star/.claude/skills/t-work/SKILL.md"
+push_fixture "$t_star" main "add a colliding t-work skill"
+assert_refused "a t-* skill directory collides" "$t_star" main
+
+adr_collide="$adopt_fixtures/adr-collide"
+make_consumer_fixture "$adr_collide" main
+mkdir -p "$adr_collide/docs/adr"
+printf '# 003 — Something this team decided on its own\n' > "$adr_collide/docs/adr/003-something-this-team-decided.md"
+push_fixture "$adr_collide" main "add a colliding local ADR number"
+assert_refused "a colliding ADR number" "$adr_collide" main
+
+const_collide="$adopt_fixtures/constitution-collide"
+make_consumer_fixture "$const_collide" main
+printf '# Not the template'"'"'s constitution\n' > "$const_collide/CONSTITUTION.md"
+push_fixture "$const_collide" main "add an unrelated CONSTITUTION.md"
+assert_refused "an existing CONSTITUTION.md" "$const_collide" main
+echo
+
+# --- 13. --dry-run writes nothing and never reaches the tracker -----------------------
+echo "dry-run"
+dry="$adopt_fixtures/dry-run"
+make_consumer_fixture "$dry" main
+dry_log="$dry.gh.log"; rm -f "$dry_log"
+dry_out=$(cd "$dry" && \
+  PATH="$fakebin:$PATH" FAKE_GH_TRUNK=main FAKE_GH_LOG="$dry_log" FAKE_GH_ISSUE_NUM=999998 \
+  bash "$root/installer/adopt.sh" --ref "$adopt_tag" --source "$srcrepo" \
+       --template example/adopted-fixture --dry-run 2>&1); dry_rc=$?
+[ "$dry_rc" -eq 0 ] && ok "exits 0" || bad "exits 0 (got $dry_rc)"
+case "$dry_out" in *"nothing was written"*) ok "says nothing was written" ;; *) bad "says nothing was written" ;; esac
+check "still on the trunk" \
+  bash -c 'cd "$1" && [ "$(git symbolic-ref --short HEAD)" = main ]' _ "$dry"
+check "no manifest was written" test ! -e "$dry/.template-manifest.json"
+check "working tree unchanged" \
+  bash -c '[ -z "$(git -C "$1" status --porcelain)" ]' _ "$dry"
+check "never reached the tracker" test ! -s "$dry_log"
+echo
+
+# --- 14. a non-main trunk lands in ci.yml's slot ---------------------------------------
+echo "non-main trunk"
+nonmain="$adopt_fixtures/nonmain"
+make_consumer_fixture "$nonmain" trunk
+nonmain_log="$nonmain.gh.log"; rm -f "$nonmain_log"
+nonmain_out=$(cd "$nonmain" && \
+  PATH="$fakebin:$PATH" FAKE_GH_TRUNK=trunk FAKE_GH_LOG="$nonmain_log" FAKE_GH_ISSUE_NUM=601 \
+  bash "$root/installer/adopt.sh" --ref "$adopt_tag" --source "$srcrepo" \
+       --template example/adopted-fixture 2>&1); nonmain_rc=$?
+if [ "$nonmain_rc" -eq 0 ]; then
+  ok "exits 0"
+  check "ci.yml's push trigger names the real trunk" \
+    grep -q 'branches: \[trunk\]' "$nonmain/.github/workflows/ci.yml"
+  check "ci.yml no longer says main" \
+    bash -c '! grep -q "branches: \[main\]" "$1"' _ "$nonmain/.github/workflows/ci.yml"
+else
+  bad "exits 0 (got $nonmain_rc)"
+  printf '%s\n' "$nonmain_out" | sed 's/^/    /'
+fi
+echo
+
+# --- 15. --help documents every flag ----------------------------------------------------
+echo "adopt.sh --help"
+adopt_help=$(bash "$root/installer/adopt.sh" --help 2>&1); adopt_help_rc=$?
+[ "$adopt_help_rc" -eq 0 ] && ok "exits 0" || bad "exits 0 (got $adopt_help_rc)"
+for flag in --ref --source --template --build-command --dry-run --help; do
+  case "$adopt_help" in *"$flag"*) ok "documents $flag" ;; *) bad "documents $flag" ;; esac
+done
+echo
+
 echo "$pass passed, $fail failed"
 [ "$fail" -eq 0 ]

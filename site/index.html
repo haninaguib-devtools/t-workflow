@@ -391,21 +391,43 @@
       <div class="section-label"><span>08</span><p>Adopt it</p></div>
       <div class="section-content">
         <p class="section-kicker">Stack-agnostic. Versioned. Local first.</p>
-        <h2>Install the delivery system before the first application commit.</h2>
-        <div class="adopt-command">
-          <div>
-            <p>Interactive installation</p>
-            <code id="install-command-bottom">curl -fsSL https://raw.githubusercontent.com/haninaguib-devtools/t-workflow/main/installer/install.sh | bash</code>
+        <h2>Install the delivery system before the first commit, or retrofit it in.</h2>
+
+        <div class="adopt-route">
+          <p class="section-kicker">New project</p>
+          <div class="adopt-command">
+            <div>
+              <p>Interactive installation</p>
+              <code id="install-command-bottom">curl -fsSL https://raw.githubusercontent.com/haninaguib-devtools/t-workflow/main/installer/install.sh | bash</code>
+            </div>
+            <button class="copy-button copy-button-large" type="button" data-copy="install-command-bottom"><span>Copy command</span></button>
           </div>
-          <button class="copy-button copy-button-large" type="button" data-copy="install-command-bottom"><span>Copy command</span></button>
+          <div class="adopt-steps">
+            <article><span>1</span><div><h3>Fill what the template cannot know</h3><p>Add the project's stack constraints to the constitution and its real build command to the agent contract and CI.</p></div></article>
+            <article><span>2</span><div><h3>Push the first commit</h3><p>This closes the tightly bounded genesis exception. Every later tree edit begins with t-open.</p></div></article>
+            <article><span>3</span><div><h3>Apply repository settings</h3><p>Run <code>./.t-workflow/scripts/github-bootstrap.sh</code>, then run it again after CI has first completed on the trunk.</p></div></article>
+            <article><span>4</span><div><h3>Choose a review model if the project needs one</h3><p>Run <code>/t-config</code> to set a repository default. Leave it unset when reviews should use the invoking session's model, or name a different model only when invoking a particular review.</p></div></article>
+            <article><span>5</span><div><h3>Pin releases and update deliberately</h3><p>Consumer projects use the template manifest and t-update rather than drifting from an unversioned copy.</p></div></article>
+          </div>
         </div>
-        <div class="adopt-steps">
-          <article><span>1</span><div><h3>Fill what the template cannot know</h3><p>Add the project's stack constraints to the constitution and its real build command to the agent contract and CI.</p></div></article>
-          <article><span>2</span><div><h3>Push the first commit</h3><p>This closes the tightly bounded genesis exception. Every later tree edit begins with t-open.</p></div></article>
-          <article><span>3</span><div><h3>Apply repository settings</h3><p>Run <code>./.t-workflow/scripts/github-bootstrap.sh</code>, then run it again after CI has first completed on the trunk.</p></div></article>
-          <article><span>4</span><div><h3>Choose a review model if the project needs one</h3><p>Run <code>/t-config</code> to set a repository default. Leave it unset when reviews should use the invoking session's model, or name a different model only when invoking a particular review.</p></div></article>
-          <article><span>5</span><div><h3>Pin releases and update deliberately</h3><p>Consumer projects use the template manifest and t-update rather than drifting from an unversioned copy.</p></div></article>
+
+        <div class="adopt-route">
+          <p class="section-kicker">Existing repository</p>
+          <div class="adopt-command">
+            <div>
+              <p>Run inside the repository, on its trunk</p>
+              <code id="adopt-command">curl -fsSL https://raw.githubusercontent.com/haninaguib-devtools/t-workflow/main/installer/adopt.sh | bash</code>
+            </div>
+            <button class="copy-button copy-button-large" type="button" data-copy="adopt-command"><span>Copy command</span></button>
+          </div>
+          <div class="adopt-steps">
+            <article><span>1</span><div><h3>It works out loud, before writing anything</h3><p><code>adopt.sh</code> computes the whole plan first: what it adds, what it merges automatically (an existing <code>CLAUDE.md</code>/<code>AGENTS.md</code>/<code>GEMINI.md</code>, <code>.gitignore</code>, <code>ci.yml</code>), and what needs a person's judgment — refusing there rather than guessing. <code>--dry-run</code> prints the plan and stops; <code>--ref</code>, <code>--source</code>, <code>--template</code>, and <code>--build-command</code> choose the release, its origin, and this repository's own build command.</p></div></article>
+            <article><span>2</span><div><h3>Only a clean plan gets written</h3><p>Once nothing is refused, it opens a tracking issue, checks out a new branch, and commits the merged tree — nothing already there is deleted. It never pushes and never opens the pull request itself.</p></div></article>
+            <article><span>3</span><div><h3>Push it, plan it, review it — like any protected change</h3><p><code>installer/</code>, <code>.github/</code>, and the rest it touches are protected surfaces, so the push and draft-PR commands it prints lead into the same <code>/t-plan</code> and <code>/t-review</code> any such change needs, from the adoption branch itself, before a human confirms the merge.</p></div></article>
+            <article><span>4</span><div><h3>Apply repository settings once it merges</h3><p>Run <code>./.t-workflow/scripts/github-bootstrap.sh</code> once the adoption pull request reaches the trunk — the same step a new project runs, now applied to a repository that already has history.</p></div></article>
+          </div>
         </div>
+
         <div class="closing-line">
           <p>The code may be generated quickly.<br>The evidence should still deserve trust.</p>
           <a href="https://github.com/haninaguib-devtools/t-workflow">Read the source on GitHub <span aria-hidden="true">↗</span></a>

@@ -60,7 +60,10 @@ Default reviewer model: (none — reviews inherit the invoking session's model)
 
 - **All changes go through the pipeline.** A request to change anything — code, config,
   docs — is work: open it with `/t-open` before touching any file. Never edit the tree
-  outside that task's own `/t-work` session, however small the ask. Answering questions,
+  outside that task's own `/t-work` session — `installer/adopt.sh`, run on the
+  adoption task's own branch, counts as that task's work stage the same way
+  `/t-update`'s own sync already does without being `/t-work` itself — however small
+  the ask. Answering questions,
   reading, and designing need no task; changing files always does. The **one** exception
   is repository genesis (`CONSTITUTION.md` §3): the template's placeholder fills and the
   first commit happen by hand, because there is no tracker and no `main` to open a PR
@@ -168,3 +171,14 @@ Where a skill says "run the checks", the current check set is:
 
 `.github/workflows/ci.yml` runs check 2 on every PR today, plus a `record` job asserting
 that a task PR carries its task record. Add check 1 to it once the stack exists.
+
+## Project notes
+
+A consumer's own session-start instructions live in the marked region below, kept
+verbatim by every template sync.
+
+<!-- local -->
+*(reserved: this consumer's own session-start instructions — whatever a real
+`CLAUDE.md`/`AGENTS.md`/`GEMINI.md`/`.github/copilot-instructions.md` said before this
+repo adopted the template, or whatever a consumer writes directly; none exist yet.)*
+<!-- /local -->
