@@ -60,7 +60,10 @@ Default reviewer model: (none — reviews inherit the invoking session's model)
 
 - **All changes go through the pipeline.** A request to change anything — code, config,
   docs — is work: open it with `/t-open` before touching any file. Never edit the tree
-  outside that task's own `/t-work` session, however small the ask. Answering questions,
+  outside that task's own `/t-work` session — `installer/adopt.sh`, run on the
+  adoption task's own branch, counts as that task's work stage the same way
+  `/t-update`'s own sync already does without being `/t-work` itself — however small
+  the ask. Answering questions,
   reading, and designing need no task; changing files always does. The **one** exception
   is repository genesis (`CONSTITUTION.md` §3): the template's placeholder fills and the
   first commit happen by hand, because there is no tracker and no `main` to open a PR
