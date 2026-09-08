@@ -222,11 +222,43 @@ jobs:
         if: "!cancelled()"
         run: ./.t-workflow/scripts/plumbing-test.sh
 
+      # AGENTS.md §Checks' documentation-only rule (ADR-012), published for the consumer's
+      # own build/test step in the slot below: a PR whose diff is only documentation
+      # cannot change what a build produces, so that step skips itself on this output.
+      # Only the consumer's step reads it — every gate above runs unconditionally, and
+      # this is a step-level condition, never a workflow-level `paths-ignore`, so the
+      # record, plan, title, blocker and consistency gates still run on every PR. A
+      # `push` has no base to diff against, so the trunk build always runs
+      # (docs_only=false); so does a diff the script could not judge (exit 2).
+      - name: Is this diff documentation-only?
+        id: docs-only
+        if: "!cancelled()"
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          docs_only=false
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            if git -c core.quotePath=false diff --name-only "origin/$BASE_REF"...HEAD |
+                 bash .t-workflow/scripts/docs-only.sh --stdin; then
+              docs_only=true
+            fi
+          fi
+          echo "docs_only=$docs_only" | tee -a "$GITHUB_OUTPUT"
+
       # Add the project's build/test command here as a step once the stack exists —
       # AGENTS.md §Checks item 1 is the single place that names it. A consumer's own
       # steps (its build/test step, its own CI-lock manifest-check step —
       # docs/architecture/manifest.md §The CI lock) live inside the markers below, a
       # docs/architecture/local-slots.md slot: a template sync copies everything outside
-      # the markers and carries this region forward unchanged (#118).
+      # the markers and carries this region forward unchanged (#118). The build/test
+      # step carries the documentation-only guard the step above publishes, so a
+      # documentation-only PR skips the build in CI exactly as it does locally:
+      #
+      #   - name: Project checks
+      #     if: "!cancelled() && steps.docs-only.outputs.docs_only != 'true'"
+      #     run: <the command AGENTS.md §Checks item 1 names>
+      #
+      # `installer/adopt.sh --build-command` writes that exact shape.
       # <!-- local -->
       # <!-- /local -->

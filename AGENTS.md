@@ -169,8 +169,39 @@ Where a skill says "run the checks", the current check set is:
 2. `./.t-workflow/scripts/consistency-check.sh` — cross-artifact document consistency.
 3. `git diff` review against the task's declared scope (always applicable).
 
-`.github/workflows/ci.yml` runs check 2 on every PR today, plus a `record` job asserting
-that a task PR carries its task record. Add check 1 to it once the stack exists.
+**Check 1 runs unless the task's diff is documentation-only** (ADR-012). A build cannot
+be affected by files it never reads, so before running check 1 a stage pipes the task's
+changed paths — `git -c core.quotePath=false diff --name-only <trunk>...HEAD`, the whole
+diff, never one pass's own delta — through `.t-workflow/scripts/docs-only.sh --stdin`.
+Exit 0 means every changed file is documentation: check 1 is not run, and the record's
+Deviations / notes and the PR body's `## Checks run` both say exactly
+`check 1 skipped: documentation-only diff` rather than omitting it silently. Any other
+exit runs check 1 as usual — 1 means a non-documentation path is in the diff (the script
+echoes which), 2 means nothing was checked. Checks 2 and 3 always run, and so does the
+cold review where a protected surface requires one; nothing about this rule touches
+them. A skip is only ever the script's verdict, never a judgment by eye: `/t-review`
+re-runs the script on the same diff and treats a skip it does not confirm as a finding.
+
+### Documentation-only paths
+
+What counts as documentation is defined once, in `docs-only.sh`: any `*.md` file, and
+anything under `docs/**`. A project whose documentation also lives elsewhere lists those
+paths in the marked region below, one glob per bullet in backticks (for a static site,
+`` - `site/**` ``); the script reads them in addition to its defaults, and
+`docs-only.sh --list` prints the set in force. The slot only *adds* paths — it cannot
+pull a file out of the default set.
+
+<!-- local -->
+*(reserved: this project's own documentation-only paths — one bullet per glob, in
+backticks; none yet, the defaults alone are in force.)*
+<!-- /local -->
+
+`.github/workflows/ci.yml` runs check 2 on every PR today, as one step of its single
+`checks` job alongside the record, plan, title and blocker gates, plus a `docs-only`
+step that publishes this same verdict as `steps.docs-only.outputs.docs_only`. Add check
+1 to it, inside its trailing local slot, once the stack exists — guarded with
+`if: "!cancelled() && steps.docs-only.outputs.docs_only != 'true'"` so CI follows the
+rule above too.
 
 ## Project notes
 

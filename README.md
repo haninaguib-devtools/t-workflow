@@ -75,7 +75,9 @@ The installer cannot know two things, and leaves them exactly as they ship:
 
 - `CONSTITUTION.md` §4 — your stack constraints, each ratified by an ADR.
 - `AGENTS.md` §Checks — your build/test command. This is the only place the skills get
-  it from; the same command also goes into `.github/workflows/ci.yml` as a third job.
+  it from; the same command also goes into `.github/workflows/ci.yml`, as a step in its
+  trailing local slot, guarded so a documentation-only change skips it (that slot's own
+  comment shows the exact shape; `AGENTS.md` §Checks states the rule).
 
 **When you may fill them in by hand depends on one thing: whether the first commit has
 been pushed.** That is the genesis exception (`CONSTITUTION.md` §3), and **the exception

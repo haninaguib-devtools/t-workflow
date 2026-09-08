@@ -1094,5 +1094,111 @@ expect_rc "no arguments is a usage error" \
   2 "$com"
 echo
 
+# --- 23. .t-workflow/scripts/docs-only.sh (issue #183) -----------------------------------
+# The executable form of AGENTS.md §Checks' documentation-only rule (ADR-012): exit 0
+# when every changed path is documentation (check 1 may be skipped), 1 when any is not
+# (echoed — that is why the build runs), 2 when nothing was checked. The set is *.md
+# anywhere plus docs/**, widened only by the globs in AGENTS.md's documentation-only
+# slot, which the script finds by heading, never by counting marker pairs.
+echo "docs-only.sh"
+dos=.t-workflow/scripts/docs-only.sh
+
+expect_rc "no paths at all → 2 (nothing was checked)" 2 "$dos"
+expect_rc "empty stdin → 2 (nothing was checked)" 2 bash -c ': | "$1" --stdin' _ "$dos"
+expect_rc "Markdown + docs/ + a task record → 0 (documentation-only)" \
+  0 bash -c 'printf "docs/adr/012-x.md\nREADME.md\ndocs/tasks/000100/183-x.md\n" | "$1" --stdin' _ "$dos"
+expect_rc "a non-.md file under docs/ is still documentation → 0" \
+  0 "$dos" docs/architecture/diagram.svg
+expect_rc "AGENTS.md and a SKILL.md are *.md → 0 (no build reads them)" \
+  0 "$dos" ./AGENTS.md .claude/skills/t-work/SKILL.md
+for bad_path in src/A.java .t-workflow/scripts/x.sh .github/workflows/ci.yml .template-manifest.json \
+                package.json Makefile site/index.html; do
+  expect_rc "docs plus $bad_path → 1 (not documentation-only)" \
+    1 bash -c 'printf "docs/adr/012-x.md\n%s\n" "$2" | "$1" --stdin' _ "$dos" "$bad_path"
+done
+out=$(printf 'docs/adr/012-x.md\nsrc/A.java\nREADME.md\n.t-workflow/scripts/x.sh\n' | "$dos" --stdin)
+if [ "$out" = "$(printf 'src/A.java\n.t-workflow/scripts/x.sh')" ]; then
+  ok "exit 1 echoes exactly the non-documentation paths, in order"
+else
+  bad "exit 1 echoes exactly the non-documentation paths, in order (got: $out)"
+fi
+expect_rc "a git-quoted non-ASCII .md path is un-quoted and judged documentation → 0" \
+  0 bash -c 'printf "%s\n" "\"docs/adr/002-caf\\303\\251.md\"" | "$1" --stdin' _ "$dos"
+expect_rc "a leading ./ is normalized away → 1 for ./src/A.java" 1 "$dos" ./src/A.java
+
+# --list prints the defaults, and only the defaults, in this repo (empty slot).
+if [ "$("$dos" --list)" = "$(printf '*.md\ndocs/**')" ]; then
+  ok "--list prints exactly the two defaults in this repo (empty slot)"
+else
+  bad "--list prints exactly the two defaults in this repo (got: $("$dos" --list))"
+fi
+
+# The AGENTS.md slot widens the set. The script resolves AGENTS.md from its own location,
+# so exercise it in a fixture copy of the repo whose slot carries a glob — and one whose
+# slot carries a bullet that is not backticked, which must be ignored, and one whose
+# AGENTS.md predates the heading entirely, which must fall back to the defaults.
+insert_docs_only_glob() {
+  # $1 = AGENTS.md path, $2 = bullet line to insert into the documentation-only slot
+  awk -v row="$2" '
+    /^### Documentation-only paths/ { insec=1 }
+    /^## / { insec=0 }
+    { print }
+    insec && /^<!-- local -->$/ && !inserted { print row; inserted=1 }
+  ' "$1" > "$1.new" && mv "$1.new" "$1"
+}
+fixture_dos="$work/fixture-docs-only"
+make_fixture_repo "$fixture_dos"
+insert_docs_only_glob "$fixture_dos/AGENTS.md" '- `site/**` — the project site'
+if [ "$("$fixture_dos/$dos" --list)" = "$(printf '*.md\ndocs/**\nsite/**')" ]; then
+  ok "--list includes a glob from the slot after the defaults"
+else
+  bad "--list includes a glob from the slot after the defaults (got: $("$fixture_dos/$dos" --list))"
+fi
+expect_rc "with site/** in the slot, site/index.html is documentation → 0" \
+  0 "$fixture_dos/$dos" site/index.html site/styles.css docs/x.md
+expect_rc "the slot only adds: a script path is still not documentation → 1" \
+  1 "$fixture_dos/$dos" site/index.html .t-workflow/scripts/x.sh
+expect_rc "without the slot entry (this repo), site/index.html is not documentation → 1" \
+  1 "$dos" site/index.html
+
+fixture_dos_plain="$work/fixture-docs-only-plain"
+make_fixture_repo "$fixture_dos_plain"
+insert_docs_only_glob "$fixture_dos_plain/AGENTS.md" '- site/** (not backticked — ignored)'
+if [ "$("$fixture_dos_plain/$dos" --list)" = "$(printf '*.md\ndocs/**')" ]; then
+  ok "a slot bullet without backticks is ignored"
+else
+  bad "a slot bullet without backticks is ignored (got: $("$fixture_dos_plain/$dos" --list))"
+fi
+
+fixture_dos_old="$work/fixture-docs-only-old"
+make_fixture_repo "$fixture_dos_old"
+awk '/^### Documentation-only paths/ { skip=1 } /^## Project notes/ { skip=0 } !skip' \
+  "$fixture_dos_old/AGENTS.md" > "$fixture_dos_old/AGENTS.md.new" && mv "$fixture_dos_old/AGENTS.md.new" "$fixture_dos_old/AGENTS.md"
+if [ "$("$fixture_dos_old/$dos" --list)" = "$(printf '*.md\ndocs/**')" ]; then
+  ok "an AGENTS.md without the heading (a consumer not yet synced) falls back to the defaults"
+else
+  bad "an AGENTS.md without the heading falls back to the defaults (got: $("$fixture_dos_old/$dos" --list))"
+fi
+expect_rc "…and still judges a documentation diff → 0" 0 "$fixture_dos_old/$dos" docs/x.md README.md
+
+# The new slot is a real slot: a consumer's globs inside it never register as manifest
+# drift (the same round-trip #16 proves for CONSTITUTION.md / protected-paths.sh).
+filled_agents="$work/AGENTS-docs-only-filled.md"
+cp AGENTS.md "$filled_agents"
+insert_docs_only_glob "$filled_agents" '- `site/**`'
+h_empty=$(.t-workflow/scripts/check-manifest.sh --hash-file AGENTS.md)
+h_filled=$(.t-workflow/scripts/check-manifest.sh --hash-file "$filled_agents")
+if [ "$h_empty" = "$h_filled" ]; then ok "AGENTS.md: a filled documentation-only slot hashes the same as the empty one"
+else bad "AGENTS.md: a filled documentation-only slot hashes the same as the empty one (got $h_filled != $h_empty)"; fi
+
+# The slot sits fourth of five pairs in AGENTS.md — the ordinal installer/adopt.sh's
+# splice_local_slot now assumes for project notes (fifth). Pin the count and the order.
+pairs=$(grep -c '^<!-- local -->$' AGENTS.md)
+[ "$pairs" -eq 5 ] && ok "AGENTS.md carries exactly five marker pairs" || bad "AGENTS.md carries exactly five marker pairs (got $pairs)"
+order=$(awk '/^## |^### /{h=$0} /^<!-- local -->$/{print h}' AGENTS.md | paste -sd'|')
+want='## The pipeline|## Reviewer model|## Checks|### Documentation-only paths|## Project notes'
+[ "$order" = "$want" ] && ok "the pairs sit under: $want" || bad "the pairs sit under: $want (got: $order)"
+echo
+
 echo "$pass passed, $fail failed"
 [ "$fail" -eq 0 ]

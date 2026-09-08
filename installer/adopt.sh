@@ -358,8 +358,12 @@ cp -R "$tpl/CLAUDE.md" CLAUDE.md
 cp -R "$tpl/GEMINI.md" GEMINI.md
 cp -R "$tpl/.github/copilot-instructions.md" .github/copilot-instructions.md
 cp "$tpl/AGENTS.md" AGENTS.md
+# AGENTS.md's marker pairs, in file order (docs/architecture/local-slots.md §The
+# marker): 1 skill rows, 2 reviewer model, 3 §Checks item 1 (the build command),
+# 4 §Checks documentation-only paths, 5 §Project notes. splice_local_slot addresses a
+# pair by that ordinal, so a template release that adds a pair moves these numbers.
 if [ "$harvested_any" = yes ]; then
-  splice_local_slot AGENTS.md 4 "$notes_tmp"
+  splice_local_slot AGENTS.md 5 "$notes_tmp"
 fi
 if [ -n "$build_command" ]; then
   cmd_line="$scratch/checks_item1.txt"
@@ -387,9 +391,11 @@ fi
 ci_tail="$scratch/ci_tail.txt"
 : > "$ci_tail"
 if [ -n "$build_command" ]; then
+  # Guarded by the template's own `docs-only` step (AGENTS.md §Checks, ADR-012): a
+  # documentation-only PR skips the build in CI exactly as the skills skip it locally.
   {
     echo "      - name: Project checks"
-    echo '        if: "!cancelled()"'
+    echo '        if: "!cancelled() && steps.docs-only.outputs.docs_only != '"'"'true'"'"'"'
     printf '        run: %s\n' "$build_command"
   } >> "$ci_tail"
 fi

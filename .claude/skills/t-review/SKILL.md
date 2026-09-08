@@ -136,6 +136,18 @@ holding only the id, so this matters more here than anywhere else.
    itself — but remains a candidate for the CI source whenever CI runs that same check
    unconditionally (as `consistency-check.sh` does, regardless of any plan's tags).
 
+   **Check 1 and the documentation-only rule** (`AGENTS.md` §Checks, ADR-012). This
+   review's own run of check 1 follows the same rule `/t-work` did: pipe the PR's
+   changed paths (`.pr.files` from the snapshot, the whole diff) through
+   `bash .t-workflow/scripts/docs-only.sh --stdin`; exit 0 → check 1 is not run, and
+   the review body lists it as `check 1 skipped: documentation-only diff — confirmed by
+   this review`. A `## Checks run` line claiming that skip is valid **only** when this
+   review's own run of the script, on this head's diff, agrees — it is never a reused
+   result, because the claim is exactly what is being verified. A claimed skip the
+   script contradicts (exit 1 — the non-documentation paths it echoes — or exit 2) is a
+   **high** finding: a required check never ran on a diff that could affect it. Where
+   item 1 names no command, there is nothing to run, skip, or confirm — say so.
+
    A failing check is a finding at the severity its consequence deserves. Four things are
    **blocker or high by construction**, never medium or low: a check that failed,
    behavior or content removed without the issue authorizing it, a changed path outside

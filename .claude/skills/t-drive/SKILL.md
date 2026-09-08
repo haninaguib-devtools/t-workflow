@@ -172,7 +172,10 @@ children in a dependency chain run in topological order, one after another.
    base.
    - `readiness: ready` → continue to step 7.
    - `readiness: not-ready` (unresolved blocker/high findings), or a check
-     `AGENTS.md` §Checks names fails → **one bounded retry** (ADR-004 Decision 2), no
+     `AGENTS.md` §Checks names fails (check 1 counted only where that section's
+     documentation-only rule, ADR-012, does not skip it — `/t-work` and `/t-review`
+     each run `.t-workflow/scripts/docs-only.sh` themselves) → **one bounded retry**
+     (ADR-004 Decision 2), no
      more: run
      `/t-work <child-id>` again in its own Fix mode (already defined — addresses only the
      named blocker/high findings, no new retry machinery here), re-run only the checks
@@ -266,8 +269,9 @@ there — including straight into Phase 3 below if that pass resolves the last o
      and `/t-work` refuses one outright. Address only the named blocker/high findings —
      a code fix goes directly onto the integration branch, pushed; a defect in the PR's
      own title or body (its `Task:`/`Closes:` lines, its included/excluded summary) is
-     fixed there instead, no commit needed — re-run the checks the findings falsify,
-     then re-review.
+     fixed there instead, no commit needed — re-run the checks the findings falsify
+     (check 1 per `AGENTS.md` §Checks' documentation-only rule, decided over the
+     integration branch's whole diff against the trunk), then re-review.
      - Passes this time → proceed as `readiness: ready` above.
      - Fails again → **stop.** Report exactly what is still blocking, and do not name
        `/t-ship` — the human decides how to proceed from here.
@@ -330,7 +334,8 @@ state calls for, rather than always replaying plan → work → review from scra
    diff here — never one "did it need planning" flag: a diff that strayed onto a
    protected path is reviewed even when the declared scope looked clean.
 5. **One bounded retry.** `readiness: not-ready`, or a check `AGENTS.md` §Checks names
-   fails → exactly one `/t-work <id>` Fix-mode pass (only the named blocker/high
+   fails (check 1 counted only where that section's documentation-only rule, ADR-012,
+   does not skip it) → exactly one `/t-work <id>` Fix-mode pass (only the named blocker/high
    findings), re-run only the falsified checks, then `/t-review <id>` again scoped to
    the fix — the bound and shape ADR-004 Decision 2 defines, no new machinery.
    - Passes → continue to step 6.
